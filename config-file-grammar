@@ -1,0 +1,7 @@
+<config>  ::= ( <ws>* <assign>? <comment>? '\n' )*
+<comment> ::= '#' [^\n]*
+<assign>  ::= <varid> <ws>* '=' <ws>* <value>
+<varid>   ::= [-_a-zA-Z0-9]+
+<value>   ::= '<?' [^('?>')]* '?>' <ws>* | [^('#'|'\n')]*
+                                           {remove trailing white space}
+<ws>      ::= ' ' | '\t'
