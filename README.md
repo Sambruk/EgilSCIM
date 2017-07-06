@@ -31,12 +31,12 @@ A configuration file consists of a set of variable assignments. On
 each line, there can be an optional variable assignment followed by
 an optional comment. A variable assignment starts with a variable
 name followed by the '=' sign and a value. A variable name can be one
-or more of '-', '_', 'a'-'z', 'A'-'Z' and '0'-'9'. A value is either
-a single line value or a multi line value. A single line value is
-terminated by a comment or an end-of-line, and surrounding white
-space is removed. A multi line value starts with '<?' and ends with
-'?>'. Anything in between is the value, with no whitespace truncation
-applied.
+or more of `'-'`, `'_'`, `'a'`-`'z'`, `'A'`-`'Z'` and `'0'`-`'9'`. A
+value is either a single line value or a multi line value. A single
+line value is terminated by a comment or an end-of-line, and
+surrounding white space is removed. A multi line value starts with
+`'<?'` and ends with `'?>'`. Anything in between is the value, with
+no white space truncation applied.
 
 #### Examples
 
