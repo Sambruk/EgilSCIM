@@ -2,6 +2,6 @@
 <comment> ::= '#' [^\n]*
 <assign>  ::= <varid> <ws>* '=' <ws>* <value>
 <varid>   ::= [-_a-zA-Z0-9]+
-<value>   ::= '<?' [^('?>')]* '?>' <ws>* | [^('#'|'\n')]*
-                                           {remove trailing white space}
+<value>   ::= '<?' [^('?>')]* '?>' <ws>*
+            | [^('#'|'\n')]*                    # remove trailing <ws>*
 <ws>      ::= ' ' | '\t'
