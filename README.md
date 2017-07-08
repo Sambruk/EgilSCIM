@@ -2,7 +2,7 @@
 
 SimpleSCIM is a program under development with the intended purpose
 of demonstrating the usefulness of the SCIM protocol for
-automatically manage user accounts in remote systems, and to be a
+automatically managing user accounts in remote systems, and to be a
 basic implementation of a SCIM client to be expanded upon.
 
 ## Intended usage
@@ -30,13 +30,13 @@ A configuration file has the following grammar:
 A configuration file consists of a set of variable assignments. On
 each line, there can be an optional variable assignment followed by
 an optional comment. A variable assignment starts with a variable
-name followed by the '=' sign and a value. A variable name can be one
-or more of `'-'`, `'_'`, `'a'`-`'z'`, `'A'`-`'Z'` and `'0'`-`'9'`. A
-value is either a single line value or a multi line value. A single
-line value is terminated by a comment or an end-of-line, and
-surrounding white space is removed. A multi line value starts with
-`'<?'` and ends with `'?>'`. Anything in between is the value, with
-no white space truncation applied.
+name followed by the `'='` sign and a value. A variable name can be
+one or more of `'-'`, `'_'`, `'a'`-`'z'`, `'A'`-`'Z'` and
+`'0'`-`'9'`. A value is either a single line value or a multi line
+value. A single line value is terminated by a comment or an
+end-of-line, and surrounding white space is removed. A multi line
+value starts with `'<?'` and ends with `'?>'`. Anything in between is
+the value, with no white space truncation applied.
 
 #### Examples
 
@@ -53,6 +53,12 @@ var4 = <?
 
 SimpleSCIM will have a set of required variable names that have not
 yet been decided. They will be listed below.
+
+* `ldapuri` contains the _schema_ (i.e. `ldap://`, `ldaps://`,
+  `ldapi://` and `cldap://`), the _host_ (i.e. domain or IP address)
+  and optionally the _port_ (i.e. `:port`) if it is not on a standard
+  LDAP port.
+* ...
 
 ### Execution
 
