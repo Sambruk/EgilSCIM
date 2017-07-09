@@ -51,14 +51,31 @@ var4 = <?
 
 #### Required variables
 
-SimpleSCIM will have a set of required variable names that have not
-yet been decided. They will be listed below.
+SimpleSCIM has a set of required variable names that are not yet
+decided. The following variable names are suggested required
+variables:
 
-* `ldapuri` contains the _schema_ (i.e. `ldap://`, `ldaps://`,
-  `ldapi://` and `cldap://`), the _host_ (i.e. domain or IP address)
-  and optionally the _port_ (i.e. `:port`) if it is not on a standard
-  LDAP port.
-* ...
+* `ldap-auth` is currently not being used, since `LDAP_AUTH_SIMPLE`
+  is the only authentication method supported. SASL could potentially
+  be supported in the future.
+* `ldap-uri` is the uri to the LDAP server that contains the _schema_
+  (i.e. `ldap://`, `ldaps://`, `ldapi://` and `cldap://`), the _host_
+  and optionally the _port_ if a non standard port is being used,
+  e.g. `ldaps://ldap.example.com:1234`.
+* `ldap-who` is the DN to bind as.
+* `ldap-passwd` is the password associated with the entry.
+* `ldap-base` is the DN of the entry at which to start the search.
+* `ldap-scope` is the scope of the search, i.e. `BASE`, `ONELEVEL`,
+  `SUBTREE` or `CHILDREN`.
+* `ldap-filter` is the filter to apply in the search. Leave empty for
+  the filter `(objectClass=*)`.
+* `ldap-attrs` is a white space separated list of attribute
+  descriptions to return from matching entries. Leave empty to return
+  all attributes.
+* `ldap-attrsonly` is a boolean variable (i.e. `TRUE` or `FALSE`)
+  that should be set to `TRUE` if only attribute descriptions are
+  wanted. It should be set to `FALSE` if both attribute descriptions
+  and attribute values are wanted.
 
 ### Execution
 
