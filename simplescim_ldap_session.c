@@ -52,7 +52,7 @@ int simplescim_ldap_session_start()
 	                       NULL, NULL, NULL);
 
 	if (err != LDAP_SUCCESS) {
-		ldap_print_error(err, "ldap_simple_bind_s");
+		ldap_print_error(err, "ldap_sasl_bind_s");
 		ldap_destroy(ld);
 		ld = NULL;
 		return -1;
