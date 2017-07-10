@@ -1,36 +1,36 @@
 #include "simplescim_config_file_parser.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <glib.h>
+#include <stdio.h>      /* perror(), fprintf() */
+#include <stdlib.h>     /* malloc(), free() */
+#include <string.h>     /* strerror(), memcpy() */
+#include <ctype.h>      /* isgraph() */
+#include <errno.h>      /* errno */
+#include <unistd.h>     /* fstat(), close(), read() */
+#include <sys/types.h>  /* open(), fstat() */
+#include <sys/stat.h>   /* open(), fstat() */
+#include <fcntl.h>      /* open() */
+#include <glib.h>       /* GHashTable */
+
+#include "simplescim_globals.h"
 
 static struct {
-	const char *name;
 	char *inp;
 	const char *cur;
 	size_t line;
 	size_t col;
 	GHashTable *vars;
-} global;
+} parser;
 
-static void global_reset()
+static void parser_reset()
 {
-	global.name = NULL;
-	global.inp = NULL;
-	global.cur = NULL;
-	global.line = 0;
-	global.col = 0;
-	global.vars = NULL;
+	parser.inp = NULL;
+	parser.cur = NULL;
+	parser.line = 0;
+	parser.col = 0;
+	parser.vars = NULL;
 }
 
-static int global_read_inp()
+static int read_config_file()
 {
 	int fd;
 	struct stat sb;
@@ -40,18 +40,18 @@ static int global_read_inp()
 	unsigned char tmp;
 
 	/* Open file */
-	fd = open(global.name, O_RDONLY);
+	fd = open(simplescim_global_filename, O_RDONLY);
 
 	if (fd == -1) {
 		/* Could not open file */
-		perror(global.name);
+		perror(simplescim_global_filename);
 		return -1;
 	}
 
 	/* Stat file for type/mode and size */
 	if (fstat(fd, &sb) == -1) {
 		/* Could not stat file */
-		perror(global.name);
+		perror(simplescim_global_filename);
 		close(fd);
 		return -1;
 	}
@@ -60,8 +60,8 @@ static int global_read_inp()
 	if (!S_ISREG(sb.st_mode)) {
 		/* File is not regular */
 		fprintf(stderr,
-		        "%s: Must be a regular file\n",
-		        global.name);
+		        "%s: not a regular file\n",
+		        simplescim_global_filename);
 		close(fd);
 		return -1;
 	}
@@ -74,7 +74,7 @@ static int global_read_inp()
 
 	if (inp == NULL) {
 		/* Could not allocate string */
-		perror(global.name);
+		perror(simplescim_global_filename);
 		close(fd);
 		return -1;
 	}
@@ -95,7 +95,7 @@ static int global_read_inp()
 
 	if (nread == -1) {
 		/* An error occurred */
-		perror(global.name);
+		perror(simplescim_global_filename);
 		free(inp);
 		close(fd);
 		return -1;
@@ -105,8 +105,8 @@ static int global_read_inp()
 		/* The actual file size is smaller than the reported
 		   file size */
 		fprintf(stderr,
-"%s: File size reported as %lu B but could only read %ld B\n",
-		        global.name,
+"%s: file size reported as %lu B but could only read %ld B\n",
+		        simplescim_global_filename,
 		        inp_len,
 		        nread);
 		free(inp);
@@ -131,7 +131,7 @@ static int global_read_inp()
 
 	if (nread == -1) {
 		/* An error occurred */
-		perror(global.name);
+		perror(simplescim_global_filename);
 		free(inp);
 		close(fd);
 		return -1;
@@ -141,8 +141,8 @@ static int global_read_inp()
 		/* The actual file size is larger than the reported
 		   file size */
 		fprintf(stderr,
-"%s: File size reported as %lu B but actual file size is larger\n",
-		        global.name,
+"%s: file size reported as %lu B but actual file size is larger\n",
+		        simplescim_global_filename,
 		        inp_len);
 		free(inp);
 		close(fd);
@@ -155,35 +155,35 @@ static int global_read_inp()
 	/* Terminate string */
 	inp[inp_len] = '\0';
 
-	/* Store string globally */
-	global.inp = inp;
+	/* Store string global data structure */
+	parser.inp = inp;
 
 	return 0;
 }
 
-static void print_error(const char *str)
+static void syntax_error(const char *str)
 {
 	fprintf(stderr,
 	        "%s:%lu:%lu: syntax error: %s\n",
-	        global.name,
-	        global.line,
-	        global.col,
+	        simplescim_global_filename,
+	        parser.line,
+	        parser.col,
 	        str);
 }
 
-static void print_error_expected(const char *str)
+static void syntax_error_expected(const char *str)
 {
 	fprintf(stderr,
-	        "%s:%lu:%lu: syntax error: Expected %s, found ",
-	        global.name,
-	        global.line,
-	        global.col,
+	        "%s:%lu:%lu: syntax error: expected %s, found ",
+	        simplescim_global_filename,
+	        parser.line,
+	        parser.col,
 	        str);
 
-	if (isgraph(*global.cur)) {
-		fprintf(stderr, "'%c'\n", *global.cur);
+	if (isgraph(*parser.cur)) {
+		fprintf(stderr, "'%c'\n", *parser.cur);
 	} else {
-		fprintf(stderr, "0x%02X\n", *global.cur);
+		fprintf(stderr, "0x%02X\n", *parser.cur);
 	}
 }
 
@@ -214,9 +214,9 @@ static int is_varid(char c)
 /* <ws> ::= ' ' | '\t' */
 static void rule_skip_ws()
 {
-	while (*global.cur == ' ' || *global.cur == '\t') {
-		++global.cur;
-		++global.col;
+	while (*parser.cur == ' ' || *parser.cur == '\t') {
+		++parser.cur;
+		++parser.col;
 	}
 }
 
@@ -227,12 +227,12 @@ static int rule_varid(char **var)
 	char *tmp;
 
 	/* Determine variable name length */
-	while (is_varid(global.cur[var_len])) {
+	while (is_varid(parser.cur[var_len])) {
 		++var_len;
 	}
 
 	if (var_len == 0) {
-		print_error("Variable name cannot be empty");
+		syntax_error("variable name cannot be empty");
 		return -1;
 	}
 
@@ -240,16 +240,16 @@ static int rule_varid(char **var)
 	tmp = malloc(var_len + 1);
 
 	if (tmp == NULL) {
-		print_error(strerror(errno));
+		syntax_error(strerror(errno));
 		return -1;
 	}
 
-	memcpy(tmp, global.cur, var_len);
+	memcpy(tmp, parser.cur, var_len);
 	tmp[var_len] = '\0';
 	*var = tmp;
 
-	global.cur += var_len;
-	global.col += var_len;
+	parser.cur += var_len;
+	parser.col += var_len;
 
 	return 0;
 }
@@ -261,31 +261,31 @@ static int rule_value(char **val)
 	char *tmp;
 
 	/* Multi line value or single line value */
-	if (global.cur[0] == '<' && global.cur[1] == '?') {
+	if (parser.cur[0] == '<' && parser.cur[1] == '?') {
 		size_t tmp_line, tmp_col;
 
-		global.cur += 2;
-		global.col += 2;
+		parser.cur += 2;
+		parser.col += 2;
 
-		tmp_line = global.line;
-		tmp_col = global.col;
+		tmp_line = parser.line;
+		tmp_col = parser.col;
 
 		/* Determine length of multi line value */
 		for (;;) {
-			if (global.cur[val_len] == '\0') {
-				global.line = tmp_line;
-				global.col = tmp_col;
-				print_error("Unexpected end-of-file");
+			if (parser.cur[val_len] == '\0') {
+				parser.line = tmp_line;
+				parser.col = tmp_col;
+				syntax_error("unexpected end-of-file");
 				return -1;
 			}
 
 			/* Multi line value terminated by '?>' */
-			if (global.cur[val_len] == '?'
-			    && global.cur[val_len + 1] == '>') {
+			if (parser.cur[val_len] == '?'
+			    && parser.cur[val_len + 1] == '>') {
 				break;
 			}
 
-			if (global.cur[val_len] == '\n') {
+			if (parser.cur[val_len] == '\n') {
 				++val_len;
 				++tmp_line;
 				tmp_col = 1;
@@ -299,29 +299,29 @@ static int rule_value(char **val)
 		tmp = malloc(val_len + 1);
 
 		if (tmp == NULL) {
-			print_error(strerror(errno));
+			syntax_error(strerror(errno));
 			return -1;
 		}
 
-		memcpy(tmp, global.cur, val_len);
+		memcpy(tmp, parser.cur, val_len);
 		tmp[val_len] = '\0';
 
-		global.cur += val_len + 2;
-		global.line = tmp_line;
-		global.col = tmp_col + 2;
+		parser.cur += val_len + 2;
+		parser.line = tmp_line;
+		parser.col = tmp_col + 2;
 
 		rule_skip_ws();
 	} else {
 		/* Determine single line value length */
-		while (global.cur[val_len] != '\n'
-		       && global.cur[val_len] != '#'
-		       && global.cur[val_len] != '\0') {
+		while (parser.cur[val_len] != '\n'
+		       && parser.cur[val_len] != '#'
+		       && parser.cur[val_len] != '\0') {
 			++val_len;
 		}
 
-		if (global.cur[val_len] == '\0') {
-			global.col += val_len;
-			print_error("Unexpected end-of-file");
+		if (parser.cur[val_len] == '\0') {
+			parser.col += val_len;
+			syntax_error("unexpected end-of-file");
 			return -1;
 		}
 
@@ -329,15 +329,15 @@ static int rule_value(char **val)
 		tmp = malloc(val_len + 1);
 
 		if (tmp == NULL) {
-			print_error(strerror(errno));
+			syntax_error(strerror(errno));
 			return -1;
 		}
 
-		memcpy(tmp, global.cur, val_len);
+		memcpy(tmp, parser.cur, val_len);
 		tmp[val_len] = '\0';
 
-		global.cur += val_len;
-		global.col += val_len;
+		parser.cur += val_len;
+		parser.col += val_len;
 
 		/* Remove trailing white space */
 		while (val_len > 0 && (tmp[val_len - 1] == ' '
@@ -358,8 +358,8 @@ static int rule_assign()
 	char *var, *val;
 
 	/* Obligatory variable name */
-	if (!is_varid(*global.cur)) {
-		print_error_expected("variable name");
+	if (!is_varid(*parser.cur)) {
+		syntax_error_expected("variable name");
 		return -1;
 	}
 
@@ -371,14 +371,14 @@ static int rule_assign()
 	rule_skip_ws();
 
 	/* Obligatory variable assignment character */
-	if (*global.cur != '=') {
-		print_error_expected("'='");
+	if (*parser.cur != '=') {
+		syntax_error_expected("'='");
 		free(var);
 		return -1;
 	}
 
-	++global.cur;
-	++global.col;
+	++parser.cur;
+	++parser.col;
 
 	/* Optional white space */
 	rule_skip_ws();
@@ -389,7 +389,7 @@ static int rule_assign()
 		return -1;
 	}
 
-	g_hash_table_insert(global.vars, var, val);
+	g_hash_table_insert(parser.vars, var, val);
 
 	return 0;
 }
@@ -398,19 +398,19 @@ static int rule_assign()
 static int rule_comment()
 {
 	/* Obligatory line comment initialiser character */
-	if (*global.cur != '#') {
-		print_error_expected("'#'");
+	if (*parser.cur != '#') {
+		syntax_error_expected("'#'");
 		return -1;
 	}
 
 	/* Zero or more non-newline characters */
-	while (*global.cur != '\n' && *global.cur != '\0') {
-		++global.cur;
-		++global.col;
+	while (*parser.cur != '\n' && *parser.cur != '\0') {
+		++parser.cur;
+		++parser.col;
 	}
 
-	if (*global.cur == '\0') {
-		print_error("Unexpected end-of-file");
+	if (*parser.cur == '\0') {
+		syntax_error("unexpected end-of-file");
 		return -1;
 	}
 
@@ -421,82 +421,78 @@ static int rule_comment()
 static int rule_config()
 {
 	/* Zero or more lines */
-	while (*global.cur != '\0') {
+	while (*parser.cur != '\0') {
 		/* Optional white space */
 		rule_skip_ws();
 
 		/* Optional variable assignment */
-		if (is_varid(*global.cur)) {
+		if (is_varid(*parser.cur)) {
 			if (rule_assign() == -1) {
 				return -1;
 			}
 		}
 
 		/* Optional comment */
-		if (*global.cur == '#') {
+		if (*parser.cur == '#') {
 			if (rule_comment() == -1) {
 				return -1;
 			}
 		}
 
 		/* Obligatory newline */
-		if (*global.cur != '\n') {
-			print_error_expected("end-of-line");
+		if (*parser.cur != '\n') {
+			syntax_error_expected("end-of-line");
 			return -1;
 		}
 
-		++global.cur;
-		++global.line;
-		global.col = 1;
+		++parser.cur;
+		++parser.line;
+		parser.col = 1;
 	}
 
 	return 0;
 }
 
-GHashTable *simplescim_parse_config_file(const char *filename)
+GHashTable *simplescim_parse_config_file()
 {
 	GHashTable *vars;
 
-	/* Copy config file name to global data structure */
-	global.name = filename;
-
-	/* Read config file contents to string in global
-	   data structure */
-	if (global_read_inp() == -1) {
+	/* Read config file contents to string in global data
+	   structure */
+	if (read_config_file() == -1) {
 		return NULL;
 	}
 
-	/* Initialise parser position variables in global
-	   data structure */
-	global.line = 1;
-	global.col = 1;
+	/* Initialise parser position variables in global data
+	   structure */
+	parser.line = 1;
+	parser.col = 1;
 
-	/* Initialise variable hash table in global
-	   data structure */
-	global.vars = g_hash_table_new_full(g_str_hash,
+	/* Initialise variable hash table in global data structure */
+	parser.vars = g_hash_table_new_full(g_str_hash,
 	                                    g_str_equal,
 	                                    free,
 	                                    free);
 
 	/* Start parsing */
-	global.cur = global.inp;
+	parser.cur = parser.inp;
 
 	if (rule_config() == -1) {
 		/* An error occurred while parsing */
-		free(global.inp);
-		g_hash_table_destroy(global.vars);
+		free(parser.inp);
+		g_hash_table_destroy(parser.vars);
 		return NULL;
 	}
 
-	/* Free string containing config file contents from
-	   global data structure */
-	free(global.inp);
+	/* Free string containing config file contents from global
+	   data structure */
+	free(parser.inp);
 
 	/* Save variable hash table */
-	vars = global.vars;
+	vars = parser.vars;
 
 	/* Reset global data structure */
-	global_reset();
+	parser_reset();
 
 	return vars;
 }

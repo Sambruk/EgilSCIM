@@ -3,6 +3,6 @@
 
 #include <glib.h>
 
-GHashTable *simplescim_parse_config_file(const char *filename);
+GHashTable *simplescim_parse_config_file();
 
 #endif
