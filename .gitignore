@@ -1,0 +1,13 @@
+# C object files
+*.o
+
+# Temporary vi files
+*.swp
+
+# Latex intermediate files
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
