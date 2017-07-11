@@ -143,9 +143,9 @@ int simplescim_ldap_session_search()
 
 static void print_berval(struct berval *bv)
 {
-	size_t i = 0;
+	size_t i;
 
-	while (i < bv->bv_len) {
+	for (i = 0; i < bv->bv_len; ++i) {
 		if (isgraph(bv->bv_val[i])) {
 			putchar(bv->bv_val[i]);
 		} else {
