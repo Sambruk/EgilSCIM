@@ -142,8 +142,38 @@ int simplescim_ldap_session_search()
 
 int simplescim_ldap_session_print_result()
 {
-	printf("Printing LDAP output from %s\n",
-	       simplescim_global_filename);
+	LDAPMessage *msg;
+
+	for (msg = ldap_first_message(ld, res);
+	     msg != NULL;
+	     msg = ldap_next_message(ld, msg)) {
+		switch (ldap_msgtype(msg)) {
+		case LDAP_RES_SEARCH_ENTRY:
+			printf("LDAP_RES_SEARCH_ENTRY\n");
+			/*print_entry(msg);*/
+			break;
+
+		case LDAP_RES_SEARCH_REFERENCE:
+			printf("LDAP_RES_SEARCH_REFERENCE\n");
+			/*print_reference(msg);*/
+			break;
+
+		case LDAP_RES_EXTENDED:
+			printf("LDAP_RES_EXTENDED\n");
+			/*print_extended(msg);*/
+			break;
+
+		case LDAP_RES_SEARCH_RESULT:
+			printf("LDAP_RES_SEARCH_RESULT\n");
+			/*print_result(msg);*/
+			break;
+
+		case LDAP_RES_INTERMEDIATE:
+			printf("LDAP_RES_INTERMEDIATE\n");
+			break;
+		}
+	}
+
 	return 0;
 }
 
