@@ -73,8 +73,8 @@ static int parse_attr(char **dest)
 		++attr_len;
 	}
 
-	if (parser.cur[attr_len] == '\0') {
-		syntax_error("unexpected end-of-string");
+	if (attr_len == 0) {
+		syntax_error("empty attribute name");
 		return -1;
 	}
 
