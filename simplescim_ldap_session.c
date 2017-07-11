@@ -199,6 +199,8 @@ static int print_entry(LDAPMessage *entry, size_t n)
 		ldap_value_free_len(vals);
 	}
 
+	ber_free(ber, 0);
+
 	return 0;
 }
 
