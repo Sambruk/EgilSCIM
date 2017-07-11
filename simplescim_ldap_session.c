@@ -149,7 +149,7 @@ static void print_berval(struct berval *bv)
 		if (isprint(bv->bv_val[i])) {
 			putchar(bv->bv_val[i]);
 		} else {
-			printf("\\x%02X", bv->bv_val[i]);
+			printf("\\x%02X", (unsigned char)bv->bv_val[i]);
 		}
 	}
 }
