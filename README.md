@@ -69,9 +69,8 @@ variables:
   `SUBTREE` or `CHILDREN`.
 * `ldap-filter` is the filter to apply in the search. Leave empty for
   the filter `(objectClass=*)`.
-* `ldap-attrs` is a white space separated list of attribute
-  descriptions to return from matching entries. Leave empty to return
-  all attributes.
+* `ldap-attrs` is a comma separated list of attribute descriptions to
+  return from matching entries. Leave empty to return all attributes.
 * `ldap-attrsonly` is a boolean variable (i.e. `TRUE` or `FALSE`)
   that should be set to `TRUE` if only attribute descriptions are
   wanted. It should be set to `FALSE` if both attribute descriptions
@@ -99,10 +98,10 @@ file for *service2* is executed to completion.
 SimpleSCIM currently requires the following C libraries:
 
 * `glib-2.0` for the `GHashTable` data structure
+* `libldap` from OpenLDAP for fetching identity information using LDAP
 
 SimpleSCIM plans to use the following libraries in the future:
 
-* `libldap` from OpenLDAP for fetching identity information using LDAP
 * `libcurl` to send the SCIM request
 
 Compile the program by executing:
