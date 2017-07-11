@@ -166,6 +166,10 @@ static int print_entry(LDAPMessage *entry, size_t n)
 
 	sprintf(header, "* Entry %lu *", n);
 
+	if (n > 0) {
+		putchar('\n');
+	}
+
 	for (i = 0; i < strlen(header); ++i) {
 		putchar('*');
 	}
@@ -197,6 +201,7 @@ static int print_entry(LDAPMessage *entry, size_t n)
 		}
 
 		ldap_value_free_len(vals);
+		ldap_memfree(attr);
 	}
 
 	ber_free(ber, 0);
