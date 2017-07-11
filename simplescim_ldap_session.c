@@ -146,7 +146,7 @@ static void print_berval(struct berval *bv)
 	size_t i;
 
 	for (i = 0; i < bv->bv_len; ++i) {
-		if (isgraph(bv->bv_val[i])) {
+		if (isprint(bv->bv_val[i])) {
 			putchar(bv->bv_val[i]);
 		} else {
 			printf("\\x%02X", bv->bv_val[i]);
@@ -154,16 +154,36 @@ static void print_berval(struct berval *bv)
 	}
 }
 
-static int print_entry(LDAPMessage *entry)
+static int print_entry(LDAPMessage *entry, size_t n)
 {
 	char *attr;
 	struct berval **vals;
 	BerElement *ber;
+	char header[32];
 	size_t i;
+
+	/* Print header */
+
+	sprintf(header, "* Entry %lu *", n);
+
+	for (i = 0; i < strlen(header); ++i) {
+		putchar('*');
+	}
+
+	printf("\n%s\n", header);
+
+	for (i = 0; i < strlen(header); ++i) {
+		putchar('*');
+	}
+
+	putchar('\n');
+
+	/* Print attributes */
 
 	for (attr = ldap_first_attribute(ld, entry, &ber);
 	     attr != NULL;
 	     attr = ldap_next_attribute(ld, entry, ber)) {
+		printf("= attribute \"%s\" =\n", attr);
 		vals = ldap_get_values_len(ld, entry, attr);
 
 		if (vals == NULL) {
@@ -185,13 +205,18 @@ static int print_entry(LDAPMessage *entry)
 int simplescim_ldap_session_print_result()
 {
 	LDAPMessage *entry;
+	size_t n;
+
+	n = 0;
 
 	for (entry = ldap_first_entry(ld, res);
 	     entry != NULL;
 	     entry = ldap_next_entry(ld, entry)) {
-		if (print_entry(entry) == -1) {
+		if (print_entry(entry, n) == -1) {
 			return -1;
 		}
+
+		++n;
 	}
 
 	return 0;
