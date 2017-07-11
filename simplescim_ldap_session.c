@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <glib.h>
 #include <ldap.h>
@@ -140,56 +141,42 @@ int simplescim_ldap_session_search()
 	return 0;
 }
 
-int print_result(LDAPMessage *result)
+static void print_berval(struct berval *bv)
 {
-	int err;
-	int errcode;
-	char *matcheddn;
-	char *errmsg;
-	char **referrals;
+	size_t i = 0;
 
-	err = ldap_parse_result(
-		ld,
-		result,
-		&errcode,
-		&matcheddn,
-		&errmsg,
-		&referrals,
-		NULL,
-		0
-	);
-
-	if (err != LDAP_SUCCESS) {
-		ldap_print_error(err, "ldap_parse_result");
-		return -1;
+	while (i < bv->bv_len) {
+		if (isgraph(bv->bv_val[i])) {
+			putchar(bv->bv_val[i]);
+		} else {
+			printf("\\x%02X", bv->bv_val[i]);
+		}
 	}
+}
 
-	printf("result: %d %s\n", errcode, ldap_err2string(errcode));
+static int print_entry(LDAPMessage *entry)
+{
+	char *attr;
+	struct berval **vals;
+	BerElement *ber;
+	size_t i;
 
-	if (matcheddn != NULL) {
-		if (matcheddn[0] != '\0') {
-			printf("Matched DN: %s\n", matcheddn);
+	for (attr = ldap_first_attribute(ld, entry, &ber);
+	     attr != NULL;
+	     attr = ldap_next_attribute(ld, entry, ber)) {
+		vals = ldap_get_values_len(ld, entry, attr);
+
+		if (vals == NULL) {
+			continue;
 		}
 
-		ber_memfree(matcheddn);
-	}
-
-	if (errmsg != NULL) {
-		if (errmsg[0] != '\0') {
-			printf("Additional information: %s\n", errmsg);
+		for (i = 0; vals[i] != NULL; ++i) {
+			printf("%s: ", attr);
+			print_berval(vals[i]);
+			printf("\n");
 		}
 
-		ber_memfree(errmsg);
-	}
-
-	if (referrals != NULL) {
-		size_t i;
-
-		for (i = 0; referrals[i] != NULL; ++i) {
-			printf("Referral: %s\n", referrals[i]);
-		}
-
-		ber_memvfree((void **)referrals);
+		ldap_value_free_len(vals);
 	}
 
 	return 0;
@@ -197,39 +184,13 @@ int print_result(LDAPMessage *result)
 
 int simplescim_ldap_session_print_result()
 {
-	LDAPMessage *msg;
+	LDAPMessage *entry;
 
-	for (msg = ldap_first_message(ld, res);
-	     msg != NULL;
-	     msg = ldap_next_message(ld, msg)) {
-		switch (ldap_msgtype(msg)) {
-		case LDAP_RES_SEARCH_ENTRY:
-			printf("LDAP_RES_SEARCH_ENTRY\n");
-			/*print_entry(msg);*/
-			break;
-
-		case LDAP_RES_SEARCH_REFERENCE:
-			printf("LDAP_RES_SEARCH_REFERENCE\n");
-			/*print_reference(msg);*/
-			break;
-
-		case LDAP_RES_EXTENDED:
-			printf("LDAP_RES_EXTENDED\n");
-			/*print_extended(msg);*/
-			break;
-
-		case LDAP_RES_SEARCH_RESULT:
-			printf("LDAP_RES_SEARCH_RESULT\n");
-
-			if (print_result(msg) == -1) {
-				return -1;
-			}
-
-			break;
-
-		case LDAP_RES_INTERMEDIATE:
-			printf("LDAP_RES_INTERMEDIATE\n");
-			break;
+	for (entry = ldap_first_entry(ld, res);
+	     entry != NULL;
+	     entry = ldap_next_entry(ld, entry)) {
+		if (print_entry(entry) == -1) {
+			return -1;
 		}
 	}
 
