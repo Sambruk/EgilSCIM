@@ -140,6 +140,61 @@ int simplescim_ldap_session_search()
 	return 0;
 }
 
+int print_result(LDAPMessage *result)
+{
+	int err;
+	int errcode;
+	char *matcheddn;
+	char *errmsg;
+	char **referrals;
+
+	err = ldap_parse_result(
+		ld,
+		result,
+		&errcode,
+		&matcheddn,
+		&errmsg,
+		&referrals,
+		NULL,
+		0
+	);
+
+	if (err != LDAP_SUCCESS) {
+		ldap_print_error(err, "ldap_parse_result");
+		return -1;
+	}
+
+	printf("result: %d %s\n", errcode, ldap_err2string(errcode));
+
+	if (matcheddn != NULL) {
+		if (matcheddn[0] != '\0') {
+			printf("Matched DN: %s\n", matcheddn);
+		}
+
+		ber_memfree(matcheddn);
+	}
+
+	if (errmsg != NULL) {
+		if (errmsg[0] != '\0') {
+			printf("Additional information: %s\n", errmsg);
+		}
+
+		ber_memfree(errmsg);
+	}
+
+	if (referrals != NULL) {
+		size_t i;
+
+		for (i = 0; referrals[i] != NULL; ++i) {
+			printf("Referral: %s\n", referrals[i]);
+		}
+
+		ber_memvfree((void **)referrals);
+	}
+
+	return 0;
+}
+
 int simplescim_ldap_session_print_result()
 {
 	LDAPMessage *msg;
@@ -165,7 +220,11 @@ int simplescim_ldap_session_print_result()
 
 		case LDAP_RES_SEARCH_RESULT:
 			printf("LDAP_RES_SEARCH_RESULT\n");
-			/*print_result(msg);*/
+
+			if (print_result(msg) == -1) {
+				return -1;
+			}
+
 			break;
 
 		case LDAP_RES_INTERMEDIATE:
