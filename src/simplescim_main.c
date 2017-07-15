@@ -15,8 +15,6 @@ static void print_attribute(const char *attribute,
 	for (i = 0; values[i] != NULL; ++i) {
 		printf("%s: %s\n", attribute, values[i]->bv_val);
 	}
-
-	printf("\n");
 }
 
 static void print_user(const struct berval *unique_identifier,
@@ -27,6 +25,7 @@ static void print_user(const struct berval *unique_identifier,
 	printf("====================\n\n");
 	printf("unique identifier: \"%s\"\n\n", unique_identifier->bv_val);
 	simplescim_user_foreach(user, print_attribute);
+	printf("\n");
 }
 
 static void print_user_list(struct simplescim_user_list *users)
