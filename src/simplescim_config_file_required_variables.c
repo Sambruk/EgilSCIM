@@ -22,6 +22,7 @@ static const char *required_variables[] = {
 	"ldap-attrs",
 	"ldap-attrsonly",
 	"ldap-unique-identifier",
+	"cache-file",
 	NULL
 };
 
@@ -64,6 +65,7 @@ static const char **required_values[] = {
 	NULL,
 	NULL,
 	required_values_boolean,
+	NULL,
 	NULL
 };
 

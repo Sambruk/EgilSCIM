@@ -1,0 +1,19 @@
+cache-file:
+	uint64_t	n_users				(number of)
+	user *		users
+
+user:
+	uint64_t	unique_identifier_length	(bytes)
+	uint8_t *	unique_identifier
+	uint64_t	n_attributes			(number of)
+	attribute *	attributes
+
+attribute:
+	uint64_t	attribute_name_length		(bytes)
+	uint8_t *	attribute_name
+	uint64_t	n_values			(number of)
+	value *		values
+
+value:
+	uint64_t	value_length			(bytes)
+	uint8_t *	value

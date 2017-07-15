@@ -14,7 +14,8 @@ SimpleSCIM: simplescim_main.o \
             simplescim_config_file_parser.o \
             simplescim_config_file_required_variables.o \
             simplescim_ldap.o \
-            simplescim_ldap_attrs_parser.o
+            simplescim_ldap_attrs_parser.o \
+            simplescim_cache_file.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 simplescim_main.o: simplescim_main.c \
@@ -92,9 +93,19 @@ simplescim_ldap_attrs_parser.o: simplescim_ldap_attrs_parser.c \
                                 simplescim_config_file.h
 	$(CC) -c $(CFLAGS) -o $@ $<
 
+simplescim_cache_file.o: simplescim_cache_file.c \
+                         simplescim_cache_file.h \
+                         simplescim_error_string.h \
+                         simplescim_config_file.h \
+                         simplescim_open_file.h \
+                         simplescim_user.h \
+                         simplescim_user_list.h
+	$(CC) -c $(CFLAGS) -o $@ $<
+
 .PHONY: clean distclean
 
 clean:
+	rm -f simplescim_cache_file.o
 	rm -f simplescim_ldap_attrs_parser.o
 	rm -f simplescim_ldap.o
 	rm -f simplescim_config_file_required_variables.o

@@ -1,0 +1,5 @@
+simplescim_cache_file.c:
+439: Check if cache file exists. If not, return an empty user list.
+
+simplescim_scim.c:
+IMPLEMENT!
