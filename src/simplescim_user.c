@@ -58,13 +58,15 @@ struct simplescim_user *simplescim_user_new()
  */
 static void simplescim_user_delete_values(struct berval **values)
 {
-	struct berval *value;
+	size_t i;
 
-	for (value = *values;
-	     value != NULL;
-	     ++value) {
-		free(value->bv_val);
-		free(value);
+	if (values == NULL) {
+		return;
+	}
+
+	for (i = 0; values[i] != NULL; ++i) {
+		free(values[i]->bv_val);
+		free(values[i]);
 	}
 
 	free(values);
