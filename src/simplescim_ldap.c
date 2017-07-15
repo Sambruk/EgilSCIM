@@ -322,17 +322,42 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 
 		if (attr_clone == NULL) {
 			simplescim_error_string_malloc();
+
 			simplescim_user_delete(user);
+
+			ldap_memfree(attr);
+			ber_free(ber, 0);
+
 			return NULL;
 		}
 
 		/* Get and clone 'vals'. */
 		vals = ldap_get_values_len(ld, entry, attr);
+
+		if (vals == NULL) {
+			sprintf(simplescim_error_string,
+			        "%s:ldap_get_values_len: unknown error",
+			        simplescim_config_file_name);
+
+			free(attr_clone);
+			simplescim_user_delete(user);
+
+			ldap_memfree(attr);
+			ber_free(ber, 0);
+
+			return NULL;
+		}
+
 		vals_clone = clone_vals((const struct berval **)vals);
  
 		if (vals_clone == NULL) {
 			free(attr_clone);
 			simplescim_user_delete(user);
+
+			ldap_value_free_len(vals);
+			ldap_memfree(attr);
+			ber_free(ber, 0);
+
 			return NULL;
 		}
 
@@ -351,6 +376,11 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 			free(vals_clone);
 			free(attr_clone);
 			simplescim_user_delete(user);
+
+			ldap_value_free_len(vals);
+			ldap_memfree(attr);
+			ber_free(ber, 0);
+
 			return NULL;
 		}
 
