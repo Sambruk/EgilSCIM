@@ -92,7 +92,7 @@ int simplescim_config_file_required_variables()
 
 		if (err == -1) {
 			sprintf(simplescim_error_string,
-"%s: required variable \"%s\" is missing\n",
+"%s: required variable \"%s\" is missing",
 			        simplescim_config_file_name,
 			        var);
 			return -1;
