@@ -1,192 +1,79 @@
 #include "simplescim_config_file_parser.h"
 
-#include <stdio.h>      /* perror(), fprintf() */
-#include <stdlib.h>     /* malloc(), free() */
-#include <string.h>     /* strerror(), memcpy() */
-#include <ctype.h>      /* isgraph() */
-#include <errno.h>      /* errno */
-#include <unistd.h>     /* fstat(), close(), read() */
-#include <sys/types.h>  /* open(), fstat() */
-#include <sys/stat.h>   /* open(), fstat() */
-#include <fcntl.h>      /* open() */
-#include <glib.h>       /* GHashTable */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
 
-#include "simplescim_globals.h"
+#include "simplescim_error_string.h"
+#include "simplescim_config_file.h"
 
+/**
+ * A global static data structure containing the current
+ * state and position of the parser.
+ */
 static struct {
-	char *inp;
 	const char *cur;
 	size_t line;
 	size_t col;
-	GHashTable *vars;
 } parser;
 
-static void parser_reset()
+/**
+ * Resets the parser state.
+ */
+static void reset_parser()
 {
-	parser.inp = NULL;
 	parser.cur = NULL;
 	parser.line = 0;
 	parser.col = 0;
-	parser.vars = NULL;
 }
 
-static int read_config_file()
-{
-	int fd;
-	struct stat sb;
-	char *inp;
-	size_t inp_len;
-	ssize_t nread;
-	unsigned char tmp;
-
-	/* Open file */
-	fd = open(simplescim_global_filename, O_RDONLY);
-
-	if (fd == -1) {
-		/* Could not open file */
-		perror(simplescim_global_filename);
-		return -1;
-	}
-
-	/* Stat file for type/mode and size */
-	if (fstat(fd, &sb) == -1) {
-		/* Could not stat file */
-		perror(simplescim_global_filename);
-		close(fd);
-		return -1;
-	}
-
-	/* Ensure that file is regular */
-	if (!S_ISREG(sb.st_mode)) {
-		/* File is not regular */
-		fprintf(stderr,
-		        "%s: not a regular file\n",
-		        simplescim_global_filename);
-		close(fd);
-		return -1;
-	}
-
-	/* Fetch the reported file size */
-	inp_len = sb.st_size;
-
-	/* Allocate string for file contents */
-	inp = malloc(inp_len + 1);
-
-	if (inp == NULL) {
-		/* Could not allocate string */
-		perror(simplescim_global_filename);
-		close(fd);
-		return -1;
-	}
-
-	/*
-	  Read file to string.
-
-	  If 'nread' is equal to 'inp_len', the actual file size is
-	  at least as large as the reported file size.
-
-	  If 'nread' is less than 'inp_len', the actual file size is
-	  smaller than the reported file size.
-
-	  If 'nread' is -1, an error occurred.
-	*/
-
-	nread = read(fd, inp, inp_len);
-
-	if (nread == -1) {
-		/* An error occurred */
-		perror(simplescim_global_filename);
-		free(inp);
-		close(fd);
-		return -1;
-	}
-
-	if ((size_t)nread < inp_len) {
-		/* The actual file size is smaller than the reported
-		   file size */
-		fprintf(stderr,
-"%s: file size reported as %lu B but could only read %ld B\n",
-		        simplescim_global_filename,
-		        inp_len,
-		        nread);
-		free(inp);
-		close(fd);
-		return -1;
-	}
-
-	/*
-	  Ensure that the actual file size is not larger than the
-	  reported file size by reading one more byte from the file.
-
-	  If 'nread' is 0, no more bytes could be read and the actual
-	  file size is equal to the reported file size.
-
-	  If 'nread' is 1, more bytes could be read and the actual
-	  file size is larger than the reported file size.
-
-	  If 'nread' is -1, an error occurred.
-	*/
-
-	nread = read(fd, &tmp, 1);
-
-	if (nread == -1) {
-		/* An error occurred */
-		perror(simplescim_global_filename);
-		free(inp);
-		close(fd);
-		return -1;
-	}
-
-	if (nread == 1) {
-		/* The actual file size is larger than the reported
-		   file size */
-		fprintf(stderr,
-"%s: file size reported as %lu B but actual file size is larger\n",
-		        simplescim_global_filename,
-		        inp_len);
-		free(inp);
-		close(fd);
-		return -1;
-	}
-
-	/* Close file */
-	close(fd);
-
-	/* Terminate string */
-	inp[inp_len] = '\0';
-
-	/* Store string global data structure */
-	parser.inp = inp;
-
-	return 0;
-}
-
+/**
+ * Prints a syntax error to 'simplescim_error_string'
+ * according to global static 'parser' object and 'str'.
+ */
 static void syntax_error(const char *str)
 {
-	fprintf(stderr,
-	        "%s:%lu:%lu: syntax error: %s\n",
-	        simplescim_global_filename,
+	sprintf(simplescim_error_string,
+	        "%s:%lu:%lu:syntax error: %s",
+	        simplescim_config_file_name,
 	        parser.line,
 	        parser.col,
 	        str);
 }
 
+/**
+ * Prints a syntax error to 'simplescim_error_string'
+ * according to global static 'parser' object and 'str',
+ * when the error is of type "expected x, found y".
+ */
 static void syntax_error_expected(const char *str)
 {
-	fprintf(stderr,
-	        "%s:%lu:%lu: syntax error: expected %s, found ",
-	        simplescim_global_filename,
-	        parser.line,
-	        parser.col,
-	        str);
+	int offset;
 
-	if (isgraph(*parser.cur)) {
-		fprintf(stderr, "'%c'\n", *parser.cur);
+	offset = sprintf(simplescim_error_string,
+	                 "%s:%lu:%lu:syntax error: expected %s, found ",
+	                 simplescim_config_file_name,
+	                 parser.line,
+	                 parser.col,
+	                 str);
+
+	if (isprint(*parser.cur)) {
+		sprintf(simplescim_error_string + offset,
+		        "'%c'",
+		        *parser.cur);
 	} else {
-		fprintf(stderr, "0x%02X\n", *parser.cur);
+		sprintf(simplescim_error_string + offset,
+		        "0x%02X",
+		        *parser.cur);
 	}
 }
 
+/**
+ * Returns 1 if 'c' is a valid character in a varid.
+ * Returns 0 otherwise.
+ */
 static int is_varid(char c)
 {
 	static unsigned char lookup_table[0x100] = {
@@ -232,7 +119,7 @@ static int rule_varid(char **var)
 	}
 
 	if (var_len == 0) {
-		syntax_error("variable name cannot be empty");
+		syntax_error("empty variable name");
 		return -1;
 	}
 
@@ -240,7 +127,10 @@ static int rule_varid(char **var)
 	tmp = malloc(var_len + 1);
 
 	if (tmp == NULL) {
-		syntax_error(strerror(errno));
+		sprintf(simplescim_error_string,
+		        "%s: %s",
+		        simplescim_config_file_name,
+		        strerror(errno));
 		return -1;
 	}
 
@@ -254,7 +144,10 @@ static int rule_varid(char **var)
 	return 0;
 }
 
-/* <value> ::= '<?' [^('?>')]* '?>' <ws>* | [^('#'|'\n')]* */
+/**
+ * <value> ::= '<?' [^('?>')]* '?>' <ws>*
+ *           | [^('#'|'\n')]*                    # remove trailing <ws>*
+ */
 static int rule_value(char **val)
 {
 	size_t val_len = 0;
@@ -299,7 +192,10 @@ static int rule_value(char **val)
 		tmp = malloc(val_len + 1);
 
 		if (tmp == NULL) {
-			syntax_error(strerror(errno));
+			sprintf(simplescim_error_string,
+			        "%s: %s",
+			        simplescim_config_file_name,
+			        strerror(errno));
 			return -1;
 		}
 
@@ -329,7 +225,10 @@ static int rule_value(char **val)
 		tmp = malloc(val_len + 1);
 
 		if (tmp == NULL) {
-			syntax_error(strerror(errno));
+			sprintf(simplescim_error_string,
+			        "%s: %s",
+			        simplescim_config_file_name,
+			        strerror(errno));
 			return -1;
 		}
 
@@ -356,6 +255,7 @@ static int rule_value(char **val)
 static int rule_assign()
 {
 	char *var, *val;
+	int err;
 
 	/* Obligatory variable name */
 	if (!is_varid(*parser.cur)) {
@@ -363,7 +263,9 @@ static int rule_assign()
 		return -1;
 	}
 
-	if (rule_varid(&var) == -1) {
+	err = rule_varid(&var);
+
+	if (err == -1) {
 		return -1;
 	}
 
@@ -384,12 +286,20 @@ static int rule_assign()
 	rule_skip_ws();
 
 	/* Obligatory value */
-	if (rule_value(&val) == -1) {
+	err = rule_value(&val);
+
+	if (err == -1) {
 		free(var);
 		return -1;
 	}
 
-	g_hash_table_insert(parser.vars, var, val);
+	err = simplescim_config_file_insert(var, val);
+
+	if (err == -1) {
+		free(var);
+		free(val);
+		return -1;
+	}
 
 	return 0;
 }
@@ -402,6 +312,9 @@ static int rule_comment()
 		syntax_error_expected("'#'");
 		return -1;
 	}
+
+	++parser.cur;
+	++parser.col;
 
 	/* Zero or more non-newline characters */
 	while (*parser.cur != '\n' && *parser.cur != '\0') {
@@ -420,6 +333,8 @@ static int rule_comment()
 /* <config> ::= ( <ws>* <assign>? <comment>? '\n' )* */
 static int rule_config()
 {
+	int err;
+
 	/* Zero or more lines */
 	while (*parser.cur != '\0') {
 		/* Optional white space */
@@ -427,14 +342,18 @@ static int rule_config()
 
 		/* Optional variable assignment */
 		if (is_varid(*parser.cur)) {
-			if (rule_assign() == -1) {
+			err = rule_assign();
+
+			if (err == -1) {
 				return -1;
 			}
 		}
 
 		/* Optional comment */
 		if (*parser.cur == '#') {
-			if (rule_comment() == -1) {
+			err = rule_comment();
+
+			if (err == -1) {
 				return -1;
 			}
 		}
@@ -453,46 +372,32 @@ static int rule_config()
 	return 0;
 }
 
-GHashTable *simplescim_parse_config_file()
+/**
+ * Parses 'input' into variable-value pairs and stores them
+ * in the global configuration file data structure.
+ * On success, zero is returned. On error, -1 is returned
+ * and 'simplescim_error_string' is set to an appropriate
+ * error message.
+ */
+int simplescim_config_file_parser(const char *input)
 {
-	GHashTable *vars;
+	int err;
 
-	/* Read config file contents to string in global data
-	   structure */
-	if (read_config_file() == -1) {
-		return NULL;
-	}
-
-	/* Initialise parser position variables in global data
-	   structure */
+	/* Initialise config file contents and parser
+	   position variables in global data structure */
+	parser.cur = input;
 	parser.line = 1;
 	parser.col = 1;
 
-	/* Initialise variable hash table in global data structure */
-	parser.vars = g_hash_table_new_full(g_str_hash,
-	                                    g_str_equal,
-	                                    free,
-	                                    free);
-
 	/* Start parsing */
-	parser.cur = parser.inp;
+	err = rule_config();
 
-	if (rule_config() == -1) {
-		/* An error occurred while parsing */
-		free(parser.inp);
-		g_hash_table_destroy(parser.vars);
-		return NULL;
+	if (err == -1) {
+		reset_parser();
+		return -1;
 	}
 
-	/* Free string containing config file contents from global
-	   data structure */
-	free(parser.inp);
+	reset_parser();
 
-	/* Save variable hash table */
-	vars = parser.vars;
-
-	/* Reset global data structure */
-	parser_reset();
-
-	return vars;
+	return 0;
 }

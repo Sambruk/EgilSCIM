@@ -4,58 +4,88 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
 
-#include "simplescim_globals.h"
+#include "simplescim_error_string.h"
+#include "simplescim_config_file.h"
 
+/**
+ * A global static data structure containing the current
+ * state and position of the parser.
+ */
 static struct {
-	const char *inp;
 	const char *cur;
+	size_t line;
 	size_t col;
 	char **attrs;
 	size_t n_attrs;
 } parser;
 
-static void parser_reset()
+/**
+ * Resets the parser state.
+ */
+static void reset_parser()
 {
-	parser.inp = NULL;
 	parser.cur = NULL;
+	parser.line = 0;
 	parser.col = 0;
 	parser.attrs = NULL;
 	parser.n_attrs = 0;
 }
 
+/**
+ * Prints a syntax error to 'simplescim_error_string'
+ * according to global static 'parser' object and 'str'.
+ */
 static void syntax_error(const char *str)
 {
-	fprintf(stderr,
-	        "%s:%s:%lu: syntax error: %s\n",
-	        simplescim_global_filename,
-	        "attrs",
+	sprintf(simplescim_error_string,
+	        "%s:attrs:%lu:%lu:syntax error: %s\n",
+	        simplescim_config_file_name,
+	        parser.line,
 	        parser.col,
 	        str);
 }
 
+/**
+ * Prints a syntax error to 'simplescim_error_string'
+ * according to global static 'parser' object and 'str',
+ * when the error is of type "expected x, found y".
+ */
 static void syntax_error_expected(const char *str)
 {
-	fprintf(stderr,
-	        "%s:%s:%lu: syntax error: expected %s, found ",
-	        simplescim_global_filename,
-	        "attrs",
-	        parser.col,
-	        str);
+	int offset;
 
-	if (isgraph(*parser.cur)) {
-		fprintf(stderr, "'%c'\n", *parser.cur);
+	offset = sprintf(simplescim_error_string,
+"%s:attrs:%lu:%lu:syntax error: expected %s, found ",
+	                 simplescim_config_file_name,
+	                 parser.line,
+	                 parser.col,
+	                 str);
+
+	if (isprint(*parser.cur)) {
+		sprintf(simplescim_error_string + offset,
+		        "'%c'",
+		        *parser.cur);
 	} else {
-		fprintf(stderr, "0x%02X\n", *parser.cur);
+		sprintf(simplescim_error_string + offset,
+		        "0x%02X",
+		        *parser.cur);
 	}
 }
 
 static void skip_ws()
 {
-	while (*parser.cur == ' ' || *parser.cur == '\t') {
-		++parser.cur;
-		++parser.col;
+	while (*parser.cur == ' '
+	       || *parser.cur == '\t'
+	       || *parser.cur == '\n') {
+		if (*parser.cur == '\n') {
+			++parser.cur;
+			++parser.line;
+			parser.col = 1;
+		} else {
+			++parser.cur;
+			++parser.col;
+		}
 	}
 }
 
@@ -68,6 +98,7 @@ static int parse_attr(char **dest)
 
 	while (parser.cur[attr_len] != ' '
 	       && parser.cur[attr_len] != '\t'
+	       && parser.cur[attr_len] != '\n'
 	       && parser.cur[attr_len] != ','
 	       && parser.cur[attr_len] != '\0') {
 		++attr_len;
@@ -81,12 +112,7 @@ static int parse_attr(char **dest)
 	attr = malloc(attr_len + 1);
 
 	if (attr == NULL) {
-		fprintf(stderr,
-		        "%s:%s:%s: %s\n",
-		        simplescim_global_filename,
-		        "attrs",
-		        "malloc",
-		        strerror(errno));
+		simplescim_error_string_malloc();
 		return -1;
 	}
 
@@ -103,25 +129,25 @@ static int parse_attr(char **dest)
 }
 
 /**
- * Parses a string containing comma separated attribute names into a
- * NULL terminated list of strings. If attrs is empty, *dest is set
- * to NULL.
- *
- * On success, zero is returned. On error, -1 is returned and an
- * error message is printed to stderr.
+ * Parses a comma separated list of attributes into a
+ * NULL-terminated list of strings.
+ * On success, zero is returned. On error, -1 is returned
+ * and 'simplescim_error_string' is set to an appropriate
+ * error message.
  */
-int simplescim_parse_ldap_attrs(const char *attrs, char ***dest)
+int simplescim_ldap_attrs_parser(const char *attrs, char ***attrs_val)
 {
 	size_t i;
+	int err;
 
-	parser.inp = attrs;
 	parser.cur = attrs;
+	parser.line = 1;
 	parser.col = 1;
 	parser.n_attrs = 1;
 
 	/* If no attributes are specified, set *dest to NULL */
 	if (strcmp(attrs, "") == 0) {
-		*dest = NULL;
+		*attrs_val = NULL;
 		return 0;
 	}
 
@@ -136,16 +162,12 @@ int simplescim_parse_ldap_attrs(const char *attrs, char ***dest)
 	parser.attrs = malloc(sizeof(char *) * (parser.n_attrs + 1));
 
 	if (parser.attrs == NULL) {
-		fprintf(stderr,
-		        "%s:%s:%s: %s\n",
-		        simplescim_global_filename,
-		        "attrs",
-		        "malloc",
-		        strerror(errno));
+		simplescim_error_string_malloc();
+		reset_parser();
 		return -1;
 	}
 
-	/* Parse all attributes */
+	/* Parser all attributes */
 	for (i = 0; i < parser.n_attrs; ++i) {
 		if (i > 0) {
 			if (*parser.cur != ',') {
@@ -157,7 +179,7 @@ int simplescim_parse_ldap_attrs(const char *attrs, char ***dest)
 				}
 
 				free(parser.attrs);
-				parser_reset();
+				reset_parser();
 
 				return -1;
 			}
@@ -166,14 +188,16 @@ int simplescim_parse_ldap_attrs(const char *attrs, char ***dest)
 			++parser.col;
 		}
 
-		if (parse_attr(&parser.attrs[i]) == -1) {
+		err = parse_attr(&parser.attrs[i]);
+
+		if (err == -1) {
 			while (i > 0) {
 				free(parser.attrs[i - 1]);
 				--i;
 			}
 
 			free(parser.attrs);
-			parser_reset();
+			reset_parser();
 
 			return -1;
 		}
@@ -188,14 +212,14 @@ int simplescim_parse_ldap_attrs(const char *attrs, char ***dest)
 		}
 
 		free(parser.attrs);
-		parser_reset();
+		reset_parser();
 
 		return -1;
 	}
 
 	parser.attrs[parser.n_attrs] = NULL;
-	*dest = parser.attrs;
-	parser_reset();
+	*attrs_val = parser.attrs;
+	reset_parser();
 
 	return 0;
 }

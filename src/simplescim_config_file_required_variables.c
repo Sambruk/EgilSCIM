@@ -2,19 +2,17 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <glib.h>
 
-#include "simplescim_globals.h"
+#include "simplescim_error_string.h"
+#include "simplescim_config_file.h"
 
 /**
- * required_variables
- *
  * A NULL-terminated list of variable names that must be present in a
  * configuration file. The order that the variable names appear in
  * this list is important since the lists and functions further down
  * in this file assumes that the order is consistent between lists.
  */
-const char *required_variables[] = {
+static const char *required_variables[] = {
 	"ldap-uri",
 	"ldap-who",
 	"ldap-passwd",
@@ -23,16 +21,15 @@ const char *required_variables[] = {
 	"ldap-filter",
 	"ldap-attrs",
 	"ldap-attrsonly",
+	"ldap-unique-identifier",
 	NULL
 };
 
 /**
- * required_values_ldap_scope
- *
  * A NULL-terminated list of possible values for the variable
  * "ldap-scope".
  */
-const char *required_values_ldap_scope[] = {
+static const char *required_values_ldap_scope[] = {
 	"BASE",
 	"ONELEVEL",
 	"SUBTREE",
@@ -41,19 +38,15 @@ const char *required_values_ldap_scope[] = {
 };
 
 /**
- * required_values_boolean
- *
  * A NULL-terminated list of possible values for boolean variables.
  */
-const char *required_values_boolean[] = {
+static const char *required_values_boolean[] = {
 	"TRUE",
 	"FALSE",
 	NULL
 };
 
 /**
- * required_values
- *
  * A list of lists that contain all valid values of a specific
  * variable. The order is assumed to be the same as in
  * required_variables, i.e. if required_variables[n] = "variable",
@@ -62,7 +55,7 @@ const char *required_values_boolean[] = {
  * {"value1", "value2", NULL}. If "variable" can have any value,
  * required_values[n] will be NULL.
  */
-const char **required_values[] = {
+static const char **required_values[] = {
 	NULL,
 	NULL,
 	NULL,
@@ -70,24 +63,24 @@ const char **required_values[] = {
 	required_values_ldap_scope,
 	NULL,
 	NULL,
-	required_values_boolean
+	required_values_boolean,
+	NULL
 };
 
 /**
- * required_variables_present
- *
  * Ensures that the required variables are present in
- * simplescim_global_vars and have one of its predefined values if
- * such values exist.
- *
- * On success, zero is returned. On error, -1 is returned and an
- * error message is printed to stderr.
+ * simplescim_config_file and have one of its predefined
+ * values if such values exist.
+ * On success, zero is returned. On error, -1 is returned
+ * and 'simplescim_error_string' is set to an appropriate
+ * error message.
  */
-int required_variables_present()
+int simplescim_config_file_required_variables()
 {
 	size_t i, j;
 	const char *var, *val;
-	gboolean res;
+	int offset;
+	int err;
 
 	for (i = 0; required_variables[i] != NULL; ++i) {
 		/* Fetch required variable name */
@@ -95,17 +88,12 @@ int required_variables_present()
 
 		/* Fetch the presence status
 		   and value of the variable */
-		res = g_hash_table_lookup_extended(
-			simplescim_global_vars,
-			var,
-			NULL,
-			(void **)&val
-		);
+		err = simplescim_config_file_get(var, &val);
 
-		if (res == FALSE) {
-			fprintf(stderr,
+		if (err == -1) {
+			sprintf(simplescim_error_string,
 "%s: required variable \"%s\" is missing\n",
-			        simplescim_global_filename,
+			        simplescim_config_file_name,
 			        var);
 			return -1;
 		}
@@ -134,20 +122,21 @@ int required_variables_present()
 
 		/* No match was found, so current required
 		   variable has an incorrect value */
-		fprintf(stderr,
-		        "%s: variable \"%s\" has invalid value \"%s\"\n",
-		        simplescim_global_filename,
-		        var,
-		        val);
-		fprintf(stderr,
+		offset = sprintf(simplescim_error_string,
+"%s: variable \"%s\" has invalid value \"%s\"\n"
 "variable \"%s\" must have one of the following values:\n",
-		        var);
+		                 simplescim_config_file_name,
+		                 var,
+		                 val,
+		                 var);
 
 		for (j = 0; required_values[i][j] != NULL; ++j) {
-			fprintf(stderr, " %s", required_values[i][j]);
+			offset += sprintf(
+				simplescim_error_string + offset,
+				" %s",
+				required_values[i][j]
+			);
 		}
-
-		fprintf(stderr, "\n");
 
 		return -1;
 	}
