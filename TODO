@@ -3,3 +3,6 @@ simplescim_cache_file.c:
 
 simplescim_scim.c:
 IMPLEMENT!
+
+uthash.h:
+Add as git submodule
