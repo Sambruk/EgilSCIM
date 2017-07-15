@@ -55,9 +55,6 @@ SimpleSCIM has a set of required variable names that are not yet
 decided. The following variable names are suggested required
 variables:
 
-* `ldap-auth` is currently not being used, since `LDAP_AUTH_SIMPLE`
-  is the only authentication method supported. SASL could potentially
-  be supported in the future.
 * `ldap-uri` is the uri to the LDAP server that contains the _schema_
   (i.e. `ldap://`, `ldaps://`, `ldapi://` and `cldap://`), the _host_
   and optionally the _port_ if a non standard port is being used,
@@ -75,6 +72,8 @@ variables:
   that should be set to `TRUE` if only attribute descriptions are
   wanted. It should be set to `FALSE` if both attribute descriptions
   and attribute values are wanted.
+* `ldap-unique-identifier` is the LDAP attribute that uniquely
+  identifies an entry.
 
 ### Execution
 
@@ -97,7 +96,7 @@ file for *service2* is executed to completion.
 
 SimpleSCIM currently requires the following C libraries:
 
-* `glib-2.0` for the `GHashTable` data structure
+* `uthash` (included in repo for now) for hash tables.
 * `libldap` from OpenLDAP for fetching identity information using LDAP
 
 SimpleSCIM plans to use the following libraries in the future:
