@@ -15,6 +15,8 @@ static void print_attribute(const char *attribute,
 	for (i = 0; values[i] != NULL; ++i) {
 		printf("%s: %s\n", attribute, values[i]->bv_val);
 	}
+
+	printf("\n");
 }
 
 static void print_user(const struct berval *unique_identifier,
