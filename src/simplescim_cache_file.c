@@ -436,8 +436,11 @@ struct simplescim_user_list *simplescim_cache_file_load()
 
 	simplescim_config_file_get("cache-file", &cache_file_name);
 
-	/* TODO: Check if cache file exists. If not, return
-	         an empty user list. */
+	/* Check if cache file exists.
+	   If not, return an empty user list. */
+	if (access(cache_file_name, F_OK) != 0) {
+		return simplescim_user_list_new();
+	}
 
 	/* Open cache file */
 
