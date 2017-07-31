@@ -1,37 +1,32 @@
 #include "simplescim_ldap.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ldap.h>
 
 #include "simplescim_error_string.h"
+#include "simplescim_user.h"
+#include "simplescim_user_list.h"
 #include "simplescim_config_file.h"
 #include "simplescim_ldap_attrs_parser.h"
-#include "simplescim_user_list.h"
-#include "simplescim_user.h"
 
-/**
- * Global static variable holding the LDAP session.
- */
 static LDAP *ld = NULL;
-
-/**
- * Global static variable holding the LDAPsearch result.
- */
 static LDAPMessage *res = NULL;
 
 /**
  * Prints an error message concerning LDAP to
- * 'simplescim_error_string'.
+ * simplescim_error_string.
  */
 static void simplescim_ldap_print_error(int err, const char *func)
 {
-	sprintf(simplescim_error_string,
-	        "%s:%s: %s",
-	        simplescim_config_file_name,
-	        func,
-	        ldap_err2string(err));
+	simplescim_error_string_set_prefix(
+		"%s",
+		func
+	);
+	simplescim_error_string_set_message(
+		"%s",
+		ldap_err2string(err)
+	);
 }
 
 /**
@@ -186,11 +181,11 @@ static int simplescim_ldap_search(const char *base,
 }
 
 /**
- * Clones a 'struct berval' value into a dynamically
+ * Clones a struct berval value into a dynamically
  * allocated object.
- * On success, a pointer to the cloned 'struct berval *' is
+ * On success, a pointer to the cloned struct berval is
  * returned. On error, NULL is returned and
- * 'simplescim_error_string' is set to an appropriate error
+ * simplescim_error_string is set to an appropriate error
  * message.
  */
 static struct berval *clone_val(const struct berval *val)
@@ -198,16 +193,19 @@ static struct berval *clone_val(const struct berval *val)
 	struct berval *clone;
 
 	if (val == NULL) {
-		sprintf(simplescim_error_string,
-		        "%s:clone_val: cannot clone NULL\n",
-		        simplescim_config_file_name);
+		simplescim_error_string_set(
+			"clone_val",
+			"cannot clone NULL"
+		);
 		return NULL;
 	}
 
 	clone = malloc(sizeof(struct berval));
 
 	if (clone == NULL) {
-		simplescim_error_string_malloc();
+		simplescim_error_string_set_errno(
+			"clone_val:malloc"
+		);
 		return NULL;
 	}
 
@@ -215,7 +213,9 @@ static struct berval *clone_val(const struct berval *val)
 	clone->bv_val = malloc(clone->bv_len + 1);
 
 	if (clone->bv_val == NULL) {
-		simplescim_error_string_malloc();
+		simplescim_error_string_set_errno(
+			"clone_val:malloc"
+		);
 		free(clone);
 		return NULL;
 	}
@@ -228,11 +228,11 @@ static struct berval *clone_val(const struct berval *val)
 
 /**
  * Clones a NULL-terminated list of pointers to
- * 'struct berval' values into a dynamically allocated
+ * struct berval values into a dynamically allocated
  * object.
- * On success, a pointer to the cloned 'struct berval **'
+ * On success, a pointer to the cloned struct berval list
  * is returned. On error, NULL is returned and
- * 'simplescim_error_string' is set to an appropriate error
+ * simplescim_error_string is set to an appropriate error
  * message.
  */
 static struct berval **clone_vals(const struct berval **vals)
@@ -243,9 +243,10 @@ static struct berval **clone_vals(const struct berval **vals)
 	size_t i;
 
 	if (vals == NULL) {
-		sprintf(simplescim_error_string,
-		        "%s:clone_vals: cannot clone NULL\n",
-		        simplescim_config_file_name);
+		simplescim_error_string_set(
+			"clone_vals",
+			"cannot clone NULL"
+		);
 		return NULL;
 	}
 
@@ -262,7 +263,9 @@ static struct berval **clone_vals(const struct berval **vals)
 	clone = malloc(sizeof(struct berval *) * (len + 1));
 
 	if (clone == NULL) {
-		simplescim_error_string_malloc();
+		simplescim_error_string_set_errno(
+			"clone_vals:malloc"
+		);
 		return NULL;
 	}
 
@@ -298,7 +301,7 @@ static struct berval **clone_vals(const struct berval **vals)
 /**
  * Converts an entry in the LDAP search results into a user.
  * On success, a pointer to a new user object is returned.
- * On error, NULL is returned and 'simplescim_error_string'
+ * On error, NULL is returned and simplescim_error_string
  * is set to an appropriate error message.
  */
 static struct simplescim_user *entry_to_user(LDAPMessage *entry)
@@ -321,13 +324,12 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 		attr_clone = strdup(attr);
 
 		if (attr_clone == NULL) {
-			simplescim_error_string_malloc();
-
-			simplescim_user_delete(user);
-
+			simplescim_error_string_set_errno(
+				"entry_to_user"
+			);
 			ldap_memfree(attr);
 			ber_free(ber, 0);
-
+			simplescim_user_delete(user);
 			return NULL;
 		}
 
@@ -335,29 +337,26 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 		vals = ldap_get_values_len(ld, entry, attr);
 
 		if (vals == NULL) {
-			sprintf(simplescim_error_string,
-			        "%s:ldap_get_values_len: unknown error",
-			        simplescim_config_file_name);
+			simplescim_error_string_set(
+				"ldap_get_values_len",
+				"unknown error"
+			);
 
 			free(attr_clone);
-			simplescim_user_delete(user);
-
 			ldap_memfree(attr);
 			ber_free(ber, 0);
-
+			simplescim_user_delete(user);
 			return NULL;
 		}
 
 		vals_clone = clone_vals((const struct berval **)vals);
  
 		if (vals_clone == NULL) {
-			free(attr_clone);
-			simplescim_user_delete(user);
-
 			ldap_value_free_len(vals);
+			free(attr_clone);
 			ldap_memfree(attr);
 			ber_free(ber, 0);
-
+			simplescim_user_delete(user);
 			return NULL;
 		}
 
@@ -374,13 +373,11 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 			}
 
 			free(vals_clone);
-			free(attr_clone);
-			simplescim_user_delete(user);
-
 			ldap_value_free_len(vals);
+			free(attr_clone);
 			ldap_memfree(attr);
 			ber_free(ber, 0);
-
+			simplescim_user_delete(user);
 			return NULL;
 		}
 
@@ -396,10 +393,10 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 }
 
 /**
- * Returns a clone of the 'struct berval *' value with
+ * Returns a clone of the struct berval value with
  * attribute 'unique_identifier_attr', if such exists.
  * On success, a pointer to the cloned object is returned.
- * On error, NULL is returned and 'simplescim_error_string'
+ * On error, NULL is returned and simplescim_error_string
  * is set to an appropriate error message.
  */
 static struct berval *
@@ -417,18 +414,24 @@ get_users_unique_identifier(struct simplescim_user *user,
 	);
 
 	if (err == -1) {
-		sprintf(simplescim_error_string,
-		        "%s:LDAP: user does not have attribute \"%s\"",
-		        simplescim_config_file_name,
-		        unique_identifier_attr);
+		simplescim_error_string_set_prefix(
+			"get_users_unique_identifier"
+		);
+		simplescim_error_string_set_message(
+			"user does not have attribute \"%s\"",
+			unique_identifier_attr
+		);
 		return NULL;
 	}
 
 	if (vals[0] == NULL || vals[1] != NULL) {
-		sprintf(simplescim_error_string,
-"%s:LDAP: attribute \"%s\" must have exactly one value",
-		        simplescim_config_file_name,
-		        unique_identifier_attr);
+		simplescim_error_string_set_prefix(
+			"get_users_unique_identifier"
+		);
+		simplescim_error_string_set_message(
+			"attribute \"%s\" must have exactly one value",
+			unique_identifier_attr
+		);
 		return NULL;
 	}
 
@@ -445,7 +448,7 @@ get_users_unique_identifier(struct simplescim_user *user,
  * Construct the user list object from the LDAP response.
  * On success, a pointer to the constructed object is
  * returned. On error, NULL is returned and
- * 'simplescim_error_string' is set to an appropriate
+ * simplescim_error_string is set to an appropriate
  * error message.
  */
 static struct simplescim_user_list *simplescim_ldap_to_user_list()
@@ -455,7 +458,6 @@ static struct simplescim_user_list *simplescim_ldap_to_user_list()
 	struct berval *unique_identifier;
 	const char *unique_identifier_attr;
 	LDAPMessage *entry;
-	size_t entry_n;
 	int err;
 
 	/* Initialise user list */
@@ -470,8 +472,6 @@ static struct simplescim_user_list *simplescim_ldap_to_user_list()
 
 	/* For every response entry, create a user and
 	   insert it into the user list. */
-
-	entry_n = 1;
 
 	for (entry = ldap_first_entry(ld, res);
 	     entry != NULL;
@@ -514,21 +514,19 @@ static struct simplescim_user_list *simplescim_ldap_to_user_list()
 			simplescim_user_list_delete(users);
 			return NULL;
 		}
-
-		++entry_n;
 	}
 
 	return users;
 }
 
 /**
- * Reads user data from LDAP into a user list object using
- * the global configuration file structure and returns a
+ * Reads user data from LDAP into a user list object
+ * according to the configuration file and returns a
  * pointer it. On error, NULL is returned and
- * 'simplescim_error_string' is set to an appropriate error
+ * simplescim_error_string is set to an appropriate error
  * message.
  */
-struct simplescim_user_list *simplescim_ldap_read()
+struct simplescim_user_list *simplescim_ldap_get_users()
 {
 	struct simplescim_user_list *users;
 	const char *uri, *who, *passwd;

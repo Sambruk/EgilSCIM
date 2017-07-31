@@ -74,6 +74,18 @@ variables:
   and attribute values are wanted.
 * `ldap-unique-identifier` is the LDAP attribute that uniquely
   identifies an entry.
+* `cache-file` specifies the configuration file's cache file used to
+  remember previous executions of the configuration file.
+* `scim-uri` specifies the remote host that will receive the SCIM
+  request, e.g. `example.com`.
+* `scim-resource-type` specifies which SCIM resource type the
+  configuration file manages, e.g. `/Users`.
+* `scim-unique-identifier` specifies which SCIM attribute uniquely
+  identifies the object through SCIM.
+* `scim-create` specifies the JSON object to send when creating a new
+  object.
+* `scim-update` specifies the JSON object to send when updating a
+   remote object.
 
 ### Execution
 
@@ -97,11 +109,12 @@ file for *service2* is executed to completion.
 SimpleSCIM currently requires the following C libraries:
 
 * `uthash` (included in repo for now) for hash tables.
-* `libldap` from OpenLDAP for fetching identity information using LDAP
+* `libldap` from OpenLDAP for fetching identity information using LDAP.
+* `json-c` to parse the JSON objects from the configuration file.
 
 SimpleSCIM plans to use the following libraries in the future:
 
-* `libcurl` to send the SCIM request
+* `libcurl` to send the SCIM request.
 
 Compile the program by executing:
 

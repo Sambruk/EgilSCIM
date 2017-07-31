@@ -2,10 +2,10 @@
 #define SIMPLESCIM_CONFIG_FILE_PARSER_H
 
 /**
- * Parses 'input' into variable-value pairs and stores them
- * in the global configuration file data structure.
+ * Parses the configuration file with its contents in
+ * 'input'.
  * On success, zero is returned. On error, -1 is returned
- * and 'simplescim_error_string' is set to an appropriate
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
 int simplescim_config_file_parser(const char *input);

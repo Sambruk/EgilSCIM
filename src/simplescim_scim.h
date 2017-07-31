@@ -5,10 +5,10 @@
 
 /**
  * Makes SCIM requests by comparing the two user lists and
- * reading JSON templates from the global configuration
- * file data structure.
+ * reading JSON templates from the configuration file.
+ * Updates (or creates) the cache file.
  * On success, zero is returned. On error, -1 is returned
- * and 'simplescim_error_string' is set to an appropriate
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
 int simplescim_scim_perform(const struct simplescim_user_list *current,

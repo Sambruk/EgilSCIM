@@ -1,6 +1,5 @@
 #include "simplescim_ldap_attrs_parser.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -33,17 +32,21 @@ static void reset_parser()
 }
 
 /**
- * Prints a syntax error to 'simplescim_error_string'
+ * Prints a syntax error to simplescim_error_string
  * according to global static 'parser' object and 'str'.
  */
 static void syntax_error(const char *str)
 {
-	sprintf(simplescim_error_string,
-	        "%s:attrs:%lu:%lu:syntax error: %s\n",
-	        simplescim_config_file_name,
-	        parser.line,
-	        parser.col,
-	        str);
+	simplescim_error_string_set_prefix(
+		"%s:ldap-attrs:%lu:%lu:syntax error",
+		simplescim_config_file_name,
+		parser.line,
+		parser.col
+	);
+	simplescim_error_string_set_message(
+		"%s",
+		str
+	);
 }
 
 /**
@@ -53,23 +56,25 @@ static void syntax_error(const char *str)
  */
 static void syntax_error_expected(const char *str)
 {
-	int offset;
-
-	offset = sprintf(simplescim_error_string,
-"%s:attrs:%lu:%lu:syntax error: expected %s, found ",
-	                 simplescim_config_file_name,
-	                 parser.line,
-	                 parser.col,
-	                 str);
+	simplescim_error_string_set_prefix(
+		"%s:ldap-attrs:%lu:%lu:syntax error",
+		simplescim_config_file_name,
+		parser.line,
+		parser.col
+	);
 
 	if (isprint(*parser.cur)) {
-		sprintf(simplescim_error_string + offset,
-		        "'%c'",
-		        *parser.cur);
+		simplescim_error_string_set_message(
+			"expected %s, found '%c'",
+			str,
+			*parser.cur
+		);
 	} else {
-		sprintf(simplescim_error_string + offset,
-		        "0x%02X",
-		        *parser.cur);
+		simplescim_error_string_set_message(
+			"expected %s, found 0x%02X",
+			str,
+			*parser.cur
+		);
 	}
 }
 
@@ -112,7 +117,9 @@ static int parse_attr(char **dest)
 	attr = malloc(attr_len + 1);
 
 	if (attr == NULL) {
-		simplescim_error_string_malloc();
+		simplescim_error_string_set_errno(
+			"parse_attr:malloc"
+		);
 		return -1;
 	}
 
@@ -132,7 +139,7 @@ static int parse_attr(char **dest)
  * Parses a comma separated list of attributes into a
  * NULL-terminated list of strings.
  * On success, zero is returned. On error, -1 is returned
- * and 'simplescim_error_string' is set to an appropriate
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
 int simplescim_ldap_attrs_parser(const char *attrs, char ***attrs_val)
@@ -162,7 +169,9 @@ int simplescim_ldap_attrs_parser(const char *attrs, char ***attrs_val)
 	parser.attrs = malloc(sizeof(char *) * (parser.n_attrs + 1));
 
 	if (parser.attrs == NULL) {
-		simplescim_error_string_malloc();
+		simplescim_error_string_set_errno(
+			"simplescim_ldap_attrs_parser:malloc"
+		);
 		reset_parser();
 		return -1;
 	}

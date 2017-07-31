@@ -1,8 +1,26 @@
-simplescim_cache_file.c:
-439: Check if cache file exists. If not, return an empty user list.
-
 simplescim_scim.c:
-IMPLEMENT!
+ - Send SCIM requests with libcurl
+ - Get SCIM response with libcurl
 
 uthash.h:
-Add as git submodule
+ - Add as git submodule
+
+tests:
+ - Implement using check
+   (https://github.com/libcheck/check)
+
+Compile on
+ - Debian
+ - Ubuntu
+ - Ubuntu Server
+ - Fedora
+ - RHEL (CentOS)
+ - ClearOS
+ - SLES (OpenSUSE)
+ - Oracle Linux
+ - Mageia / Mandriva
+ - Arch Linux
+ - Gentoo Linux
+ - Slackware
+ - OpenBSD / FreeBSD (?)
+ - Oracle Solaris (?)

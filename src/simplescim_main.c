@@ -7,89 +7,68 @@
 #include "simplescim_cache_file.h"
 #include "simplescim_scim.h"
 
-static void print_attribute(const char *attribute,
-                            const struct berval **values)
+static void print_error()
 {
-	size_t i;
-
-	for (i = 0; values[i] != NULL; ++i) {
-		printf("%s: %s\n", attribute, values[i]->bv_val);
-	}
+	fprintf(stderr, "%s\n", simplescim_error_string_get());
 }
 
-static void print_user(const struct berval *unique_identifier,
-                       const struct simplescim_user *user)
+static void print_status(const char *config_file_name)
 {
-	printf("====================\n");
-	printf("=       USER       =\n");
-	printf("====================\n\n");
-	printf("unique identifier: \"%s\"\n\n", unique_identifier->bv_val);
-	simplescim_user_foreach(user, print_attribute);
-	printf("\n");
-}
-
-static void print_user_list(struct simplescim_user_list *users)
-{
-	simplescim_user_list_foreach(users, print_user);
+	fprintf(stdout,
+	        "Successfully performed SCIM operations for %s\n",
+	        config_file_name);
 }
 
 int main(int argc, char *argv[])
 {
+	struct simplescim_user_list *ldap, *cache;
 	int i;
 	int err;
-	struct simplescim_user_list *current/*, *cached*/;
 
 	for (i = 1; i < argc; ++i) {
-		/* Read configuration file */
-		err = simplescim_config_file_read(argv[i]);
+		/* Load configuration file */
+		err = simplescim_config_file_load(argv[i]);
 
 		if (err == -1) {
-			fprintf(stderr,
-			        "%s\n",
-			        simplescim_error_string);
+			print_error();
 			continue;
 		}
 
-		/* Read LDAP catalogue */
-		current = simplescim_ldap_read();
+		/* Get users from LDAP catalogue */
+		ldap = simplescim_ldap_get_users();
 
-		if (current == NULL) {
-			fprintf(stderr,
-			        "%s\n",
-			        simplescim_error_string);
+		if (ldap == NULL) {
+			print_error();
 			simplescim_config_file_clear();
 			continue;
 		}
 
-		print_user_list(current);
+		/* Get users from cache file */
+		cache = simplescim_cache_file_get_users();
 
-		/* Read cache */
-		/*cached = simplescim_cache_file_load();
-
-		if (cached == NULL) {
-			fprintf(stderr,
-			        "%s\n",
-			        simplescim_error_string);
-			simplescim_user_list_delete(current);
+		if (cache == NULL) {
+			print_error();
+			simplescim_user_list_delete(ldap);
 			simplescim_config_file_clear();
 			continue;
-		}*/
+		}
 
-		/* Perform SCIM requests */
-		/*err = simplescim_scim_perform(current, cached);
+		/* Perform SCIM operations */
+		err = simplescim_scim_perform(ldap, cache);
 
 		if (err == -1) {
-			fprintf(stderr,
-			        "%s\n",
-			        simplescim_error_string);
-			simplescim_user_list_delete(cached);
-			simplescim_user_list_delete(current);
+			print_error();
+			simplescim_user_list_delete(cache);
+			simplescim_user_list_delete(ldap);
 			simplescim_config_file_clear();
 			continue;
-		}*/
+		}
 
-		/*simplescim_user_list_delete(cached);*/
-		simplescim_user_list_delete(current);
+		print_status(argv[i]);
+
+		/* Clean up */
+		simplescim_user_list_delete(cache);
+		simplescim_user_list_delete(ldap);
 		simplescim_config_file_clear();
 	}
 

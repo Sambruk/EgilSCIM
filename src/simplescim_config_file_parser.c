@@ -1,10 +1,8 @@
 #include "simplescim_config_file_parser.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
 
 #include "simplescim_error_string.h"
 #include "simplescim_config_file.h"
@@ -30,44 +28,59 @@ static void reset_parser()
 }
 
 /**
- * Prints a syntax error to 'simplescim_error_string'
- * according to global static 'parser' object and 'str'.
+ * Sets simplescim_error_string to a syntax error according
+ * to global static 'parser' object and 'str'.
  */
 static void syntax_error(const char *str)
 {
-	sprintf(simplescim_error_string,
-	        "%s:%lu:%lu:syntax error: %s",
-	        simplescim_config_file_name,
-	        parser.line,
-	        parser.col,
-	        str);
+	/* Set prefix */
+	simplescim_error_string_set_prefix(
+		"%s:%lu:%lu:syntax error",
+		simplescim_config_file_name,
+		parser.line,
+		parser.col
+	);
+
+	/* Set message */
+	simplescim_error_string_set_message(
+		"%s",
+		str
+	);
 }
 
 /**
- * Prints a syntax error to 'simplescim_error_string'
- * according to global static 'parser' object and 'str',
- * when the error is of type "expected x, found y".
+ * Sets simplescim_error_string to a syntax error according
+ * to global static 'parser' object and 'str', when the
+ * error is of type "expected x, found y". 'str' is the
+ * expected value and the found value is fetched from the
+ * global static 'parser' object.
  */
 static void syntax_error_expected(const char *str)
 {
-	int offset;
+	/* Set prefix */
+	simplescim_error_string_set_prefix(
+		"%s:%lu:%lu:syntax error",
+		simplescim_config_file_name,
+		parser.line,
+		parser.col
+	);
 
-	offset = sprintf(simplescim_error_string,
-	                 "%s:%lu:%lu:syntax error: expected %s, found ",
-	                 simplescim_config_file_name,
-	                 parser.line,
-	                 parser.col,
-	                 str);
-
+	/* Set message */
 	if (isprint(*parser.cur)) {
-		sprintf(simplescim_error_string + offset,
-		        "'%c'",
-		        *parser.cur);
+		simplescim_error_string_set_message(
+			"expected %s, found '%c'",
+			str,
+			*parser.cur
+		);
 	} else {
-		sprintf(simplescim_error_string + offset,
-		        "0x%02X",
-		        *parser.cur);
+		simplescim_error_string_set_message(
+			"expected %s, found 0x%02X",
+			str,
+			*parser.cur
+		);
 	}
+
+
 }
 
 /**
@@ -108,10 +121,10 @@ static void rule_skip_ws()
 }
 
 /* <varid> ::= [-_a-zA-Z0-9]+ */
-static int rule_varid(char **var)
+static int rule_varid(char **varp)
 {
+	char *var;
 	size_t var_len = 0;
-	char *tmp;
 
 	/* Determine variable name length */
 	while (is_varid(parser.cur[var_len])) {
@@ -124,19 +137,19 @@ static int rule_varid(char **var)
 	}
 
 	/* Allocate and copy variable name string */
-	tmp = malloc(var_len + 1);
+	var = malloc(var_len + 1);
 
-	if (tmp == NULL) {
-		sprintf(simplescim_error_string,
-		        "%s: %s",
-		        simplescim_config_file_name,
-		        strerror(errno));
+	if (var == NULL) {
+		simplescim_error_string_set_errno(
+			"%s",
+			simplescim_config_file_name
+		);
 		return -1;
 	}
 
-	memcpy(tmp, parser.cur, var_len);
-	tmp[var_len] = '\0';
-	*var = tmp;
+	memcpy(var, parser.cur, var_len);
+	var[var_len] = '\0';
+	*varp = var;
 
 	parser.cur += var_len;
 	parser.col += var_len;
@@ -148,10 +161,10 @@ static int rule_varid(char **var)
  * <value> ::= '<?' [^('?>')]* '?>' <ws>*
  *           | [^('#'|'\n')]*                    # remove trailing <ws>*
  */
-static int rule_value(char **val)
+static int rule_value(char **valp)
 {
+	char *val;
 	size_t val_len = 0;
-	char *tmp;
 
 	/* Multi line value or single line value */
 	if (parser.cur[0] == '<' && parser.cur[1] == '?') {
@@ -189,18 +202,18 @@ static int rule_value(char **val)
 		}
 
 		/* Allocate and copy value string */
-		tmp = malloc(val_len + 1);
+		val = malloc(val_len + 1);
 
-		if (tmp == NULL) {
-			sprintf(simplescim_error_string,
-			        "%s: %s",
-			        simplescim_config_file_name,
-			        strerror(errno));
+		if (val == NULL) {
+			simplescim_error_string_set_errno(
+				"%s",
+				simplescim_config_file_name
+			);
 			return -1;
 		}
 
-		memcpy(tmp, parser.cur, val_len);
-		tmp[val_len] = '\0';
+		memcpy(val, parser.cur, val_len);
+		val[val_len] = '\0';
 
 		parser.cur += val_len + 2;
 		parser.line = tmp_line;
@@ -222,31 +235,31 @@ static int rule_value(char **val)
 		}
 
 		/* Allocate and copy value string */
-		tmp = malloc(val_len + 1);
+		val = malloc(val_len + 1);
 
-		if (tmp == NULL) {
-			sprintf(simplescim_error_string,
-			        "%s: %s",
-			        simplescim_config_file_name,
-			        strerror(errno));
+		if (val == NULL) {
+			simplescim_error_string_set_errno(
+				"%s",
+				simplescim_config_file_name
+			);
 			return -1;
 		}
 
-		memcpy(tmp, parser.cur, val_len);
-		tmp[val_len] = '\0';
+		memcpy(val, parser.cur, val_len);
+		val[val_len] = '\0';
 
 		parser.cur += val_len;
 		parser.col += val_len;
 
 		/* Remove trailing white space */
-		while (val_len > 0 && (tmp[val_len - 1] == ' '
-		                       || tmp[val_len - 1] == '\t')) {
-			tmp[val_len - 1] = '\0';
+		while (val_len > 0 && (val[val_len - 1] == ' '
+		                       || val[val_len - 1] == '\t')) {
+			val[val_len - 1] = '\0';
 			--val_len;
 		}
 	}
 
-	*val = tmp;
+	*valp = val;
 
 	return 0;
 }
@@ -373,18 +386,17 @@ static int rule_config()
 }
 
 /**
- * Parses 'input' into variable-value pairs and stores them
- * in the global configuration file data structure.
+ * Parses the configuration file with its contents in
+ * 'input'.
  * On success, zero is returned. On error, -1 is returned
- * and 'simplescim_error_string' is set to an appropriate
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
 int simplescim_config_file_parser(const char *input)
 {
 	int err;
 
-	/* Initialise config file contents and parser
-	   position variables in global data structure */
+	/* Initialise parser position */
 	parser.cur = input;
 	parser.line = 1;
 	parser.col = 1;

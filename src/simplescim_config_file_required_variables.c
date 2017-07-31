@@ -23,6 +23,11 @@ static const char *required_variables[] = {
 	"ldap-attrsonly",
 	"ldap-unique-identifier",
 	"cache-file",
+	"scim-uri",
+	"scim-resource-type",
+	"scim-unique-identifier",
+	"scim-create",
+	"scim-update",
 	NULL
 };
 
@@ -57,28 +62,34 @@ static const char *required_values_boolean[] = {
  * required_values[n] will be NULL.
  */
 static const char **required_values[] = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	required_values_ldap_scope,
-	NULL,
-	NULL,
-	required_values_boolean,
-	NULL,
-	NULL
+	NULL,                           /* ldap-uri */
+	NULL,                           /* ldap-who */
+	NULL,                           /* ldap-passwd */
+	NULL,                           /* ldap-base */
+	required_values_ldap_scope,     /* ldap-scope */
+	NULL,                           /* ldap-filter */
+	NULL,                           /* ldap-attrs */
+	required_values_boolean,        /* ldap-attrsonly */
+	NULL,                           /* ldap-unique-identifier */
+	NULL,                           /* cache-file */
+	NULL,                           /* scim-uri */
+	NULL,                           /* scim-resource-type */
+	NULL,                           /* scim-unique-identifier */
+	NULL,                           /* scim-create */
+	NULL                            /* scim-delete */
 };
 
 /**
  * Ensures that the required variables are present in
- * simplescim_config_file and have one of its predefined
- * values if such values exist.
+ * configuration file and have one of its predefined
+ * values if such values are defined.
  * On success, zero is returned. On error, -1 is returned
- * and 'simplescim_error_string' is set to an appropriate
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
 int simplescim_config_file_required_variables()
 {
+	static char error_string[1024];
 	size_t i, j;
 	const char *var, *val;
 	int offset;
@@ -93,10 +104,16 @@ int simplescim_config_file_required_variables()
 		err = simplescim_config_file_get(var, &val);
 
 		if (err == -1) {
-			sprintf(simplescim_error_string,
-"%s: required variable \"%s\" is missing",
-			        simplescim_config_file_name,
-			        var);
+			simplescim_error_string_set_prefix(
+				"%s",
+				simplescim_config_file_name
+			);
+
+			simplescim_error_string_set_message(
+				"required variable \"%s\" is missing",
+				var
+			);
+
 			return -1;
 		}
 
@@ -124,21 +141,36 @@ int simplescim_config_file_required_variables()
 
 		/* No match was found, so current required
 		   variable has an incorrect value */
-		offset = sprintf(simplescim_error_string,
-"%s: variable \"%s\" has invalid value \"%s\"\n"
+		offset = snprintf(error_string,
+		                  sizeof(error_string),
+"variable \"%s\" has invalid value \"%s\"\n"
 "variable \"%s\" must have one of the following values:\n",
-		                 simplescim_config_file_name,
-		                 var,
-		                 val,
-		                 var);
+		                  var,
+		                  val,
+		                  var);
 
 		for (j = 0; required_values[i][j] != NULL; ++j) {
-			offset += sprintf(
-				simplescim_error_string + offset,
+			if ((size_t)offset >= sizeof(error_string)) {
+				break;
+			}
+
+			offset += snprintf(
+				error_string + offset,
+				sizeof(error_string) - offset,
 				" %s",
 				required_values[i][j]
 			);
 		}
+
+		simplescim_error_string_set_prefix(
+			"%s",
+			simplescim_config_file_name
+		);
+
+		simplescim_error_string_set_message(
+			"%s",
+			error_string
+		);
 
 		return -1;
 	}

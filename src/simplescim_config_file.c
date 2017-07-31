@@ -1,32 +1,22 @@
 #include "simplescim_config_file.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
 #include "uthash.h"
 
 #include "simplescim_error_string.h"
-#include "simplescim_open_file.h"
-#include "simplescim_file_to_string.h"
+#include "simplescim_config_file_open.h"
+#include "simplescim_config_file_to_string.h"
 #include "simplescim_config_file_parser.h"
 #include "simplescim_config_file_required_variables.h"
 
-
-/**
- * The uthash record for the variables data structure.
- */
 struct variable_record {
 	char *variable;
 	char *value;
 	UT_hash_handle hh;
 };
 
-/**
- * A hash table representing the global configuration file
- * data structure.
- */
 static struct variable_record *variables = NULL;
 
 /**
@@ -36,13 +26,12 @@ static struct variable_record *variables = NULL;
 const char *simplescim_config_file_name = NULL;
 
 /**
- * Loads configuration file 'file_name' into global
- * configuration file data structure.
+ * Loads configuration file 'file_name'.
  * On success, zero is returned. On error, -1 is returned
- * and 'simplescim_error_string' is set to an appropriate
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int simplescim_config_file_read(const char *file_name)
+int simplescim_config_file_load(const char *file_name)
 {
 	int fd;
 	size_t len;
@@ -53,17 +42,19 @@ int simplescim_config_file_read(const char *file_name)
 	simplescim_config_file_name = file_name;
 
 	/* Open file and get file length. */
-	fd = simplescim_open_file(file_name, &len);
+	fd = simplescim_config_file_open(&len);
 
 	if (fd == -1) {
+		simplescim_config_file_name = NULL;
 		return -1;
 	}
 
 	/* Read file contents to string. */
-	input = simplescim_file_to_string(fd, file_name, len);
+	input = simplescim_config_file_to_string(fd, len);
 
 	if (input == NULL) {
 		close(fd);
+		simplescim_config_file_name = NULL;
 		return -1;
 	}
 
@@ -73,8 +64,8 @@ int simplescim_config_file_read(const char *file_name)
 	err = simplescim_config_file_parser(input);
 
 	if (err == -1) {
-		free(input);
 		simplescim_config_file_clear();
+		free(input);
 		return -1;
 	}
 
@@ -92,9 +83,8 @@ int simplescim_config_file_read(const char *file_name)
 }
 
 /**
- * Clears the contents of the global configuration file
- * data structure and frees any dynamically allocated
- * memory associated with it.
+ * Clears the loaded configuration file and frees
+ * associated dynamically allocated memory.
  */
 void simplescim_config_file_clear()
 {
@@ -111,12 +101,11 @@ void simplescim_config_file_clear()
 }
 
 /**
- * Insert key-value pair 'variable'-'value' into global
- * configuration file data structure. 'variable' and
- * 'value' must be dynamically allocated null-terminated
- * strings.
+ * Associates 'variable' with 'value'.
+ * 'variable' and 'value' are dynamically allocated
+ * null-terminated strings.
  * On success, zero is returned. On error, -1 is returned
- * and 'simplescim_error_string' is set to an appropriate
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
 int simplescim_config_file_insert(char *variable, char *value)
@@ -130,15 +119,14 @@ int simplescim_config_file_insert(char *variable, char *value)
 	HASH_FIND_STR(variables, variable, s);
 
 	if (s == NULL) {
-		/* 'variable' is not in the hash table, so
+		/* 'variable' is not in the hash table so
 		   'value' should be inserted. */
 		s = malloc(sizeof(struct variable_record));
 
 		if (s == NULL) {
-			sprintf(simplescim_error_string,
-			        "%s:simplescim_config_file_insert: %s",
-			        simplescim_config_file_name,
-			        strerror(errno));
+			simplescim_error_string_set_errno(
+				"simplescim_config_file_insert:malloc"
+			);
 			return -1;
 		}
 
@@ -150,29 +138,25 @@ int simplescim_config_file_insert(char *variable, char *value)
 		                s->variable,
 		                strlen(s->variable),
 		                s);
-
-		return 0;
+	} else {
+		/* 'variable' is already in the hash table, so
+		   'value' should replace the previous value
+		   associated with 'variable'. 'variable' can be
+		   freed since an identical dynamically allocated
+		   object is already in the hash table. */
+		free(variable);
+		free(s->value);
+		s->value = value;
 	}
-
-	/* 'variable' is already in the hash table, so
-	   'value' should replace the previous value
-	   associated with 'variable'. 'variable' can be
-	   freed since an identical dynamically allocated
-	   object is already in the hash table. */
-
-	free(variable);
-	free(s->value);
-	s->value = value;
 
 	return 0;
 }
 
 /**
- * Gets the value associated with 'variable' and assigns it
- * to 'valuep', if a value is associated with 'variable'.
- * If a value is associated with 'variable', zero is
- * returned and the value is assigned to 'valuep'.
- * Otherwise, -1 is returned and 'valuep' remains untouched.
+ * Gets the value associated with 'variable' and stores it
+ * in 'valuep'.
+ * If 'variable' has an associated value, zero is returned.
+ * Otherwise, -1 is returned.
  */
 int simplescim_config_file_get(const char *variable,
                                const char **valuep)
@@ -185,15 +169,16 @@ int simplescim_config_file_get(const char *variable,
 		return -1;
 	}
 
-	*valuep = s->value;
+	if (valuep != NULL) {
+		*valuep = s->value;
+	}
 
 	return 0;
 }
 
 /**
- * Performs 'func' on every 'variable'-'value' pair in the
- * global configuration file data structure.
- *
+ * Performs 'func' for every variable in the loaded
+ * configuration file.
  * 'func' must have the following signature:
  * void func(const char *variable, const char *value);
  */

@@ -3,10 +3,10 @@
 
 /**
  * Ensures that the required variables are present in
- * simplescim_config_file and have one of its predefined
- * values if such values exist.
+ * configuration file and have one of its predefined
+ * values if such values are defined.
  * On success, zero is returned. On error, -1 is returned
- * and 'simplescim_error_string' is set to an appropriate
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
 int simplescim_config_file_required_variables();
