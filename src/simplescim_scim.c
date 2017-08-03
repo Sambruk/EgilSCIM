@@ -1,6 +1,7 @@
 #include "simplescim_scim.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <json.h>
 
 #include "simplescim_error_string.h"
@@ -153,7 +154,7 @@ static int create_user_func(const struct simplescim_user *user)
 
 	err = simplescim_user_set_attribute(
 		copied_user,
-		"scim-id",
+		strdup("scim-id"),
 		scim_id_list
 	);
 
@@ -258,7 +259,7 @@ static int update_user_func(
 
 	err = simplescim_user_set_attribute(
 		copied_user,
-		"scim-id",
+		strdup("scim-id"),
 		scim_id_copy
 	);
 
