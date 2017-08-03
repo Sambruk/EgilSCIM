@@ -2,9 +2,10 @@
 
 #include <stdio.h>
 #include <json.h>
-#include <lber.h>
 
 #include "simplescim_error_string.h"
+#include "simplescim_arbval.h"
+#include "simplescim_arbval_list.h"
 #include "simplescim_user.h"
 #include "simplescim_user_list.h"
 #include "simplescim_config_file.h"
@@ -58,8 +59,9 @@ static int create_user_func(const struct simplescim_user *user)
 {
 	char *parsed_json;
 	struct simplescim_user *copied_user;
-	struct berval *uid;
-	struct berval **scim_id;
+	struct simplescim_arbval *uid;
+	struct simplescim_arbval *scim_id;
+	struct simplescim_arbval_list *scim_id_list;
 	struct json_object *jobj;
 	enum json_tokener_error jerr;
 	int err;
@@ -116,24 +118,48 @@ static int create_user_func(const struct simplescim_user *user)
 	}
 
 	/* Insert SCIM ID */
-	scim_id = malloc(sizeof(struct berval *) * 2);
-	scim_id[0] = malloc(sizeof(struct berval));
-	scim_id[1] = NULL;
-	scim_id[0]->bv_len = strlen("placeholder-scim-id");
-	scim_id[0]->bv_val = strdup("placeholder-scim-id");
+	scim_id = simplescim_arbval_string("placeholder-scim-id");
 
-	err = simplescim_user_set_attribute(
-		copied_user,
-		"scim-id",
+	if (scim_id == NULL) {
+		simplescim_arbval_delete(uid);
+		simplescim_user_delete(copied_user);
+		json_object_put(jobj);
+		return -1;
+	}
+
+	scim_id_list = simplescim_arbval_list_new(1);
+
+	if (scim_id_list == NULL) {
+		simplescim_arbval_delete(scim_id);
+		simplescim_arbval_delete(uid);
+		simplescim_user_delete(copied_user);
+		json_object_put(jobj);
+		return -1;
+	}
+
+	err = simplescim_arbval_list_append(
+		scim_id_list,
 		scim_id
 	);
 
 	if (err == -1) {
-		free(scim_id[0]->bv_val);
-		free(scim_id[0]);
-		free(scim_id);
-		free(uid->bv_val);
-		free(uid);
+		simplescim_arbval_list_delete(scim_id_list);
+		simplescim_arbval_delete(scim_id);
+		simplescim_arbval_delete(uid);
+		simplescim_user_delete(copied_user);
+		json_object_put(jobj);
+		return -1;
+	}
+
+	err = simplescim_user_set_attribute(
+		copied_user,
+		"scim-id",
+		scim_id_list
+	);
+
+	if (err == -1) {
+		simplescim_arbval_list_delete(scim_id_list);
+		simplescim_arbval_delete(uid);
 		simplescim_user_delete(copied_user);
 		json_object_put(jobj);
 		return -1;
@@ -147,8 +173,7 @@ static int create_user_func(const struct simplescim_user *user)
 	);
 
 	if (err == -1) {
-		free(uid->bv_val);
-		free(uid);
+		simplescim_arbval_delete(uid);
 		simplescim_user_delete(copied_user);
 		json_object_put(jobj);
 		return -1;
@@ -176,14 +201,16 @@ static int create_user_func(const struct simplescim_user *user)
 	return 0;
 }
 
-static int update_user_func(const struct simplescim_user *user,
-                            const struct simplescim_user *cached_user)
+static int update_user_func(
+	const struct simplescim_user *user,
+	const struct simplescim_user *cached_user
+)
 {
 	char *parsed_json;
 	struct simplescim_user *copied_user;
-	struct berval *uid;
-	struct berval **scim_id;
-	const struct berval **vals;
+	struct simplescim_arbval *uid;
+	const struct simplescim_arbval_list *scim_id;
+	struct simplescim_arbval_list *scim_id_copy;
 	struct json_object *jobj;
 	enum json_tokener_error jerr;
 	int err;
@@ -206,39 +233,38 @@ static int update_user_func(const struct simplescim_user *user,
 	err = simplescim_user_get_attribute(
 		cached_user,
 		"scim-id",
-		&vals
+		&scim_id
 	);
 
 	if (err == -1) {
 		simplescim_error_string_set(
 			"update_user_func",
-			"cached user does not have attribute \"scim-id\""
+			"cached user does not have attribute "
+			"\"scim-id\""
 		);
-		free(uid->bv_val);
-		free(uid);
+		simplescim_arbval_delete(uid);
 		simplescim_user_delete(copied_user);
 		return -1;
 	}
 
 	/* Insert SCIM ID */
-	scim_id = malloc(sizeof(struct berval *) * 2);
-	scim_id[0] = malloc(sizeof(struct berval));
-	scim_id[1] = NULL;
-	scim_id[0]->bv_len = vals[0]->bv_len;
-	scim_id[0]->bv_val = strdup(vals[0]->bv_val);
+	scim_id_copy = simplescim_arbval_list_copy(scim_id);
+
+	if (scim_id_copy == NULL) {
+		simplescim_arbval_delete(uid);
+		simplescim_user_delete(copied_user);
+		return -1;
+	}
 
 	err = simplescim_user_set_attribute(
 		copied_user,
 		"scim-id",
-		scim_id
+		scim_id_copy
 	);
 
 	if (err == -1) {
-		free(scim_id[0]->bv_val);
-		free(scim_id[0]);
-		free(scim_id);
-		free(uid->bv_val);
-		free(uid);
+		simplescim_arbval_list_delete(scim_id_copy);
+		simplescim_arbval_delete(uid);
 		simplescim_user_delete(copied_user);
 		return -1;
 	}
@@ -250,8 +276,7 @@ static int update_user_func(const struct simplescim_user *user,
 	);
 
 	if (parsed_json == NULL) {
-		free(uid->bv_val);
-		free(uid);
+		simplescim_arbval_delete(uid);
 		simplescim_user_delete(copied_user);
 		return -1;
 	}
@@ -269,8 +294,7 @@ static int update_user_func(const struct simplescim_user *user,
 			json_tokener_error_desc(jerr)
 		);
 		free(parsed_json);
-		free(uid->bv_val);
-		free(uid);
+		simplescim_arbval_delete(uid);
 		simplescim_user_delete(copied_user);
 		return -1;
 	}
@@ -291,8 +315,7 @@ static int update_user_func(const struct simplescim_user *user,
 	);
 
 	if (err == -1) {
-		free(uid->bv_val);
-		free(uid);
+		simplescim_arbval_delete(uid);
 		simplescim_user_delete(copied_user);
 		json_object_put(jobj);
 		return -1;
@@ -302,7 +325,7 @@ static int update_user_func(const struct simplescim_user *user,
 	printf("==== Simulated request ====\n");
 	printf("PUT %s/%s\n",
 	       simplescim_scim_resource_type,
-	       scim_id[0]->bv_val);
+	       scim_id->al_vals[0]->av_val);
 	printf("Host: %s\n", simplescim_scim_uri);
 	printf("Accept: application/scim+json\n");
 	printf("Content-Type: application/scim+json\n\n");
@@ -323,26 +346,24 @@ static int update_user_func(const struct simplescim_user *user,
 
 static int delete_user_func(const struct simplescim_user *cached_user)
 {
-	const struct berval *scim_id;
-	const struct berval **vals;
+	const struct simplescim_arbval_list *scim_id;
 	int err;
 
 	/* Get SCIM ID */
 	err = simplescim_user_get_attribute(
 		cached_user,
 		"scim-id",
-		&vals
+		&scim_id
 	);
 
 	if (err == -1) {
 		simplescim_error_string_set(
 			"delete_user_func",
-			"cached user does not have attribute \"scim-id\""
+			"cached user does not have attribute "
+			"\"scim-id\""
 		);
 		return -1;
 	}
-
-	scim_id = vals[0];
 
 	/* TODO: Construct SCIM DELETE request with
 	         scim-uri, scim-resource-type and scim_id
@@ -354,7 +375,7 @@ static int delete_user_func(const struct simplescim_user *cached_user)
 	printf("==== Simulated request ====\n");
 	printf("DELETE %s/%s\n",
 	       simplescim_scim_resource_type,
-	       scim_id->bv_val);
+	       scim_id->al_vals[0]->av_val);
 	printf("Host: %s\n\n", simplescim_scim_uri);
 
 	return 0;
@@ -368,8 +389,10 @@ static int delete_user_func(const struct simplescim_user *cached_user)
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int simplescim_scim_perform(const struct simplescim_user_list *current,
-                            const struct simplescim_user_list *cached)
+int simplescim_scim_perform(
+	const struct simplescim_user_list *current,
+	const struct simplescim_user_list *cached
+)
 {
 	int err;
 
@@ -381,13 +404,18 @@ int simplescim_scim_perform(const struct simplescim_user_list *current,
 	}
 
 	/* Find all changes and perform necessary operations */
-	simplescim_user_list_find_changes(
+	err = simplescim_user_list_find_changes(
 		current,
 		cached,
 		create_user_func,
 		update_user_func,
 		delete_user_func
 	);
+
+	if (err == -1) {
+		simplescim_scim_clear();
+		return -1;
+	}
 
 	/* Save new cache file */
 	err = simplescim_cache_file_save(simplescim_scim_new_cache);

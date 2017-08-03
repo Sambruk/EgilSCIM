@@ -11,7 +11,9 @@
  * error occurred, in which case simplescim_error_string is
  * set to an appropriate error message.
  */
-char *simplescim_config_file_to_string(int fd,
-                                       size_t file_size);
+char *simplescim_config_file_to_string(
+	int fd,
+	size_t file_size
+);
 
 #endif

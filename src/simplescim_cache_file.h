@@ -14,6 +14,10 @@
  */
 struct simplescim_user_list *simplescim_cache_file_get_users();
 
+struct simplescim_user_list *simplescim_cache_file_get_users_from_file(
+	const char *filename
+);
+
 /**
  * Writes 'users' to cache file specified in configuration
  * file.

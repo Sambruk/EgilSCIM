@@ -118,7 +118,8 @@ static int parse_attr(char **dest)
 
 	if (attr == NULL) {
 		simplescim_error_string_set_errno(
-			"parse_attr:malloc"
+			"parse_attr:"
+			"malloc"
 		);
 		return -1;
 	}
@@ -170,13 +171,14 @@ int simplescim_ldap_attrs_parser(const char *attrs, char ***attrs_val)
 
 	if (parser.attrs == NULL) {
 		simplescim_error_string_set_errno(
-			"simplescim_ldap_attrs_parser:malloc"
+			"simplescim_ldap_attrs_parser:"
+			"malloc"
 		);
 		reset_parser();
 		return -1;
 	}
 
-	/* Parser all attributes */
+	/* Parse all attributes */
 	for (i = 0; i < parser.n_attrs; ++i) {
 		if (i > 0) {
 			if (*parser.cur != ',') {

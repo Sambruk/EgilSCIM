@@ -1,8 +1,9 @@
 #ifndef SIMPLESCIM_USER_LIST_H
 #define SIMPLESCIM_USER_LIST_H
 
-#include <lber.h>
+#include <stddef.h>
 
+#include "simplescim_arbval.h"
 #include "simplescim_user.h"
 
 struct simplescim_user_list;
@@ -19,7 +20,9 @@ struct simplescim_user_list *simplescim_user_list_new();
  * Deletes 'this' and all associated dynamically allocated
  * memory.
  */
-void simplescim_user_list_delete(struct simplescim_user_list *this);
+void simplescim_user_list_delete(
+	struct simplescim_user_list *this
+);
 
 /**
  * Returns the number of users in 'this'.
@@ -29,38 +32,39 @@ size_t simplescim_user_list_get_n_users(
 );
 
 /**
- * Associates 'unique_identifier' with 'user' in 'this'.
- * 'unique_identifier' is a dynamically allocated
- * struct berval object and 'user' is a dynamically
- * allocated simplescim_user object.
+ * Associates 'uid' with 'user' in 'this'.
  * On success, zero is returned. On error, -1 is
  * returned and simplescim_error_string is set to an
  * appropriate error message.
  */
-int simplescim_user_list_insert_user(struct simplescim_user_list *this,
-                                     struct berval *unique_identifier,
-                                     struct simplescim_user *user);
+int simplescim_user_list_insert_user(
+	struct simplescim_user_list *this,
+	struct simplescim_arbval *uid,
+	struct simplescim_user *user
+);
 
 /**
- * Gets the user associated with 'unique_identifier' in
- * 'this' and stores it in 'userp'.
- * If 'unique_identifier' has an associated user, zero is
- * returned. Otherwise, -1 is returned.
+ * Gets the user associated with 'uid' in 'this' and stores
+ * it in 'userp'.
+ * If 'uid' has an associated user, zero is returned.
+ * Otherwise, -1 is returned.
  */
-int simplescim_user_list_get_user(const struct simplescim_user_list *this,
-                                  const struct berval *unique_identifier,
-                                  const struct simplescim_user **userp);
+int simplescim_user_list_get_user(
+	const struct simplescim_user_list *this,
+	const struct simplescim_arbval *uid,
+	const struct simplescim_user **userp
+);
 
 /**
  * Performs 'func' for every user in 'this'.
  * 'func' must have the following definition:
- * void func(const struct berval *unique_identifier,
- *           const struct simplescim_user *user);
+ * int func(const struct simplescim_arbval *uid,
+ *          const struct simplescim_user *user);
  */
-void simplescim_user_list_foreach(
+int simplescim_user_list_foreach(
 	const struct simplescim_user_list *this,
-	void (*func)(const struct berval *unique_identifier,
-	             const struct simplescim_user *user)
+	int (*func)(const struct simplescim_arbval *uid,
+	            const struct simplescim_user *user)
 );
 
 /**

@@ -108,7 +108,6 @@ int simplescim_config_file_required_variables()
 				"%s",
 				simplescim_config_file_name
 			);
-
 			simplescim_error_string_set_message(
 				"required variable \"%s\" is missing",
 				var
@@ -166,7 +165,6 @@ int simplescim_config_file_required_variables()
 			"%s",
 			simplescim_config_file_name
 		);
-
 		simplescim_error_string_set_message(
 			"%s",
 			error_string

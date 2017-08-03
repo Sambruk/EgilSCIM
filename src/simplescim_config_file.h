@@ -13,7 +13,9 @@ extern const char *simplescim_config_file_name;
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int simplescim_config_file_load(const char *file_name);
+int simplescim_config_file_load(
+	const char *file_name
+);
 
 /**
  * Clears the loaded configuration file and frees
@@ -29,7 +31,10 @@ void simplescim_config_file_clear();
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int simplescim_config_file_insert(char *variable, char *value);
+int simplescim_config_file_insert(
+	char *variable,
+	char *value
+);
 
 /**
  * Gets the value associated with 'variable' and stores it
@@ -37,8 +42,10 @@ int simplescim_config_file_insert(char *variable, char *value);
  * If 'variable' has an associated value, zero is returned.
  * Otherwise, -1 is returned.
  */
-int simplescim_config_file_get(const char *variable,
-                               const char **valuep);
+int simplescim_config_file_get(
+	const char *variable,
+	const char **valuep
+);
 
 /**
  * Performs 'func' for every variable in the loaded
@@ -46,7 +53,8 @@ int simplescim_config_file_get(const char *variable,
  * 'func' must have the following signature:
  * void func(const char *variable, const char *value);
  */
-void simplescim_config_file_foreach(void (*func)(const char *variable,
-                                                 const char *value));
+void simplescim_config_file_foreach(
+	void (*func)(const char *variable, const char *value)
+);
 
 #endif

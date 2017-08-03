@@ -2,92 +2,18 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <lber.h>
 
 #include "simplescim_error_string.h"
+#include "simplescim_arbval.h"
+#include "simplescim_arbval_list.h"
 #include "simplescim_user.h"
 #include "simplescim_user_list.h"
 #include "simplescim_config_file.h"
-
-/*************
- * Read part *
- *************/
-
-/**
- * Frees all memory associated with a struct berval
- * object.
- */
-static void delete_berval(struct berval *ber)
-{
-	if (ber != NULL) {
-		if (ber->bv_val != NULL) {
-			free(ber->bv_val);
-		}
-
-		free(ber);
-	}
-}
-
-/**
- * Frees all memory associated with a NULL-terminated list
- * of pointers to struct berval objects.
- */
-static void delete_values(struct berval **values)
-{
-	size_t i;
-
-	if (values != NULL) {
-		for (i = 0; values[i] != NULL; ++i) {
-			delete_berval(values[i]);
-		}
-
-		free(values);
-	}
-}
-
-/**
- * Reads a 64-bit value in the cache file from 'fd' and
- * stores it in 'np'.
- * On success, zero is returned. On error, -1 is returned
- * and simplescim_error_string is set to an appropriate
- * error message.
- */
-static int read_uint64(int fd,
-                       const char *cache_file_name,
-                       uint64_t *np)
-{
-	uint64_t n;
-	ssize_t nread;
-
-	nread = read(fd, &n, sizeof(uint64_t));
-
-	if (nread == -1) {
-		simplescim_error_string_set_errno(
-			"%s",
-			cache_file_name
-		);
-		return -1;
-	}
-
-	if ((size_t)nread < sizeof(uint64_t)) {
-		simplescim_error_string_set_prefix(
-			"%s",
-			cache_file_name
-		);
-		simplescim_error_string_set_message(
-			"unexpected end-of-file"
-		);
-		return -1;
-	}
-
-	*np = n;
-
-	return 0;
-}
 
 /**
  * Reads 'n' bytes into 'buf' from 'fd'.
@@ -95,10 +21,12 @@ static int read_uint64(int fd,
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-static int read_n(int fd,
-                  const char *cache_file_name,
-                  uint8_t *buf,
-                  size_t n)
+static int simplescim_cache_file_read_n(
+	int fd,
+	const char *filename,
+	uint8_t *buf,
+	size_t n
+)
 {
 	ssize_t nread;
 
@@ -106,16 +34,16 @@ static int read_n(int fd,
 
 	if (nread == -1) {
 		simplescim_error_string_set_errno(
-			"%s",
-			cache_file_name
+			"simplescim_cache_file_read_n:read:%s",
+			filename
 		);
 		return -1;
 	}
 
 	if ((size_t)nread < n) {
 		simplescim_error_string_set_prefix(
-			"%s",
-			cache_file_name
+			"simplescim_cache_file_read_n:read:%s",
+			filename
 		);
 		simplescim_error_string_set_message(
 			"unexpected end-of-file"
@@ -127,163 +55,222 @@ static int read_n(int fd,
 }
 
 /**
- * Reads a struct berval in the cache file from 'fd' and
- * stores it in 'berp'.
+ * Reads a 64-bit value from 'fd' and stores it in 'buf'.
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-static int read_berval(int fd,
-                       const char *cache_file_name,
-                       struct berval **berp)
+static int simplescim_cache_file_read_uint64(
+	int fd,
+	const char *filename,
+	uint64_t *buf
+)
 {
-	struct berval *ber;
-	uint64_t bv_len;
-	uint8_t *bv_val;
+	int err;
+
+	err = simplescim_cache_file_read_n(
+		fd,
+		filename,
+		(uint8_t *)buf,
+		sizeof(uint64_t)
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Reads a struct simplescim_arbval from 'fd' and stores it
+ * in 'avp'.
+ * On success, zero is returned. On error, -1 is returned
+ * and simplescim_error_string is set to an appropriate
+ * error message.
+ */
+static int simplescim_cache_file_read_arbval(
+	int fd,
+	const char *filename,
+	struct simplescim_arbval **avp
+)
+{
+	struct simplescim_arbval *av;
+	uint64_t av_len;
+	uint8_t *av_val;
 	int err;
 
 	/* Read value length */
-	err = read_uint64(fd, cache_file_name, &bv_len);
+	err = simplescim_cache_file_read_uint64(
+		fd,
+		filename,
+		&av_len
+	);
 
 	if (err == -1) {
 		return -1;
 	}
 
 	/* Allocate value */
-	bv_val = malloc(bv_len + 1);
+	av_val = malloc(av_len + 1);
 
-	if (bv_val == NULL) {
+	if (av_val == NULL) {
 		simplescim_error_string_set_errno(
-			"read_berval:malloc"
+			"simplescim_cache_file_read_arbval:"
+			"malloc"
 		);
 		return -1;
 	}
 
 	/* Read value */
-	err = read_n(fd, cache_file_name, bv_val, bv_len);
+	err = simplescim_cache_file_read_n(
+		fd,
+		filename,
+		av_val,
+		av_len
+	);
 
 	if (err == -1) {
-		free(bv_val);
+		free(av_val);
 		return -1;
 	}
 
 	/* Null-terminate value */
-	bv_val[bv_len] = '\0';
+	av_val[av_len] = '\0';
 
-	/* Allocate 'struct berval *' */
-	ber = malloc(sizeof(struct berval));
+	/* Allocate 'av' */
+	av = simplescim_arbval_new(
+		0,
+		NULL
+	);
 
-	if (ber == NULL) {
-		simplescim_error_string_set_errno(
-			"read_berval:malloc"
-		);
-		free(bv_val);
+	if (av == NULL) {
+		free(av_val);
 		return -1;
 	}
 
-	/* Assign member variables to 'ber' */
-	ber->bv_len = bv_len;
-	ber->bv_val = (char *)bv_val;
-
-	/* Store 'ber' in 'berp' */
-	*berp = ber;
+	av->av_len = av_len;
+	av->av_val = av_val;
+	*avp = av;
 
 	return 0;
 }
 
 /**
- * Reads a NULL-terminated list of values in the cache file
- * from 'fd' and stores them in 'valuesp'.
+ * Reads a struct simplescim_arbval_list from 'fd' and
+ * stores it in 'alp'.
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-static int read_values(int fd,
-                       const char *cache_file_name,
-                       struct berval ***valuesp)
+static int simplescim_cache_file_read_arbval_list(
+	int fd,
+	const char *filename,
+	struct simplescim_arbval_list **alp
+)
 {
-	struct berval **values;
-	struct berval *value;
-	uint64_t n_values;
-	size_t i;
+	struct simplescim_arbval_list *al;
+	struct simplescim_arbval *av;
+	uint64_t al_len;
+	uint64_t i;
 	int err;
 
 	/* Read number of values */
-	err = read_uint64(fd, cache_file_name, &n_values);
+	err = simplescim_cache_file_read_uint64(
+		fd,
+		filename,
+		&al_len
+	);
 
 	if (err == -1) {
 		return -1;
 	}
 
-	/* Allocate list of values */
-	values = malloc(sizeof(struct berval *) * (n_values + 1));
+	/* Allocate 'al' */
+	al = simplescim_arbval_list_new(al_len);
 
-	if (values == NULL) {
+	if (al == NULL) {
 		simplescim_error_string_set_errno(
-			"read_values:malloc"
+			"simplescim_cache_file_read_arbval_list:"
+			"malloc"
 		);
 		return -1;
 	}
 
-	/* Read the values */
-	for (i = 0; i < n_values; ++i) {
-		/* Read value */
-		err = read_berval(fd, cache_file_name, &value);
+	/* Read all values */
+	for (i = 0; i < al_len; ++i) {
+		/* Read 'av' */
+		err = simplescim_cache_file_read_arbval(
+			fd,
+			filename,
+			&av
+		);
 
 		if (err == -1) {
-			/* Delete all values so far */
-			while (i > 0) {
-				delete_berval(values[i - 1]);
-				--i;
-			}
-
-			free(values);
+			simplescim_arbval_list_delete(al);
 			return -1;
 		}
 
-		/* Insert read value into values list */
-		values[i] = value;
+		/* Insert 'av' into 'al' */
+		err = simplescim_arbval_list_append(
+			al,
+			av
+		);
+
+		if (err == -1) {
+			simplescim_arbval_delete(av);
+			simplescim_arbval_list_delete(al);
+			return -1;
+		}
 	}
 
-	values[n_values] = NULL;
-	*valuesp = values;
+	*alp = al;
 
 	return 0;
 }
 
 /**
- * Reads one user in the cache file from 'fd' and stores it
- * in 'userp', and stores the user's unique identifier in
- * 'unique_identifierp'.
+ * Reads one user from 'fd' and stores it in 'userp', and
+ * stores the user's unique identifier in 'uidp'.
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-static int read_user(int fd,
-                     const char *cache_file_name,
-                     struct berval **unique_identifierp,
-                     struct simplescim_user **userp)
+static int simplescim_cache_file_read_user(
+	int fd,
+	const char *filename,
+	struct simplescim_arbval **uidp,
+	struct simplescim_user **userp
+)
 {
-	struct berval *unique_identifier;
+	struct simplescim_arbval *uid;
 	struct simplescim_user *user;
 	uint64_t n_attributes;
-	struct berval *attribute;
-	struct berval **values;
-	size_t i;
+	uint64_t i;
+	struct simplescim_arbval *attribute;
+	struct simplescim_arbval_list *values;
 	int err;
 
 	/* Read user's unique identifier */
-	err = read_berval(fd, cache_file_name, &unique_identifier);
+	err = simplescim_cache_file_read_arbval(
+		fd,
+		filename,
+		&uid
+	);
 
 	if (err == -1) {
 		return -1;
 	}
 
 	/* Read n_attributes */
-	err = read_uint64(fd, cache_file_name, &n_attributes);
+	err = simplescim_cache_file_read_uint64(
+		fd,
+		filename,
+		&n_attributes
+	);
 
 	if (err == -1) {
-		delete_berval(unique_identifier);
+		simplescim_arbval_delete(uid);
 		return -1;
 	}
 
@@ -291,115 +278,134 @@ static int read_user(int fd,
 	user = simplescim_user_new();
 
 	if (user == NULL) {
-		delete_berval(unique_identifier);
+		simplescim_arbval_delete(uid);
 		return -1;
 	}
 
 	/* Read attributes */
 	for (i = 0; i < n_attributes; ++i) {
 		/* Read attribute name */
-		err = read_berval(fd, cache_file_name, &attribute);
+		err = simplescim_cache_file_read_arbval(
+			fd,
+			filename,
+			&attribute
+		);
 
 		if (err == -1) {
 			simplescim_user_delete(user);
-			delete_berval(unique_identifier);
+			simplescim_arbval_delete(uid);
 			return -1;
 		}
 
 		/* Read values */
-		err = read_values(fd, cache_file_name, &values);
+		err = simplescim_cache_file_read_arbval_list(
+			fd,
+			filename,
+			&values
+		);
 
 		if (err == -1) {
-			delete_berval(attribute);
+			simplescim_arbval_delete(attribute);
 			simplescim_user_delete(user);
-			delete_berval(unique_identifier);
+			simplescim_arbval_delete(uid);
 			return -1;
 		}
 
 		/* Insert into user object */
 		err = simplescim_user_set_attribute(
 			user,
-			attribute->bv_val,
+			(char *)attribute->av_val,
 			values
 		);
 
 		if (err == -1) {
-			delete_values(values);
-			delete_berval(attribute);
+			simplescim_arbval_list_delete(values);
+			simplescim_arbval_delete(attribute);
 			simplescim_user_delete(user);
-			delete_berval(unique_identifier);
+			simplescim_arbval_delete(uid);
 			return -1;
 		}
 
-		free(attribute);
+		attribute->av_val = NULL;
+		simplescim_arbval_delete(attribute);
 	}
 
-	*unique_identifierp = unique_identifier;
+	*uidp = uid;
 	*userp = user;
 
 	return 0;
 }
 
 /**
- * Read the cache file's contents from 'fd'.
- * On success, a pointer to a newly created user list
- * object is returned. On error, NULL is returned and
- * simplescim_error_string is set to an appropriate
+ * Reads users from 'fd' and stores them in 'usersp'.
+ * On success, zero is returned. On error, -1 is returned
+ * and simplescim_error_string is set to an appropriate
  * error message.
  */
-static struct simplescim_user_list *
-read_cache_file(int fd, const char *cache_file_name)
+static int simplescim_cache_file_read_users(
+	int fd,
+	const char *filename,
+	struct simplescim_user_list **usersp
+)
 {
 	struct simplescim_user_list *users;
-	struct berval *unique_identifier;
+	struct simplescim_arbval *uid;
 	struct simplescim_user *user;
 	uint64_t n_users;
-	size_t i;
+	uint64_t i;
 	int err;
 
 	/* Read n_users */
-	err = read_uint64(fd, cache_file_name, &n_users);
+	err = simplescim_cache_file_read_uint64(
+		fd,
+		filename,
+		&n_users
+	);
 
 	if (err == -1) {
-		return NULL;
+		return -1;
 	}
 
 	/* Allocate user list */
 	users = simplescim_user_list_new();
 
 	if (users == NULL) {
-		return NULL;
+		return -1;
 	}
 
 	/* Read all users */
 	for (i = 0; i < n_users; ++i) {
 		/* Read user */
-		err = read_user(fd,
-		                cache_file_name,
-		                &unique_identifier,
-		                &user);
+		err = simplescim_cache_file_read_user(
+			fd,
+			filename,
+			&uid,
+			&user
+		);
 
 		if (err == -1) {
 			simplescim_user_list_delete(users);
-			return NULL;
+			return -1;
 		}
 
 		/* Insert user into user list */
 		err = simplescim_user_list_insert_user(
 			users,
-			unique_identifier,
+			uid,
 			user
 		);
 
 		if (err == -1) {
-			delete_berval(unique_identifier);
 			simplescim_user_delete(user);
+			simplescim_arbval_delete(uid);
 			simplescim_user_list_delete(users);
-			return NULL;
+			return -1;
 		}
 	}
 
-	return users;
+	*usersp = users;
+
+	return 0;
 }
 
 /**
@@ -414,33 +420,69 @@ read_cache_file(int fd, const char *cache_file_name)
 struct simplescim_user_list *simplescim_cache_file_get_users()
 {
 	struct simplescim_user_list *users;
-	const char *cache_file_name;
-	int fd;
+	const char *filename;
+	int err;
 
-	/* Get cache file name from configuration file */
-	simplescim_config_file_get("cache-file", &cache_file_name);
+	/* Get the cache file's name from configuration file */
+	err = simplescim_config_file_get(
+		"cache-file",
+		&filename
+	);
+
+	if (err == -1) {
+		simplescim_error_string_set(
+			"simplescim_cache_file_get_users:"
+			"simplescim_config_file_get",
+			"configuration file does not have variable "
+			"\"cache-file\""
+		);
+		return NULL;
+	}
+
+	users = simplescim_cache_file_get_users_from_file(
+		filename
+	);
+
+	if (users == NULL) {
+		return NULL;
+	}
+
+	return users;
+}
+
+struct simplescim_user_list *simplescim_cache_file_get_users_from_file(
+	const char *filename
+)
+{
+	struct simplescim_user_list *users;
+	int fd;
+	int err;
 
 	/* Check if cache file exists.
 	   If not, return an empty user list. */
-	if (access(cache_file_name, F_OK) != 0) {
+	if (access(filename, F_OK) == -1) {
 		return simplescim_user_list_new();
 	}
 
 	/* Open cache file */
-	fd = open(cache_file_name, O_RDONLY);
+	fd = open(filename, O_RDONLY);
 
 	if (fd == -1) {
 		simplescim_error_string_set_errno(
-			"%s",
-			cache_file_name
+			"simplescim_cache_file_get_users:open:%s",
+			filename
 		);
 		return NULL;
 	}
 
 	/* Read user list from cache file */
-	users = read_cache_file(fd, cache_file_name);
+	err = simplescim_cache_file_read_users(
+		fd,
+		filename,
+		&users
+	);
 
-	if (users == NULL) {
+	if (err == -1) {
 		close(fd);
 		return NULL;
 	}
@@ -450,79 +492,245 @@ struct simplescim_user_list *simplescim_cache_file_get_users()
 	return users;
 }
 
-/**************
- * Write part *
- **************/
-
-static int cache_fd;
+static int simplescim_cache_file_fd;
+static const char *simplescim_cache_file_filename;
 
 /**
- * Writes one user attribute to 'cache_fd'.
+ * Writes 'n' bytes from 'buf' to
+ * 'simplescim_cache_file_fd'.
+ * On success, zero is returned. On error, -1 is returned
+ * and simplescim_error_string is set to an appropriate
+ * error message.
  */
-static void write_attr(const char *attribute,
-                       const struct berval **values)
+static int simplescim_cache_file_write_n(
+	const uint8_t *buf,
+	size_t n
+)
 {
-	uint64_t attr_len;
-	uint64_t n_vals;
-	uint64_t val_len;
-	uint8_t *val;
-	size_t i;
+	ssize_t nwritten;
 
-	/* Calculate attribute_name_length */
-	attr_len = strlen(attribute);
+	nwritten = write(
+		simplescim_cache_file_fd,
+		buf,
+		n
+	);
 
-	/* Write attribute_name_length and attribute_name */
-	write(cache_fd, &attr_len, sizeof(uint64_t));
-	write(cache_fd, attribute, attr_len);
-
-	/* Calculate n_values */
-	n_vals = 0;
-
-	if (values != NULL) {
-		while (values[n_vals] != NULL) {
-			++n_vals;
-		}
+	if (nwritten == -1) {
+		simplescim_error_string_set_errno(
+			"simplescim_cache_file_write_n:write:%s",
+			simplescim_cache_file_filename
+		);
+		return -1;
 	}
 
-	/* Write n_values */
-	write(cache_fd, &n_vals, sizeof(uint64_t));
-
-	/* Write values */
-	for (i = 0; i < n_vals; ++i) {
-		/* Get value_length and value */
-		val_len = values[i]->bv_len;
-		val = (uint8_t *)values[i]->bv_val;
-
-		/* Write value_length and value */
-		write(cache_fd, &val_len, sizeof(uint64_t));
-		write(cache_fd, val, val_len);
+	if ((size_t)nwritten < n) {
+		simplescim_error_string_set_prefix(
+			"simplescim_cache_file_write_n:write:%s",
+			simplescim_cache_file_filename
+		);
+		simplescim_error_string_set_message(
+			"could only write %ld B out of %lu B",
+			nwritten,
+			n
+		);
+		return -1;
 	}
+
+	return 0;
 }
 
 /**
- * Writes one user to 'cache_fd'.
+ * Writes a 64-bit value from 'buf' to
+ * 'simplescim_cache_file_fd'.
+ * On success, zero is returned. On error, -1 is returned
+ * and simplescim_error_string is set to an appropriate
+ * error message.
  */
-static void write_user(const struct berval *unique_identifier,
-                       const struct simplescim_user *user)
+static int simplescim_cache_file_write_uint64(
+	uint64_t n
+)
 {
-	uint64_t uid_len;
-	uint8_t *uid;
-	uint64_t n_attrs;
+	int err;
 
-	/* Get unique_identifier_length and unique_identifier */
-	uid_len = unique_identifier->bv_len;
-	uid = (uint8_t *)unique_identifier->bv_val;
+	err = simplescim_cache_file_write_n(
+		(const uint8_t *)&n,
+		sizeof(uint64_t)
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Writes a struct simplescim_arbval from 'av' to
+ * 'simplescim_cache_file_fd'.
+ * On success, zero is returned. On error, -1 is returned
+ * and simplescim_error_string is set to an appropriate
+ * error message.
+ */
+static int simplescim_cache_file_write_arbval(
+	const struct simplescim_arbval *av
+)
+{
+	int err;
+
+	/* Write value_length */
+	err = simplescim_cache_file_write_uint64(
+		av->av_len
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	/* Write value */
+	err = simplescim_cache_file_write_n(
+		av->av_val,
+		av->av_len
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Writes a struct simplescim_arbval_list from 'al' to
+ * 'simplescim_cache_file_fd'.
+ * On success, zero is returned. On error, -1 is returned
+ * and simplescim_error_string is set to an appropriate
+ * error message.
+ */
+static int simplescim_cache_file_write_arbval_list(
+	const struct simplescim_arbval_list *al
+)
+{
+	uint64_t i;
+	int err;
+
+	/* Write n_values */
+	err = simplescim_cache_file_write_uint64(
+		al->al_len
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	/* Write values */
+	for (i = 0; i < al->al_len; ++i) {
+		err = simplescim_cache_file_write_arbval(
+			al->al_vals[i]
+		);
+
+		if (err == -1) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * Writes one user attribute and its values to
+ * 'simplescim_cache_file_fd'.
+ * On success, zero is returned. On error, -1 is returned
+ * and simplescim_error_string is set to an appropriate
+ * error message.
+ */
+static int simplescim_cache_file_write_attribute(
+	const char *attribute,
+	const struct simplescim_arbval_list *values
+)
+{
+	uint64_t attribute_len;
+	int err;
+
+	/* Calculate attribute_name_length */
+	attribute_len = strlen(attribute);
+
+	/* Write attribute_name_length */
+	err = simplescim_cache_file_write_uint64(
+		attribute_len
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	/* Write attribute_name */
+	err = simplescim_cache_file_write_n(
+		(const uint8_t *)attribute,
+		attribute_len
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	/* Write n_values and values */
+	err = simplescim_cache_file_write_arbval_list(
+		values
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Writes one user to 'simplescim_cache_file_fd'.
+ * On success, zero is returned. On error, -1 is returned
+ * and simplescim_error_string is set to an appropriate
+ * error message.
+ */
+static int simplescim_cache_file_write_user(
+	const struct simplescim_arbval *uid,
+	const struct simplescim_user *user
+)
+{
+	uint64_t n_attrs;
+	int err;
 
 	/* Write unique_identifier_length and unique_identifier */
-	write(cache_fd, &uid_len, sizeof(uint64_t));
-	write(cache_fd, uid, uid_len);
+	err = simplescim_cache_file_write_arbval(
+		uid
+	);
+
+	if (err == -1) {
+		return -1;
+	}
 
 	/* Get n_attributes */
 	n_attrs = simplescim_user_get_n_attributes(user);
 
-	/* Write n_attributes and attributes */
-	write(cache_fd, &n_attrs, sizeof(uint64_t));
-	simplescim_user_foreach(user, write_attr);
+	/* Write n_attributes */
+	err = simplescim_cache_file_write_uint64(
+		n_attrs
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	/* Write attributes */
+	err = simplescim_user_foreach(
+		user,
+		simplescim_cache_file_write_attribute
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	return 0;
 }
 
 /**
@@ -535,33 +743,64 @@ static void write_user(const struct berval *unique_identifier,
 int simplescim_cache_file_save(const struct simplescim_user_list *users)
 {
 	int fd;
-	const char *cache_file_name;
+	const char *filename;
 	uint64_t n_users;
+	int err;
 
 	/* Get cache file's name */
-	simplescim_config_file_get("cache-file", &cache_file_name);
+	err = simplescim_config_file_get(
+		"cache-file",
+		&filename
+	);
+
+	if (err == -1) {
+		simplescim_error_string_set(
+			"simplescim_cache_file_save:"
+			"simplescim_config_file_get",
+			"configuration file does not have variable "
+			"\"cache-file\""
+		);
+		return -1;
+	}
 
 	/* Open cache file for writing (mode 0664) */
-	fd = open(cache_file_name,
+	fd = open(filename,
 	          O_WRONLY | O_CREAT | O_TRUNC,
 	          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 
 	if (fd == -1) {
 		simplescim_error_string_set_errno(
-			"%s",
-			cache_file_name
+			"simplescim_cache_file_save:open:%s",
+			filename
 		);
 		return -1;
 	}
 
-	cache_fd = fd;
+	simplescim_cache_file_fd = fd;
+	simplescim_cache_file_filename = filename;
 
 	/* Get n_users */
 	n_users = simplescim_user_list_get_n_users(users);
 
-	/* Write n_users and users */
-	write(fd, &n_users, sizeof(uint64_t));
-	simplescim_user_list_foreach(users, write_user);
+	/* Write n_users */
+	err = simplescim_cache_file_write_uint64(
+		n_users
+	);
+
+	if (err == -1) {
+		close(fd);
+		return -1;
+	}
+
+	err = simplescim_user_list_foreach(
+		users,
+		simplescim_cache_file_write_user
+	);
+
+	if (err == -1) {
+		close(fd);
+		return -1;
+	}
 
 	close(fd);
 

@@ -1,14 +1,14 @@
 #include "simplescim_user_list.h"
 
 #include <stdlib.h>
-#include <lber.h>
 #include "uthash.h"
 
 #include "simplescim_error_string.h"
+#include "simplescim_arbval.h"
 #include "simplescim_user.h"
 
 struct user_record {
-	struct berval *unique_identifier;
+	struct simplescim_arbval *uid;
 	struct simplescim_user *user;
 	UT_hash_handle hh;
 };
@@ -32,7 +32,8 @@ struct simplescim_user_list *simplescim_user_list_new()
 
 	if (this == NULL) {
 		simplescim_error_string_set_errno(
-			"simplescim_user_list_new:malloc"
+			"simplescim_user_list_new:"
+			"malloc"
 		);
 		return NULL;
 	}
@@ -47,19 +48,24 @@ struct simplescim_user_list *simplescim_user_list_new()
  * Deletes 'this' and all associated dynamically allocated
  * memory.
  */
-void simplescim_user_list_delete(struct simplescim_user_list *this)
+void simplescim_user_list_delete(
+	struct simplescim_user_list *this
+)
 {
 	struct user_record *s, *tmp;
 
-	HASH_ITER(hh, this->users, s, tmp) {
-		HASH_DEL(this->users, s);
-		free(s->unique_identifier->bv_val);
-		free(s->unique_identifier);
-		simplescim_user_delete(s->user);
-		free(s);
-	}
+	if (this != NULL) {
+		if (this->users != NULL) {
+			HASH_ITER(hh, this->users, s, tmp) {
+				HASH_DEL(this->users, s);
+				simplescim_arbval_delete(s->uid);
+				simplescim_user_delete(s->user);
+				free(s);
+			}
+		}
 
-	free(this);
+		free(this);
+	}
 }
 
 /**
@@ -73,62 +79,60 @@ size_t simplescim_user_list_get_n_users(
 }
 
 /**
- * Associates 'unique_identifier' with 'user' in 'this'.
- * 'unique_identifier' is a dynamically allocated
- * struct berval object and 'user' is a dynamically
- * allocated simplescim_user object.
+ * Associates 'uid' with 'user' in 'this'.
  * On success, zero is returned. On error, -1 is
  * returned and simplescim_error_string is set to an
  * appropriate error message.
  */
-int simplescim_user_list_insert_user(struct simplescim_user_list *this,
-                                     struct berval *unique_identifier,
-                                     struct simplescim_user *user)
+int simplescim_user_list_insert_user(
+	struct simplescim_user_list *this,
+	struct simplescim_arbval *uid,
+	struct simplescim_user *user
+)
 {
 	struct user_record *s;
 
-	/* Check if 'unique_identifier' is already in the
-	   hash table, in which case 'user' should replace
-	   the previous user associated with
-	   'unique_identifier' in the hash table rather
-	   than be inserted. */
+	/* Check if 'uid' is already in the hash table, in
+	   which case 'user' should replace the previous
+	   user associated with 'uid' in the hash table
+	   rather than be inserted. */
 	HASH_FIND(hh,
 	          this->users,
-	          unique_identifier->bv_val,
-	          unique_identifier->bv_len,
+	          uid->av_val,
+	          uid->av_len,
 	          s);
 
 	if (s == NULL) {
-		/* 'unique_identifier' is not in the hash
-		   table so 'user' should be inserted. */
+		/* 'uid' is not in the hash table so 'user'
+		   should be inserted. */
 		s = malloc(sizeof(struct user_record));
 
 		if (s == NULL) {
 			simplescim_error_string_set_errno(
-				"simplescim_user_list_insert_user:malloc"
+				"simplescim_user_list_insert_user:"
+				"malloc"
 			);
 			return -1;
 		}
 
-		s->unique_identifier = unique_identifier;
+		s->uid = uid;
 		s->user = user;
 
 		HASH_ADD_KEYPTR(hh,
 		                this->users,
-		                s->unique_identifier->bv_val,
-		                s->unique_identifier->bv_len,
+		                s->uid->av_val,
+		                s->uid->av_len,
 		                s);
 
 		++this->n_users;
 	} else {
-		/* 'unique_identifier' is already in the hash
-		   table, so 'user' should replace the previous
-		   user associated with 'unique_identifier'.
-		   'unique_identifier' can be freed since an
-		   identical dynamically allocated object is
-		   already in the hash table. */
-		free(unique_identifier->bv_val);
-		free(unique_identifier);
+		/* 'uid' is already in the hash table, so
+		   'user' should replace the previous user
+		   associated with 'uid'. 'uid' can be
+		   freed since an identical dynamically
+		   allocated object is already in the hash
+		   table. */
+		simplescim_arbval_delete(uid);
 		simplescim_user_delete(s->user);
 		s->user = user;
 	}
@@ -137,21 +141,23 @@ int simplescim_user_list_insert_user(struct simplescim_user_list *this,
 }
 
 /**
- * Gets the user associated with 'unique_identifier' in
- * 'this' and stores it in 'userp'.
- * If 'unique_identifier' has an associated user, zero is
- * returned. Otherwise, -1 is returned.
+ * Gets the user associated with 'uid' in 'this' and stores
+ * it in 'userp'.
+ * If 'uid' has an associated user, zero is returned.
+ * Otherwise, -1 is returned.
  */
-int simplescim_user_list_get_user(const struct simplescim_user_list *this,
-                                  const struct berval *unique_identifier,
-                                  const struct simplescim_user **userp)
+int simplescim_user_list_get_user(
+	const struct simplescim_user_list *this,
+	const struct simplescim_arbval *uid,
+	const struct simplescim_user **userp
+)
 {
 	struct user_record *s;
 
 	HASH_FIND(hh,
 	          this->users,
-	          unique_identifier->bv_val,
-	          unique_identifier->bv_len,
+	          uid->av_val,
+	          uid->av_len,
 	          s);
 
 	if (s == NULL) {
@@ -168,20 +174,27 @@ int simplescim_user_list_get_user(const struct simplescim_user_list *this,
 /**
  * Performs 'func' for every user in 'this'.
  * 'func' must have the following definition:
- * void func(const struct berval *unique_identifier,
- *           const struct simplescim_user *user);
+ * int func(const struct simplescim_arbval *uid,
+ *          const struct simplescim_user *user);
  */
-void simplescim_user_list_foreach(
+int simplescim_user_list_foreach(
 	const struct simplescim_user_list *this,
-	void (*func)(const struct berval *unique_identifier,
-	             const struct simplescim_user *user)
+	int (*func)(const struct simplescim_arbval *uid,
+	            const struct simplescim_user *user)
 )
 {
 	struct user_record *s, *tmp;
+	int err;
 
 	HASH_ITER(hh, this->users, s, tmp) {
-		func(s->unique_identifier, s->user);
+		err = func(s->uid, s->user);
+
+		if (err == -1) {
+			return -1;
+		}
 	}
+
+	return 0;
 }
 
 /**
@@ -210,7 +223,7 @@ int simplescim_user_list_find_changes(
 		/* Get user from 'cache' */
 		err = simplescim_user_list_get_user(
 			cache,
-			s->unique_identifier,
+			s->uid,
 			&cached_user
 		);
 
@@ -222,8 +235,8 @@ int simplescim_user_list_find_changes(
 			if (err == -1) {
 				return -1;
 			}
-		} else if (!simplescim_user_subset_eq(s->user,
-		                                      cached_user)) {
+		} else if (!simplescim_user_eq(s->user,
+		                               cached_user)) {
 			/* User exists in 'cache' but is different,
 			   update it */
 			err = update_user_func(s->user, cached_user);
@@ -239,7 +252,7 @@ int simplescim_user_list_find_changes(
 		/* Get user from 'this' */
 		err = simplescim_user_list_get_user(
 			this,
-			s->unique_identifier,
+			s->uid,
 			NULL
 		);
 

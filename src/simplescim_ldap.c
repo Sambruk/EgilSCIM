@@ -181,66 +181,22 @@ static int simplescim_ldap_search(const char *base,
 }
 
 /**
- * Clones a struct berval value into a dynamically
- * allocated object.
- * On success, a pointer to the cloned struct berval is
- * returned. On error, NULL is returned and
- * simplescim_error_string is set to an appropriate error
- * message.
- */
-static struct berval *clone_val(const struct berval *val)
-{
-	struct berval *clone;
-
-	if (val == NULL) {
-		simplescim_error_string_set(
-			"clone_val",
-			"cannot clone NULL"
-		);
-		return NULL;
-	}
-
-	clone = malloc(sizeof(struct berval));
-
-	if (clone == NULL) {
-		simplescim_error_string_set_errno(
-			"clone_val:malloc"
-		);
-		return NULL;
-	}
-
-	clone->bv_len = val->bv_len;
-	clone->bv_val = malloc(clone->bv_len + 1);
-
-	if (clone->bv_val == NULL) {
-		simplescim_error_string_set_errno(
-			"clone_val:malloc"
-		);
-		free(clone);
-		return NULL;
-	}
-
-	memcpy(clone->bv_val, val->bv_val, clone->bv_len);
-	clone->bv_val[clone->bv_len] = '\0';
-
-	return clone;
-}
-
-/**
  * Clones a NULL-terminated list of pointers to
  * struct berval values into a dynamically allocated
- * object.
- * On success, a pointer to the cloned struct berval list
- * is returned. On error, NULL is returned and
- * simplescim_error_string is set to an appropriate error
- * message.
+ * struct simplescim_arbval_list object.
+ * On success, a pointer to the cloned object is returned.
+ * On error, NULL is returned and simplescim_error_string
+ * is set to an appropriate error message.
  */
-static struct berval **clone_vals(const struct berval **vals)
+static struct simplescim_arbval_list *clone_vals(
+	const struct berval **vals
+)
 {
-	struct berval **clone;
-	struct berval *val;
+	struct simplescim_arbval_list *clone;
+	struct simplescim_arbval *val;
 	size_t len;
 	size_t i;
+	int err;
 
 	if (vals == NULL) {
 		simplescim_error_string_set(
@@ -260,12 +216,9 @@ static struct berval **clone_vals(const struct berval **vals)
 
 	/* Allocate the clone */
 
-	clone = malloc(sizeof(struct berval *) * (len + 1));
+	clone = simplescim_arbval_list_new(len);
 
 	if (clone == NULL) {
-		simplescim_error_string_set_errno(
-			"clone_vals:malloc"
-		);
 		return NULL;
 	}
 
@@ -274,26 +227,28 @@ static struct berval **clone_vals(const struct berval **vals)
 	for (i = 0; i < len; ++i) {
 		/* Clone value i */
 
-		val = clone_val(vals[i]);
+		val = simplescim_arbval_new(
+			vals[i]->bv_len,
+			(const uint8_t *)vals[i]->bv_val
+		);
 
 		if (val == NULL) {
-			while (i > 0) {
-				free(clone[i - 1]->bv_val);
-				free(clone[i - 1]);
-				--i;
-			}
-
-			free(clone);
-
+			simplescim_arbval_list_delete(clone);
 			return NULL;
 		}
 
 		/* Insert the value */
+		err = simplescim_arbval_list_append(
+			clone,
+			val
+		);
 
-		clone[i] = val;
+		if (err == -1) {
+			simplescim_arbval_delete(val);
+			simplescim_arbval_list_delete(clone);
+			return NULL;
+		}
 	}
-
-	clone[len] = NULL;
 
 	return clone;
 }
@@ -308,9 +263,9 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 {
 	struct simplescim_user *user;
 	char *attr, *attr_clone;
-	struct berval **vals, **vals_clone;
+	struct berval **vals;
+	struct simplescim_arbval_list *vals_clone;
 	BerElement *ber;
-	size_t i;
 	int err;
 
 	/* Create the user object. */
@@ -325,7 +280,8 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 
 		if (attr_clone == NULL) {
 			simplescim_error_string_set_errno(
-				"entry_to_user"
+				"entry_to_user:"
+				"strdup"
 			);
 			ldap_memfree(attr);
 			ber_free(ber, 0);
@@ -362,17 +318,14 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 
 		/* Set attribute in user object */
 
-		err = simplescim_user_set_attribute(user,
-		                                    attr_clone,
-		                                    vals_clone);
+		err = simplescim_user_set_attribute(
+			user,
+			attr_clone,
+			vals_clone
+		);
 
 		if (err == -1) {
-			for (i = 0; vals_clone[i] != NULL; ++i) {
-				free(vals_clone[i]->bv_val);
-				free(vals_clone[i]);
-			}
-
-			free(vals_clone);
+			simplescim_arbval_list_delete(vals_clone);
 			ldap_value_free_len(vals);
 			free(attr_clone);
 			ldap_memfree(attr);
@@ -393,58 +346,6 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 }
 
 /**
- * Returns a clone of the struct berval value with
- * attribute 'unique_identifier_attr', if such exists.
- * On success, a pointer to the cloned object is returned.
- * On error, NULL is returned and simplescim_error_string
- * is set to an appropriate error message.
- */
-static struct berval *
-get_users_unique_identifier(struct simplescim_user *user,
-                            const char *unique_identifier_attr)
-{
-	const struct berval **vals;
-	struct berval *unique_identifier;
-	int err;
-
-	err = simplescim_user_get_attribute(
-		user,
-		unique_identifier_attr,
-		&vals
-	);
-
-	if (err == -1) {
-		simplescim_error_string_set_prefix(
-			"get_users_unique_identifier"
-		);
-		simplescim_error_string_set_message(
-			"user does not have attribute \"%s\"",
-			unique_identifier_attr
-		);
-		return NULL;
-	}
-
-	if (vals[0] == NULL || vals[1] != NULL) {
-		simplescim_error_string_set_prefix(
-			"get_users_unique_identifier"
-		);
-		simplescim_error_string_set_message(
-			"attribute \"%s\" must have exactly one value",
-			unique_identifier_attr
-		);
-		return NULL;
-	}
-
-	unique_identifier = clone_val(vals[0]);
-
-	if (unique_identifier == NULL) {
-		return NULL;
-	}
-
-	return unique_identifier;
-}
-
-/**
  * Construct the user list object from the LDAP response.
  * On success, a pointer to the constructed object is
  * returned. On error, NULL is returned and
@@ -455,20 +356,13 @@ static struct simplescim_user_list *simplescim_ldap_to_user_list()
 {
 	struct simplescim_user_list *users;
 	struct simplescim_user *user;
-	struct berval *unique_identifier;
-	const char *unique_identifier_attr;
+	struct simplescim_arbval *uid;
 	LDAPMessage *entry;
 	int err;
 
 	/* Initialise user list */
 
 	users = simplescim_user_list_new();
-
-	/* Fetch which LDAP attribute is the unique
-	   identifier. */
-
-	simplescim_config_file_get("ldap-unique-identifier",
-	                           &unique_identifier_attr);
 
 	/* For every response entry, create a user and
 	   insert it into the user list. */
@@ -488,12 +382,9 @@ static struct simplescim_user_list *simplescim_ldap_to_user_list()
 
 		/* Get the user's unique identifier. */
 
-		unique_identifier = get_users_unique_identifier(
-			user,
-			unique_identifier_attr
-		);
+		uid = simplescim_user_get_uid(user);
 
-		if (unique_identifier == NULL) {
+		if (uid == NULL) {
 			simplescim_user_delete(user);
 			simplescim_user_list_delete(users);
 			return NULL;
@@ -503,13 +394,12 @@ static struct simplescim_user_list *simplescim_ldap_to_user_list()
 
 		err = simplescim_user_list_insert_user(
 			users,
-			unique_identifier,
+			uid,
 			user
 		);
 
 		if (err == -1) {
-			free(unique_identifier->bv_val);
-			free(unique_identifier);
+			simplescim_arbval_delete(uid);
 			simplescim_user_delete(user);
 			simplescim_user_list_delete(users);
 			return NULL;

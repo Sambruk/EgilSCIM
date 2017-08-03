@@ -11,7 +11,9 @@
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int simplescim_scim_perform(const struct simplescim_user_list *current,
-                            const struct simplescim_user_list *cached);
+int simplescim_scim_perform(
+	const struct simplescim_user_list *current,
+	const struct simplescim_user_list *cached
+);
 
 #endif

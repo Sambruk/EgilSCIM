@@ -5,11 +5,14 @@
 #include <ctype.h>
 
 #include "simplescim_error_string.h"
+#include "simplescim_arbval.h"
+#include "simplescim_arbval_list.h"
 #include "simplescim_user.h"
 
 struct simplescim_scim_json_iter {
 	char *iter_var;
-	const struct berval **iter_val;
+	const struct simplescim_arbval_list *iter_val;
+	size_t iter_idx;
 	struct {
 		const char *json;
 		size_t line;
@@ -125,9 +128,18 @@ static void simplescim_scim_json_parser_delete(
 	struct simplescim_scim_json_parser *parser
 )
 {
+	struct simplescim_scim_json_iter *iter;
+
 	if (parser != NULL) {
 		if (parser->output.str != NULL) {
 			free(parser->output.str);
+		}
+
+		while (parser->iteration_stack != NULL) {
+			iter = parser->iteration_stack;
+			parser->iteration_stack = iter->next;
+			free(iter->iter_var);
+			free(iter);
 		}
 
 		free(parser);
@@ -214,6 +226,7 @@ static int simplescim_scim_json_is_id(char c)
 
 /**
  * Parses an ID in the input JSON string.
+ * <id> ::= '$'? [a-zA-Z0-9\-\_]+
  * On success, a pointer to the ID is returned. On error,
  * NULL is returned and simplescim_error_string is set to
  * an appropriate error message.
@@ -313,7 +326,8 @@ static char *simplescim_scim_json_parser_get_val(
 )
 {
 	int err;
-	const struct berval **values;
+	const struct simplescim_arbval *value;
+	const struct simplescim_arbval_list *values;
 	struct simplescim_scim_json_iter *iter;
 	char *val;
 
@@ -325,7 +339,15 @@ static char *simplescim_scim_json_parser_get_val(
 
 		while (iter != NULL) {
 			if (strcmp(iter->iter_var, var) == 0) {
-				values = iter->iter_val;
+				if (iter->iter_idx
+				    >= iter->iter_val->al_len) {
+					value = NULL;
+				} else {
+					value = iter->
+					        iter_val->
+					        al_vals[iter->iter_idx];
+				}
+
 				break;
 			}
 
@@ -360,13 +382,19 @@ static char *simplescim_scim_json_parser_get_val(
 			);
 			return NULL;
 		}
+
+		if (values->al_len == 0) {
+			value = NULL;
+		} else {
+			value = values->al_vals[0];
+		}
 	}
 
 	/* Duplicate value */
-	if (values[0] == NULL) {
+	if (value == NULL) {
 		val = strdup("");
 	} else {
-		val = strdup(values[0]->bv_val);
+		val = strdup((const char *)value->av_val);
 	}
 
 	if (val == NULL) {
@@ -421,6 +449,8 @@ static int simplescim_scim_json_parser_replacement_simple(
 
 /**
  * Parses a string literal, either single or double quoted.
+ * <string> ::= '\'' [^']* '\''
+ *            | '"' [^"]* '"'
  * On success, a pointer to the parsed string is returned.
  * On error, NULL is returned and simplescim_error_string
  * is set to an appropriate error message.
@@ -464,7 +494,7 @@ static char *simplescim_scim_json_parser_string(
 		}
 	}
 
-	if (parser->json[0] == '\0') {
+	if (parser->json[len] == '\0') {
 		simplescim_scim_json_parser_syntax_error(parser);
 		simplescim_error_string_set_message(
 			"unexpected end-of-string"
@@ -496,6 +526,7 @@ static char *simplescim_scim_json_parser_string(
 
 /**
  * Parses a case statement.
+ * <case> ::= <ws>* <string> <ws>* ':' <ws>* <string>
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
@@ -558,6 +589,7 @@ static int simplescim_scim_json_parser_case(
 
 /**
  * Parses a default statement.
+ * <default> ::= <ws>* ':' <ws>* <string>
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
@@ -607,6 +639,8 @@ static int simplescim_scim_json_parser_default(
 
 /**
  * Parses a conditional replacement rule.
+ * <cond> ::= <ws>* <id> <ws>* ('case' <case> <ws>*)*
+ *                             'default' <default> <ws>*
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error string.
@@ -680,6 +714,9 @@ static int simplescim_scim_json_parser_replacement_cond(
 
 /**
  * Parses a for statement.
+ * <iter-start> ::= <ws>* <id>[1] <ws>* 'in' <ws>* <id>[2] <ws>* '}'
+ *     [1] Must be iteration variable
+ *     [2] Must be LDAP variable
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
@@ -689,7 +726,7 @@ static int simplescim_scim_json_parser_iter_start(
 )
 {
 	char *iter_var, *ldap_var, *id;
-	const struct berval **iter_val;
+	const struct simplescim_arbval_list *iter_val;
 	struct simplescim_scim_json_iter *iter;
 	int err;
 
@@ -801,8 +838,21 @@ static int simplescim_scim_json_parser_iter_start(
 		return -1;
 	}
 
-	iter->iter_var = iter_var;
+	iter->iter_var = strdup(iter_var + 1);
+
+	if (iter->iter_var == NULL) {
+		simplescim_error_string_set_errno(
+			"simplescim_scim_json_parser_iter_start:"
+			"strdup"
+		);
+		free(iter);
+		free(iter_var);
+		return -1;
+	}
+
+	free(iter_var);
 	iter->iter_val = iter_val;
+	iter->iter_idx = 0;
 	iter->reset.json = parser->json;
 	iter->reset.line = parser->line;
 	iter->reset.col = parser->col;
@@ -814,6 +864,7 @@ static int simplescim_scim_json_parser_iter_start(
 
 /**
  * Parses an end statement.
+ * <iter-end> ::= <ws>* '}'
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
@@ -854,7 +905,7 @@ static int simplescim_scim_json_parser_iter_end(
 	   once with an empty string replacing the
 	   iteration variable. Ideally, the iteration body
 	   should not be printed at all. */
-	if (iter->iter_val[0] == NULL) {
+	if (iter->iter_idx == iter->iter_val->al_len) {
 		parser->iteration_stack = iter->next;
 		free(iter->iter_var);
 		free(iter);
@@ -862,10 +913,10 @@ static int simplescim_scim_json_parser_iter_end(
 	}
 
 	/* Increase the iteration value by one step */
-	++iter->iter_val;
+	++iter->iter_idx;
 
 	/* Check if it is the end of the iteration */
-	if (iter->iter_val[0] == NULL) {
+	if (iter->iter_idx == iter->iter_val->al_len) {
 		parser->iteration_stack = iter->next;
 		free(iter->iter_var);
 		free(iter);
@@ -882,6 +933,9 @@ static int simplescim_scim_json_parser_iter_end(
 
 /**
  * Parses a replacement rule.
+ * <replace> ::= '${' <ws>* ( ( 'switch' <cond> | <id> ) <ws>* '}' )
+ *                          | ( 'for' <iter-start> )
+ *                          | ( 'end' <iter-end> )
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error string.
@@ -982,7 +1036,7 @@ static int simplescim_scim_json_parser_start(
 		/* Check if the current characters are '${', in which
 		   case a replacement rule is applied. Otherwise, the
 		   current character is copied to the output. */
-		if (parser->json[0] == '$' && parser->json[0] == '{') {
+		if (parser->json[0] == '$' && parser->json[1] == '{') {
 			err = simplescim_scim_json_parser_replacement(
 				parser
 			);
@@ -990,7 +1044,6 @@ static int simplescim_scim_json_parser_start(
 			if (err == -1) {
 				return -1;
 			}
-
 		} else {
 			err = simplescim_scim_json_parser_copy_char(
 				parser,

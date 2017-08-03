@@ -31,7 +31,9 @@ const char *simplescim_config_file_name = NULL;
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int simplescim_config_file_load(const char *file_name)
+int simplescim_config_file_load(
+	const char *file_name
+)
 {
 	int fd;
 	size_t len;
@@ -108,7 +110,10 @@ void simplescim_config_file_clear()
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int simplescim_config_file_insert(char *variable, char *value)
+int simplescim_config_file_insert(
+	char *variable,
+	char *value
+)
 {
 	struct variable_record *s;
 
@@ -158,8 +163,10 @@ int simplescim_config_file_insert(char *variable, char *value)
  * If 'variable' has an associated value, zero is returned.
  * Otherwise, -1 is returned.
  */
-int simplescim_config_file_get(const char *variable,
-                               const char **valuep)
+int simplescim_config_file_get(
+	const char *variable,
+	const char **valuep
+)
 {
 	struct variable_record *s;
 
@@ -182,8 +189,9 @@ int simplescim_config_file_get(const char *variable,
  * 'func' must have the following signature:
  * void func(const char *variable, const char *value);
  */
-void simplescim_config_file_foreach(void (*func)(const char *variable,
-                                                 const char *value))
+void simplescim_config_file_foreach(
+	void (*func)(const char *variable, const char *value)
+)
 {
 	struct variable_record *s, *tmp;
 
