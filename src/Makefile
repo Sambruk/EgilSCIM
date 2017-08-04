@@ -25,6 +25,42 @@ SimpleSCIM: \
 	@echo "LINK $@"
 	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+SimpleSCIM_simulate: \
+	simplescim_main.o \
+	simplescim_error_string.o \
+	simplescim_arbval.o \
+	simplescim_arbval_list.o \
+	simplescim_user.o \
+	simplescim_user_list.o \
+	simplescim_config_file.o \
+	simplescim_config_file_open.o \
+	simplescim_config_file_to_string.o \
+	simplescim_config_file_parser.o \
+	simplescim_config_file_required_variables.o \
+	simplescim_ldap_simulate.o \
+	simplescim_ldap_attrs_parser.o \
+	simplescim_cache_file.o \
+	simplescim_scim.o \
+	simplescim_scim_json.o
+	@echo "LINK $@"
+	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+simplescim_cache_file_print: \
+	simplescim_cache_file_print.o \
+	simplescim_error_string.o \
+	simplescim_arbval.o \
+	simplescim_arbval_list.o \
+	simplescim_user.o \
+	simplescim_user_list.o \
+	simplescim_config_file.o \
+	simplescim_config_file_open.o \
+	simplescim_config_file_to_string.o \
+	simplescim_config_file_parser.o \
+	simplescim_config_file_required_variables.o \
+	simplescim_cache_file.o
+	@echo "LINK $@"
+	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
 simplescim_main.o: \
 	simplescim_main.c \
 	simplescim_error_string.h \
@@ -126,10 +162,23 @@ simplescim_ldap.o: \
 	simplescim_ldap.c \
 	simplescim_ldap.h \
 	simplescim_error_string.h \
+	simplescim_arbval.h \
+	simplescim_arbval_list.h \
 	simplescim_user.h \
 	simplescim_user_list.h \
 	simplescim_config_file.h \
 	simplescim_ldap_attrs_parser.h
+	@echo "CC $<"
+	@$(CC) -c $(CFLAGS) -o $@ $<
+
+simplescim_ldap_simulate.o: \
+	simplescim_ldap_simulate.c \
+	simplescim_ldap.h \
+	simplescim_error_string.h \
+	simplescim_arbval.h \
+	simplescim_arbval_list.h \
+	simplescim_user.h \
+	simplescim_user_list.h
 	@echo "CC $<"
 	@$(CC) -c $(CFLAGS) -o $@ $<
 
@@ -150,6 +199,17 @@ simplescim_cache_file.o: \
 	simplescim_user.h \
 	simplescim_user_list.h \
 	simplescim_config_file.h
+	@echo "CC $<"
+	@$(CC) -c $(CFLAGS) -o $@ $<
+
+simplescim_cache_file_print.o: \
+	simplescim_cache_file_print.c \
+	simplescim_error_string.h \
+	simplescim_arbval.h \
+	simplescim_arbval_list.h \
+	simplescim_user.h \
+	simplescim_user_list.h \
+	simplescim_cache_file.h
 	@echo "CC $<"
 	@$(CC) -c $(CFLAGS) -o $@ $<
 
@@ -240,8 +300,10 @@ clean_object:
 	rm -f simplescim_config_file_parser.o
 	rm -f simplescim_config_file_required_variables.o
 	rm -f simplescim_ldap.o
+	rm -f simplescim_ldap_simulate.o
 	rm -f simplescim_ldap_attrs_parser.o
 	rm -f simplescim_cache_file.o
+	rm -f simplescim_cache_file_print.o
 	rm -f simplescim_scim.o
 	rm -f simplescim_scim_json.o
 
@@ -250,6 +312,8 @@ clean_test_object:
 
 clean_executable:
 	rm -f SimpleSCIM
+	rm -f SimpleSCIM_simulate
+	rm -f simplescim_cache_file_print
 
 clean_test_executable:
 	rm -f test_simplescim_arbval

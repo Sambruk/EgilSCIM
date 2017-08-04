@@ -240,6 +240,11 @@ int simplescim_user_list_find_changes(
 
 			if (err == -1) {
 				++n_create_fail;
+				fprintf(
+					stderr,
+					"%s\n",
+					simplescim_error_string_get()
+				);
 			}
 		} else if (!simplescim_user_eq(s->user,
 		                               cached_user)) {
@@ -250,6 +255,11 @@ int simplescim_user_list_find_changes(
 
 			if (err == -1) {
 				++n_update_fail;
+				fprintf(
+					stderr,
+					"%s\n",
+					simplescim_error_string_get()
+				);
 			}
 		}
 	}
@@ -271,6 +281,11 @@ int simplescim_user_list_find_changes(
 
 			if (err == -1) {
 				++n_delete_fail;
+				fprintf(
+					stderr,
+					"%s\n",
+					simplescim_error_string_get()
+				);
 			}
 		}
 	}

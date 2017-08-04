@@ -5,6 +5,8 @@
 #include <ldap.h>
 
 #include "simplescim_error_string.h"
+#include "simplescim_arbval.h"
+#include "simplescim_arbval_list.h"
 #include "simplescim_user.h"
 #include "simplescim_user_list.h"
 #include "simplescim_config_file.h"
