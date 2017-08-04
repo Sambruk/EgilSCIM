@@ -197,6 +197,8 @@ int simplescim_user_list_foreach(
 	return 0;
 }
 
+#include <stdio.h>
+
 /**
  * Compares 'this' to 'cache' and performs
  * 'create_user_func' on users in 'this' but not in
@@ -217,6 +219,9 @@ int simplescim_user_list_find_changes(
 	struct user_record *s, *tmp;
 	const struct simplescim_user *cached_user;
 	int err;
+	size_t n_create = 0, n_create_fail = 0;
+	size_t n_update = 0, n_update_fail = 0;
+	size_t n_delete = 0, n_delete_fail = 0;
 
 	/* For every user in 'this' */
 	HASH_ITER(hh, this->users, s, tmp) {
@@ -230,19 +235,21 @@ int simplescim_user_list_find_changes(
 		if (err == -1) {
 			/* User doesn't exist in 'cache',
 			   create it */
+			++n_create;
 			err = create_user_func(s->user);
 
 			if (err == -1) {
-				return -1;
+				++n_create_fail;
 			}
 		} else if (!simplescim_user_eq(s->user,
 		                               cached_user)) {
 			/* User exists in 'cache' but is different,
 			   update it */
+			++n_update;
 			err = update_user_func(s->user, cached_user);
 
 			if (err == -1) {
-				return -1;
+				++n_update_fail;
 			}
 		}
 	}
@@ -259,13 +266,28 @@ int simplescim_user_list_find_changes(
 		if (err == -1) {
 			/* User doesn't exist in 'this',
 			   delete it */
+			++n_delete;
 			err = delete_user_func(s->user);
 
 			if (err == -1) {
-				return -1;
+				++n_delete_fail;
 			}
 		}
 	}
+
+	printf("Status:   Success   Failure     Total\n");
+	printf("Create: %9lu %9lu %9lu\n",
+	       n_create - n_create_fail,
+	       n_create_fail,
+	       n_create);
+	printf("Update: %9lu %9lu %9lu\n",
+	       n_update - n_update_fail,
+	       n_update_fail,
+	       n_update);
+	printf("Delete: %9lu %9lu %9lu\n",
+	       n_delete - n_delete_fail,
+	       n_delete_fail,
+	       n_delete);
 
 	return 0;
 }
