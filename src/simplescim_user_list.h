@@ -68,7 +68,8 @@ int simplescim_user_list_foreach(
 );
 
 /**
- * Compares 'this' to 'cache' and performs
+ * Compares 'this' to 'cache' and performs 'copy_user_func'
+ * on users in both 'this' and cache if they are equal,
  * 'create_user_func' on users in 'this' but not in
  * 'cache', performs 'update_user_func' on users in both
  * 'this' and 'cache' if the user has been updated and
@@ -78,6 +79,7 @@ int simplescim_user_list_foreach(
 int simplescim_user_list_find_changes(
 	const struct simplescim_user_list *this,
 	const struct simplescim_user_list *cache,
+	int (copy_user_func)(const struct simplescim_user *cached_user),
 	int (create_user_func)(const struct simplescim_user *user),
 	int (update_user_func)(const struct simplescim_user *user,
 	                       const struct simplescim_user *cached_user),

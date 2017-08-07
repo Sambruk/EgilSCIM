@@ -56,6 +56,42 @@ static void simplescim_scim_clear()
 	simplescim_user_list_delete(simplescim_scim_new_cache);
 }
 
+static int copy_user_func(const struct simplescim_user *cached_user)
+{
+	struct simplescim_user *copied_user;
+	struct simplescim_arbval *uid;
+	int err;
+
+	/* Copy user */
+	copied_user = simplescim_user_copy(cached_user);
+
+	if (copied_user == NULL) {
+		return -1;
+	}
+
+	uid = simplescim_user_get_uid(copied_user);
+
+	if (uid == NULL) {
+		simplescim_user_delete(copied_user);
+		return -1;
+	}
+
+	/* Insert copied user into new cache */
+	err = simplescim_user_list_insert_user(
+		simplescim_scim_new_cache,
+		uid,
+		copied_user
+	);
+
+	if (err == -1) {
+		simplescim_arbval_delete(uid);
+		simplescim_user_delete(copied_user);
+		return -1;
+	}
+
+	return 0;
+}
+
 static int create_user_func(const struct simplescim_user *user)
 {
 	char *parsed_json;
@@ -408,6 +444,7 @@ int simplescim_scim_perform(
 	err = simplescim_user_list_find_changes(
 		current,
 		cached,
+		copy_user_func,
 		create_user_func,
 		update_user_func,
 		delete_user_func

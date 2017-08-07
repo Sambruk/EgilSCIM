@@ -200,7 +200,8 @@ int simplescim_user_list_foreach(
 #include <stdio.h>
 
 /**
- * Compares 'this' to 'cache' and performs
+ * Compares 'this' to 'cache' and performs 'copy_user_func'
+ * on users in both 'this' and cache if they are equal,
  * 'create_user_func' on users in 'this' but not in
  * 'cache', performs 'update_user_func' on users in both
  * 'this' and 'cache' if the user has been updated and
@@ -210,6 +211,7 @@ int simplescim_user_list_foreach(
 int simplescim_user_list_find_changes(
 	const struct simplescim_user_list *this,
 	const struct simplescim_user_list *cache,
+	int (copy_user_func)(const struct simplescim_user *cached_user),
 	int (create_user_func)(const struct simplescim_user *user),
 	int (update_user_func)(const struct simplescim_user *user,
 	                       const struct simplescim_user *cached_user),
@@ -219,6 +221,7 @@ int simplescim_user_list_find_changes(
 	struct user_record *s, *tmp;
 	const struct simplescim_user *cached_user;
 	int err;
+	size_t n_copy = 0, n_copy_fail = 0;
 	size_t n_create = 0, n_create_fail = 0;
 	size_t n_update = 0, n_update_fail = 0;
 	size_t n_delete = 0, n_delete_fail = 0;
@@ -246,20 +249,40 @@ int simplescim_user_list_find_changes(
 					simplescim_error_string_get()
 				);
 			}
-		} else if (!simplescim_user_eq(s->user,
-		                               cached_user)) {
-			/* User exists in 'cache' but is different,
-			   update it */
-			++n_update;
-			err = update_user_func(s->user, cached_user);
+		} else {
+			/* User exists in 'cache' */
 
-			if (err == -1) {
-				++n_update_fail;
-				fprintf(
-					stderr,
-					"%s\n",
-					simplescim_error_string_get()
+			if (simplescim_user_eq(s->user, cached_user)) {
+				/* User is the same, copy it */
+				++n_copy;
+				err = copy_user_func(
+					cached_user
 				);
+
+				if (err == -1) {
+					++n_copy_fail;
+					fprintf(
+						stderr,
+						"%s\n",
+						simplescim_error_string_get()
+					);
+				}
+			} else {
+				/* User is different, update it */
+				++n_update;
+				err = update_user_func(
+					s->user,
+					cached_user
+				);
+
+				if (err == -1) {
+					++n_update_fail;
+					fprintf(
+						stderr,
+						"%s\n",
+						simplescim_error_string_get()
+					);
+				}
 			}
 		}
 	}
@@ -291,6 +314,10 @@ int simplescim_user_list_find_changes(
 	}
 
 	printf("Status:   Success   Failure     Total\n");
+	printf("Copy:   %9lu %9lu %9lu\n",
+	       n_copy - n_copy_fail,
+	       n_copy_fail,
+	       n_copy);
 	printf("Create: %9lu %9lu %9lu\n",
 	       n_create - n_create_fail,
 	       n_create_fail,
