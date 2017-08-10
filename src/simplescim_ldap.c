@@ -114,6 +114,7 @@ static int simplescim_ldap_search(const char *base,
                                   const char *attrsonly)
 {
 	int scope_val, attrsonly_val;
+	const char *filter_val;
 	char **attrs_val;
 	size_t i;
 	int err;
@@ -146,13 +147,21 @@ static int simplescim_ldap_search(const char *base,
 		return -1;
 	}
 
+	/* Set filter */
+
+	if (filter == NULL || filter[0] == '\0') {
+		filter_val = NULL;
+	} else {
+		filter_val = filter;
+	}
+
 	/* Search */
 
 	err = ldap_search_ext_s(
 		ld,
 		base,
 		scope_val,
-		filter,
+		filter_val,
 		attrs_val,
 		attrsonly_val,
 		NULL,
