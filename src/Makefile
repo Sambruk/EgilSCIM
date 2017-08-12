@@ -16,7 +16,6 @@ SimpleSCIM: \
 	simplescim_config_file_open.o \
 	simplescim_config_file_to_string.o \
 	simplescim_config_file_parser.o \
-	simplescim_config_file_required_variables.o \
 	simplescim_ldap.o \
 	simplescim_ldap_attrs_parser.o \
 	simplescim_cache_file.o \
@@ -36,7 +35,6 @@ SimpleSCIM_simulate: \
 	simplescim_config_file_open.o \
 	simplescim_config_file_to_string.o \
 	simplescim_config_file_parser.o \
-	simplescim_config_file_required_variables.o \
 	simplescim_ldap_simulate.o \
 	simplescim_ldap_attrs_parser.o \
 	simplescim_cache_file.o \
@@ -56,7 +54,6 @@ simplescim_cache_file_print: \
 	simplescim_config_file_open.o \
 	simplescim_config_file_to_string.o \
 	simplescim_config_file_parser.o \
-	simplescim_config_file_required_variables.o \
 	simplescim_cache_file.o
 	@echo "LINK $@"
 	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
@@ -121,7 +118,6 @@ simplescim_config_file.o: \
 	simplescim_config_file_open.h \
 	simplescim_config_file_to_string.h \
 	simplescim_config_file_parser.h \
-	simplescim_config_file_required_variables.h \
 	uthash.h
 	@echo "CC $<"
 	@$(CC) -c $(CFLAGS) -o $@ $<
@@ -145,14 +141,6 @@ simplescim_config_file_to_string.o: \
 simplescim_config_file_parser.o: \
 	simplescim_config_file_parser.c \
 	simplescim_config_file_parser.h \
-	simplescim_error_string.h \
-	simplescim_config_file.h
-	@echo "CC $<"
-	@$(CC) -c $(CFLAGS) -o $@ $<
-
-simplescim_config_file_required_variables.o: \
-	simplescim_config_file_required_variables.c \
-	simplescim_config_file_required_variables.h \
 	simplescim_error_string.h \
 	simplescim_config_file.h
 	@echo "CC $<"
@@ -298,7 +286,6 @@ clean_object:
 	rm -f simplescim_config_file_open.o
 	rm -f simplescim_config_file_to_string.o
 	rm -f simplescim_config_file_parser.o
-	rm -f simplescim_config_file_required_variables.o
 	rm -f simplescim_ldap.o
 	rm -f simplescim_ldap_simulate.o
 	rm -f simplescim_ldap_attrs_parser.o

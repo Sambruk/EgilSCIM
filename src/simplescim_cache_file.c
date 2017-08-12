@@ -431,10 +431,8 @@ struct simplescim_user_list *simplescim_cache_file_get_users()
 
 	if (err == -1) {
 		simplescim_error_string_set(
-			"simplescim_cache_file_get_users:"
-			"simplescim_config_file_get",
-			"configuration file does not have variable "
-			"\"cache-file\""
+			"simplescim_cache_file_get_users",
+			"required variable \"cache-file\" is missing"
 		);
 		return NULL;
 	}
@@ -755,10 +753,8 @@ int simplescim_cache_file_save(const struct simplescim_user_list *users)
 
 	if (err == -1) {
 		simplescim_error_string_set(
-			"simplescim_cache_file_save:"
-			"simplescim_config_file_get",
-			"configuration file does not have variable "
-			"\"cache-file\""
+			"simplescim_cache_file_save",
+			"required variable \"cache-file\" is missing"
 		);
 		return -1;
 	}

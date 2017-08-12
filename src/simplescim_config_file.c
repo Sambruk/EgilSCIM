@@ -9,7 +9,6 @@
 #include "simplescim_config_file_open.h"
 #include "simplescim_config_file_to_string.h"
 #include "simplescim_config_file_parser.h"
-#include "simplescim_config_file_required_variables.h"
 
 struct variable_record {
 	char *variable;
@@ -72,14 +71,6 @@ int simplescim_config_file_load(
 	}
 
 	free(input);
-
-	/* Verify that all required variables are present. */
-	err = simplescim_config_file_required_variables();
-
-	if (err == -1) {
-		simplescim_config_file_clear();
-		return -1;
-	}
 
 	return 0;
 }

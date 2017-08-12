@@ -20,19 +20,76 @@ static const char *simplescim_scim_create;
 static const char *simplescim_scim_update;
 static struct simplescim_user_list *simplescim_scim_new_cache;
 
+static int simplescim_scim_get_variable(
+	const char *variable,
+	const char **dest
+)
+{
+	int err;
+
+	err = simplescim_config_file_get(
+		variable,
+		dest
+	);
+
+	if (err == -1) {
+		simplescim_error_string_set_prefix(
+			"simplescim_scim_get_variable"
+		);
+		simplescim_error_string_set_message(
+			"required variable \"%s\" is missing",
+			variable
+		);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int simplescim_scim_get_variables()
+{
+	size_t n_variables = 5;
+	const char *variables[] = {
+		"scim-uri",
+		"scim-resource-type",
+		"scim-unique-identifier",
+		"scim-create",
+		"scim-update"
+	};
+	const char **destinations[] = {
+		&simplescim_scim_uri,
+		&simplescim_scim_resource_type,
+		&simplescim_scim_unique_identifier,
+		&simplescim_scim_create,
+		&simplescim_scim_update
+	};
+	size_t i;
+	int err;
+
+	for (i = 0; i < n_variables; ++i) {
+		err = simplescim_scim_get_variable(
+			variables[i],
+			destinations[i]
+		);
+
+		if (err == -1) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 static int simplescim_scim_init()
 {
+	int err;
+
 	/* Fetch variables from configuration file */
-	simplescim_config_file_get("scim-uri",
-	                           &simplescim_scim_uri);
-	simplescim_config_file_get("scim-resource-type",
-	                           &simplescim_scim_resource_type);
-	simplescim_config_file_get("scim-unique-identifier",
-	                           &simplescim_scim_unique_identifier);
-	simplescim_config_file_get("scim-create",
-	                           &simplescim_scim_create);
-	simplescim_config_file_get("scim-update",
-	                           &simplescim_scim_update);
+	err = simplescim_scim_get_variables();
+
+	if (err == -1) {
+		return -1;
+	}
 
 	/* Allocate new cache */
 	simplescim_scim_new_cache = simplescim_user_list_new();

@@ -12,8 +12,25 @@
 #include "simplescim_config_file.h"
 #include "simplescim_ldap_attrs_parser.h"
 
-static LDAP *ld = NULL;
-static LDAPMessage *res = NULL;
+/**
+ * LDAP state variables
+ */
+
+static LDAP *simplescim_ldap_ld = NULL;
+static LDAPMessage *simplescim_ldap_res = NULL;
+
+/**
+ * Configuration file variables
+ */
+
+static const char *simplescim_ldap_uri;
+static const char *simplescim_ldap_who;
+static const char *simplescim_ldap_passwd;
+static const char *simplescim_ldap_base;
+static const char *simplescim_ldap_scope;
+static const char *simplescim_ldap_filter;
+static const char *simplescim_ldap_attrs;
+static const char *simplescim_ldap_attrsonly;
 
 /**
  * Prints an error message concerning LDAP to
@@ -37,66 +54,159 @@ static void simplescim_ldap_print_error(int err, const char *func)
  */
 static void simplescim_ldap_close()
 {
-	if (res != NULL) {
+	if (simplescim_ldap_res != NULL) {
 		/* Disregard the return value. */
-		ldap_msgfree(res);
-		res = NULL;
+		ldap_msgfree(simplescim_ldap_res);
+		simplescim_ldap_res = NULL;
 	}
 
-	if (ld != NULL) {
+	if (simplescim_ldap_ld != NULL) {
 		/* Disregard the return value. */
-		ldap_unbind_ext(ld, NULL, NULL);
-		ld = NULL;
+		ldap_unbind_ext(simplescim_ldap_ld, NULL, NULL);
+		simplescim_ldap_ld = NULL;
 	}
+}
+
+/**
+ * Gets and verifies one variable from the configuration file.
+ */
+static int simplescim_ldap_get_variable(
+	const char *variable,
+	const char **dest
+)
+{
+	int err;
+
+	err = simplescim_config_file_get(
+		variable,
+		dest
+	);
+
+	if (err == -1) {
+		simplescim_error_string_set_prefix(
+			"simplescim_ldap_get_variable"
+		);
+		simplescim_error_string_set_message(
+			"required variable \"%s\" is missing",
+			variable
+		);
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Gets and verifies all LDAP variables from the configuration file.
+ */
+int simplescim_ldap_get_variables()
+{
+	size_t n_variables = 9;
+	const char *variables[] = {
+		"ldap-uri",
+		"ldap-who",
+		"ldap-passwd",
+		"ldap-base",
+		"ldap-scope",
+		"ldap-filter",
+		"ldap-attrs",
+		"ldap-attrsonly",
+		"ldap-unique-identifier"
+	};
+	const char **destinations[] = {
+		&simplescim_ldap_uri,
+		&simplescim_ldap_who,
+		&simplescim_ldap_passwd,
+		&simplescim_ldap_base,
+		&simplescim_ldap_scope,
+		&simplescim_ldap_filter,
+		&simplescim_ldap_attrs,
+		&simplescim_ldap_attrsonly,
+		NULL
+	};
+	size_t i;
+	int err;
+
+	for (i = 0; i < n_variables; ++i) {
+		err = simplescim_ldap_get_variable(
+			variables[i],
+			destinations[i]
+		);
+
+		if (err == -1) {
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 /**
  * Initialises LDAP session.
  */
-static int simplescim_ldap_init(const char *uri,
-                                const char *who,
-                                const char *passwd)
+static int simplescim_ldap_init()
 {
 	int ldap_version = LDAP_VERSION3;
 	struct berval cred;
 	int err;
 
+	/* Get configuration file variables related to LDAP */
+
+	err = simplescim_ldap_get_variables();
+
+	if (err == -1) {
+		return -1;
+	}
+
 	/* Initialise LDAP session */
 
-	err = ldap_initialize(&ld, uri);
+	err = ldap_initialize(&simplescim_ldap_ld, simplescim_ldap_uri);
 
 	if (err != LDAP_SUCCESS) {
-		simplescim_ldap_print_error(err, "ldap_initialize");
+		simplescim_ldap_print_error(
+			err,
+			"ldap_initialize"
+		);
 		return -1;
 	}
 
 	/* Set protocol version */
 
-	err = ldap_set_option(ld,
-	                      LDAP_OPT_PROTOCOL_VERSION,
-	                      &ldap_version);
+	err = ldap_set_option(
+		simplescim_ldap_ld,
+		LDAP_OPT_PROTOCOL_VERSION,
+		&ldap_version
+	);
 
 	if (err != LDAP_OPT_SUCCESS) {
-		simplescim_ldap_print_error(err, "ldap_set_option");
+		simplescim_ldap_print_error(
+			err,
+			"ldap_set_option"
+		);
 		simplescim_ldap_close();
 		return -1;
 	}
 
 	/* Perform bind */
 
-	cred.bv_val = (char *)passwd;
-	cred.bv_len = strlen(passwd);
+	cred.bv_val = (char *)simplescim_ldap_passwd;
+	cred.bv_len = strlen(simplescim_ldap_passwd);
 
-	err = ldap_sasl_bind_s(ld,
-	                       who,
-	                       LDAP_SASL_SIMPLE,
-	                       &cred,
-	                       NULL,
-	                       NULL,
-	                       NULL);
+	err = ldap_sasl_bind_s(
+		simplescim_ldap_ld,
+		simplescim_ldap_who,
+		LDAP_SASL_SIMPLE,
+		&cred,
+		NULL,
+		NULL,
+		NULL
+	);
 
 	if (err != LDAP_SUCCESS) {
-		simplescim_ldap_print_error(err, "ldap_sasl_bind_s");
+		simplescim_ldap_print_error(
+			err,
+			"ldap_sasl_bind_s"
+		);
 		simplescim_ldap_close();
 		return -1;
 	}
@@ -107,59 +217,82 @@ static int simplescim_ldap_init(const char *uri,
 /**
  * Performs the LDAP search operation.
  */
-static int simplescim_ldap_search(const char *base,
-                                  const char *scope,
-                                  const char *filter,
-                                  const char *attrs,
-                                  const char *attrsonly)
+static int simplescim_ldap_search()
 {
-	int scope_val, attrsonly_val;
+	int scope_val;
 	const char *filter_val;
 	char **attrs_val;
+	int attrsonly_val;
 	size_t i;
 	int err;
 
 	/* Set search scope */
 
-	if (strcmp(scope, "BASE") == 0) {
+	if (strcmp(simplescim_ldap_scope, "BASE") == 0) {
 		scope_val = LDAP_SCOPE_BASE;
-	} else if (strcmp(scope, "ONELEVEL") == 0) {
+	} else if (strcmp(simplescim_ldap_scope, "ONELEVEL") == 0) {
 		scope_val = LDAP_SCOPE_ONELEVEL;
-	} else if (strcmp(scope, "SUBTREE") == 0) {
+	} else if (strcmp(simplescim_ldap_scope, "SUBTREE") == 0) {
 		scope_val = LDAP_SCOPE_SUBTREE;
-	} else {
+	} else if (strcmp(simplescim_ldap_scope, "CHILDREN") == 0) {
 		scope_val = LDAP_SCOPE_CHILDREN;
-	}
-
-	/* Set attrsonly */
-
-	if (strcmp(attrsonly, "TRUE") == 0) {
-		attrsonly_val = 1;
 	} else {
-		attrsonly_val = 0;
-	}
-
-	/* Parse attrs */
-
-	err = simplescim_ldap_attrs_parser(attrs, &attrs_val);
-
-	if (err == -1) {
+		simplescim_error_string_set_prefix(
+			"simplescim_ldap_search"
+		);
+		simplescim_error_string_set_message(
+"variable \"ldap-scope\" has invalid value \"%s\"\n"
+"variable \"ldap-scope\" must have one of the following values:\n"
+" BASE ONELEVEL SUBTREE CHILDREN",
+			simplescim_ldap_scope
+		);
 		return -1;
 	}
 
 	/* Set filter */
 
-	if (filter == NULL || filter[0] == '\0') {
+	if (simplescim_ldap_filter == NULL
+	    || simplescim_ldap_filter[0] == '\0') {
 		filter_val = NULL;
 	} else {
-		filter_val = filter;
+		filter_val = simplescim_ldap_filter;
+	}
+
+	/* Parse attrs */
+
+	err = simplescim_ldap_attrs_parser(
+		simplescim_ldap_attrs,
+		&attrs_val
+	);
+
+	if (err == -1) {
+		return -1;
+	}
+
+	/* Set attrsonly */
+
+	if (strcmp(simplescim_ldap_attrsonly, "TRUE") == 0) {
+		attrsonly_val = 1;
+	} else if (strcmp(simplescim_ldap_attrsonly, "FALSE") == 0) {
+		attrsonly_val = 0;
+	} else {
+		simplescim_error_string_set_prefix(
+			"simplescim_ldap_search"
+		);
+		simplescim_error_string_set_message(
+"variable \"ldap-attrsonly\" has invalid value \"%s\"\n"
+"variable \"ldap-attrsonly\" must have one of the following values:\n"
+" TRUE FALSE",
+			simplescim_ldap_attrsonly
+		);
+		return -1;
 	}
 
 	/* Search */
 
 	err = ldap_search_ext_s(
-		ld,
-		base,
+		simplescim_ldap_ld,
+		simplescim_ldap_base,
 		scope_val,
 		filter_val,
 		attrs_val,
@@ -168,7 +301,7 @@ static int simplescim_ldap_search(const char *base,
 		NULL,
 		NULL,
 		-1,
-		&res
+		&simplescim_ldap_res
 	);
 
 	/* Free attrs_val if it is not NULL. */
@@ -277,15 +410,16 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 	struct berval **vals;
 	struct simplescim_arbval_list *vals_clone;
 	BerElement *ber;
+	int ld_errno;
 	int err;
 
 	/* Create the user object. */
 
 	user = simplescim_user_new();
 
-	for (attr = ldap_first_attribute(ld, entry, &ber);
+	for (attr = ldap_first_attribute(simplescim_ldap_ld, entry, &ber);
 	     attr != NULL;
-	     attr = ldap_next_attribute(ld, entry, ber)) {
+	     attr = ldap_next_attribute(simplescim_ldap_ld, entry, ber)) {
 		/* Clone 'attr'. */
 		attr_clone = strdup(attr);
 
@@ -301,13 +435,30 @@ static struct simplescim_user *entry_to_user(LDAPMessage *entry)
 		}
 
 		/* Get and clone 'vals'. */
-		vals = ldap_get_values_len(ld, entry, attr);
+		vals = ldap_get_values_len(
+			simplescim_ldap_ld,
+			entry,
+			attr
+		);
 
 		if (vals == NULL) {
-			simplescim_error_string_set(
-				"ldap_get_values_len",
-				"unknown error"
+			err = ldap_get_option(
+				simplescim_ldap_ld,
+				LDAP_OPT_RESULT_CODE,
+				&ld_errno
 			);
+
+			if (err != LDAP_OPT_SUCCESS) {
+				simplescim_ldap_print_error(
+					err,
+					"ldap_get_option"
+				);
+			} else {
+				simplescim_ldap_print_error(
+					ld_errno,
+					"ldap_get_values_len"
+				);
+			}
 
 			free(attr_clone);
 			ldap_memfree(attr);
@@ -378,9 +529,10 @@ static struct simplescim_user_list *simplescim_ldap_to_user_list()
 	/* For every response entry, create a user and
 	   insert it into the user list. */
 
-	for (entry = ldap_first_entry(ld, res);
+	for (entry = ldap_first_entry(simplescim_ldap_ld,
+	                              simplescim_ldap_res);
 	     entry != NULL;
-	     entry = ldap_next_entry(ld, entry)) {
+	     entry = ldap_next_entry(simplescim_ldap_ld, entry)) {
 
 		/* Create the user. */
 
@@ -430,20 +582,11 @@ static struct simplescim_user_list *simplescim_ldap_to_user_list()
 struct simplescim_user_list *simplescim_ldap_get_users()
 {
 	struct simplescim_user_list *users;
-	const char *uri, *who, *passwd;
-	const char *base, *scope, *filter;
-	const char *attrs, *attrsonly;
 	int err;
 
 	/* Initialise LDAP session. */
 
-	uri = who = passwd = NULL;
-
-	simplescim_config_file_get("ldap-uri", &uri);
-	simplescim_config_file_get("ldap-who", &who);
-	simplescim_config_file_get("ldap-passwd", &passwd);
-
-	err = simplescim_ldap_init(uri, who, passwd);
+	err = simplescim_ldap_init();
 
 	if (err == -1) {
 		return NULL;
@@ -451,19 +594,7 @@ struct simplescim_user_list *simplescim_ldap_get_users()
 
 	/* Perform search operation. */
 
-	base = scope = filter = attrs = attrsonly = NULL;
-
-	simplescim_config_file_get("ldap-base", &base);
-	simplescim_config_file_get("ldap-scope", &scope);
-	simplescim_config_file_get("ldap-filter", &filter);
-	simplescim_config_file_get("ldap-attrs", &attrs);
-	simplescim_config_file_get("ldap-attrsonly", &attrsonly);
-
-	err = simplescim_ldap_search(base,
-	                             scope,
-	                             filter,
-	                             attrs,
-	                             attrsonly);
+	err = simplescim_ldap_search();
 
 	if (err == -1) {
 		simplescim_ldap_close();
