@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g -pedantic -Wall -Wextra -Werror `pkg-config --cflags json-c`
-LDFLAGS = -lldap -llber `pkg-config --libs json-c`
+LDFLAGS = -lldap -llber `pkg-config --libs json-c` -lcurl
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes
 
 all: SimpleSCIM
@@ -20,7 +20,8 @@ SimpleSCIM: \
 	simplescim_ldap_attrs_parser.o \
 	simplescim_cache_file.o \
 	simplescim_scim.o \
-	simplescim_scim_json.o
+	simplescim_scim_json.o \
+	simplescim_scim_send.o
 	@echo "LINK $@"
 	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
@@ -39,7 +40,8 @@ SimpleSCIM_simulate: \
 	simplescim_ldap_attrs_parser.o \
 	simplescim_cache_file.o \
 	simplescim_scim.o \
-	simplescim_scim_json.o
+	simplescim_scim_json.o \
+	simplescim_scim_send.o
 	@echo "LINK $@"
 	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
@@ -210,7 +212,8 @@ simplescim_scim.o: \
 	simplescim_user.h \
 	simplescim_user_list.h \
 	simplescim_cache_file.h \
-	simplescim_scim_json.h
+	simplescim_scim_json.h \
+	simplescim_scim_send.h
 	@echo "CC $<"
 	@$(CC) -c $(CFLAGS) -o $@ $<
 
@@ -221,6 +224,13 @@ simplescim_scim_json.o: \
 	simplescim_arbval.h \
 	simplescim_arbval_list.h \
 	simplescim_user.h
+	@echo "CC $<"
+	@$(CC) -c $(CFLAGS) -o $@ $<
+
+simplescim_scim_send.o: \
+	simplescim_scim_send.c \
+	simplescim_scim_send.h \
+	simplescim_error_string.h
 	@echo "CC $<"
 	@$(CC) -c $(CFLAGS) -o $@ $<
 
@@ -293,6 +303,7 @@ clean_object:
 	rm -f simplescim_cache_file_print.o
 	rm -f simplescim_scim.o
 	rm -f simplescim_scim_json.o
+	rm -f simplescim_scim_send.o
 
 clean_test_object:
 	rm -f test_simplescim_arbval.o

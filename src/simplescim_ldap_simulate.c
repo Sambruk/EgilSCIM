@@ -22,15 +22,24 @@ struct user {
 };
 
 static struct user g_users[] = {
-	{3, {
-		{"uid", 1, {"1"}},
+	{4, {
+		{"uid", 1, {"test1"}},
 		{"fullName", 1, {"Test1 Testtest1"}},
-		{"givenName", 1, {"Test1"}}
+		{"givenName", 1, {"Test1"}},
+		{"email", 2, {
+			"test1@example.com",
+			"test1@email.com"
+		}}
 	}},
-	{3, {
-		{"uid", 1, {"2"}},
+	{4, {
+		{"uid", 1, {"test2"}},
 		{"fullName", 1, {"Test2 Testtest2"}},
-		{"givenName", 1, {"Test2"}}
+		{"givenName", 1, {"Test2"}},
+		{"email", 3, {
+			"test2@example.com",
+			"test2@email.com",
+			"test2@gmail.com"
+		}}
 	}}
 };
 

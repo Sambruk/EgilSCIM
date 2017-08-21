@@ -48,6 +48,18 @@ int simplescim_config_file_get(
 );
 
 /**
+ * Gets the value associated with 'variable' and stores it
+ * in 'valuep' unless 'valuep' is NULL.
+ * If 'variable' has an associated value, zero is returned.
+ * Otherwise, -1 is returned and simplescim_error_string is
+ * set to an appropriate error message.
+ */
+int simplescim_config_file_require(
+	const char *variable,
+	const char **valuep
+);
+
+/**
  * Performs 'func' for every variable in the loaded
  * configuration file.
  * 'func' must have the following signature:

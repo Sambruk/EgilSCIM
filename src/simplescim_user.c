@@ -165,18 +165,12 @@ struct simplescim_arbval *simplescim_user_get_uid(
 	int err;
 
 	/* Get LDAP attribute that is unique identifier */
-	err = simplescim_config_file_get(
-		"ldap-unique-identifier",
+	err = simplescim_config_file_require(
+		"user-unique-identifier",
 		&uid_attr
 	);
 
 	if (err == -1) {
-		simplescim_error_string_set(
-			"simplescim_user_get_uid:"
-			"simplescim_config_file_get",
-			"configuration file does not have variable "
-			"\"ldap-unique-identifier\""
-		);
 		return NULL;
 	}
 
@@ -199,12 +193,12 @@ struct simplescim_arbval *simplescim_user_get_uid(
 		return NULL;
 	}
 
-	if (values->al_vals[0] == NULL) {
+	if (values->al_len != 1) {
 		simplescim_error_string_set_prefix(
 			"simplescim_user_get_uid"
 		);
 		simplescim_error_string_set_message(
-			"attribute \"%s\" is empty for user",
+			"attribute \"%s\" must have exactly one value",
 			uid_attr
 		);
 		return NULL;
