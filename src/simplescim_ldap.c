@@ -12,6 +12,11 @@
 #include "simplescim_config_file.h"
 #include "simplescim_ldap_attrs_parser.h"
 
+struct var_ent {
+	const char *var;
+	const char **dest;
+};
+
 /**
  * LDAP state variables
  */
@@ -68,69 +73,38 @@ static void simplescim_ldap_close()
 }
 
 /**
- * Gets and verifies one variable from the configuration file.
- */
-static int simplescim_ldap_get_variable(
-	const char *variable,
-	const char **dest
-)
-{
-	int err;
-
-	err = simplescim_config_file_get(
-		variable,
-		dest
-	);
-
-	if (err == -1) {
-		simplescim_error_string_set_prefix(
-			"simplescim_ldap_get_variable"
-		);
-		simplescim_error_string_set_message(
-			"required variable \"%s\" is missing",
-			variable
-		);
-		return -1;
-	}
-
-	return 0;
-}
-
-/**
  * Gets and verifies all LDAP variables from the configuration file.
  */
 int simplescim_ldap_get_variables()
 {
-	size_t n_variables = 9;
-	const char *variables[] = {
-		"ldap-uri",
-		"ldap-who",
-		"ldap-passwd",
-		"ldap-base",
-		"ldap-scope",
-		"ldap-filter",
-		"ldap-attrs",
-		"ldap-attrsonly",
-		"ldap-unique-identifier"
+	struct var_ent variables[] = {
+		{"ldap-uri",
+		 &simplescim_ldap_uri},
+		{"ldap-who",
+		 &simplescim_ldap_who},
+		{"ldap-passwd",
+		 &simplescim_ldap_passwd},
+		{"ldap-base",
+		 &simplescim_ldap_base},
+		{"ldap-scope",
+		 &simplescim_ldap_scope},
+		{"ldap-filter",
+		 &simplescim_ldap_filter},
+		{"ldap-attrs",
+		 &simplescim_ldap_attrs},
+		{"ldap-attrsonly",
+		 &simplescim_ldap_attrsonly}
 	};
-	const char **destinations[] = {
-		&simplescim_ldap_uri,
-		&simplescim_ldap_who,
-		&simplescim_ldap_passwd,
-		&simplescim_ldap_base,
-		&simplescim_ldap_scope,
-		&simplescim_ldap_filter,
-		&simplescim_ldap_attrs,
-		&simplescim_ldap_attrsonly,
-		NULL
-	};
+	size_t n_variables;
 	size_t i;
 	int err;
 
+	n_variables = sizeof(variables) / sizeof(struct var_ent);
+
 	for (i = 0; i < n_variables; ++i) {
-		err = simplescim_ldap_get_variable(
-			variables[i],
-			destinations[i]
+		err = simplescim_config_file_require(
+			variables[i].var,
+			variables[i].dest
 		);
 
 		if (err == -1) {
