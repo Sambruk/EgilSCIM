@@ -72,20 +72,98 @@ variables:
   that should be set to `TRUE` if only attribute descriptions are
   wanted. It should be set to `FALSE` if both attribute descriptions
   and attribute values are wanted.
-* `ldap-unique-identifier` is the LDAP attribute that uniquely
-  identifies an entry.
+* `user-unique-identifier` is the attribute that uniquely identifies
+  a user.
+* `user-scim-resource-identifier` is the attribute that will contain
+  the SCIM resource identifier in the cache.
 * `cache-file` specifies the configuration file's cache file used to
   remember previous executions of the configuration file.
-* `scim-uri` specifies the remote host that will receive the SCIM
-  request, e.g. `example.com`.
-* `scim-resource-type` specifies which SCIM resource type the
-  configuration file manages, e.g. `/Users`.
-* `scim-unique-identifier` specifies which SCIM attribute uniquely
-  identifies the object through SCIM.
+* `cert` is the path to the client's certificate file.
+* `pinnedpubkey` is the server's hashed public key, e.g.
+  `sha256//XYj98rkYBIYzCAc0NBYfooMUN38eq6xpQZOZP0b/jK8=`.
+* `scim-url` specifies the protocol, host and resource that will
+  receive the SCIM request, e.g. `http://example.com/User`.
+* `scim-resource-identifier` specifies which variable in the returned
+  JSON object that contains the SCIM resource identifier.
 * `scim-create` specifies the JSON object to send when creating a new
   object.
 * `scim-update` specifies the JSON object to send when updating a
    remote object.
+
+##### Template
+
+`/etc/SimpleSCIM/conf/test.conf`:
+
+```
+# LDAP variables
+
+ldap-uri       = ldaps://ldap.example.com
+ldap-who       = # -D in ldapsearch
+ldap-passwd    = # -w in ldapsearch
+ldap-base      = # -b in ldapsearch
+ldap-scope     = # BASE, ONELEVEL, SUBTREE or CHILDREN
+ldap-filter    = # LDAP filter
+ldap-attrs     = # Empty => All attributes
+ldap-attrsonly = FALSE
+
+# User variables
+
+user-unique-identifier = uid
+user-scim-resource-identifier = scim-id
+
+# Cache path
+
+cache-file = /etc/SimpleSCIM/cache/test.cache
+
+# Certificate variables
+
+cert = /etc/SimpleSCIM/cert/cert.pem
+pinnedpubkey = sha256//XYj98rkYBIYzCAc0NBYfooMUN38eq6xpQZOZP0b/jK8=
+
+# SCIM variables
+
+scim-url = https://scim.example.com/Users
+scim-resource-identifier = id
+
+scim-create = <?
+{
+ "schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],
+ "userName":"${uid}",
+ "externalId":"${uid}",
+ "name":{
+  "formatted":"${fullName}",
+  "givenName":"${givenName}"
+ },
+ "emails":[
+  ${for $e in email}
+  {
+   "value":"${$e}"
+  },
+  ${end}
+ ]
+}
+?>
+
+scim-update = <?
+{
+ "schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],
+ "id":"${scim-id}",
+ "userName":"${uid}",
+ "externalId":"${uid}",
+ "name":{
+  "formatted":"${fullName}",
+  "givenName":"${givenName}"
+ },
+ "emails":[
+  ${for $e in email}
+  {
+   "value":"${$e}"
+  },
+  ${end}
+ ]
+}
+?>
+```
 
 ### Execution
 
@@ -111,9 +189,6 @@ SimpleSCIM currently requires the following C libraries:
 * `uthash` (included in repo for now) for hash tables.
 * `libldap` from OpenLDAP for fetching identity information using LDAP.
 * `json-c` to parse the JSON objects from the configuration file.
-
-SimpleSCIM plans to use the following libraries in the future:
-
 * `libcurl` to send the SCIM request.
 
 Compile the program by executing:
