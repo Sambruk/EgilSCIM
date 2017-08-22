@@ -1,6 +1,11 @@
 uthash.h:
  - Add as git submodule
 
+simplescim_scim_json.c:
+ - Rewrite parser:
+   - Construct AST ONCE
+   - Traverse AST for every user
+
 tests:
  - Implement using check
    (https://github.com/libcheck/check)
