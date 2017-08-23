@@ -333,14 +333,26 @@ int simplescim_user_subset_eq(
 	const struct simplescim_user *other
 )
 {
+	const char *user_scim_resource_identifier;
 	struct attribute_record *s, *tmp;
 	const struct simplescim_arbval_list *this_vals;
 	const struct simplescim_arbval_list *other_vals;
 	int err;
 
+	err = simplescim_config_file_require(
+		"user-scim-resource-identifier",
+		&user_scim_resource_identifier
+	);
+
+	if (err == -1) {
+		/* return -1; ? */
+		return 0;
+	}
+
 	/* For every attribute in 'this' */
 	HASH_ITER(hh, this->attributes, s, tmp) {
-		if (strcmp(s->attribute, "scim-id") == 0) {
+		if (strcmp(s->attribute,
+		           user_scim_resource_identifier) == 0) {
 			continue;
 		}
 
