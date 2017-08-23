@@ -11,7 +11,7 @@ tests:
    (https://github.com/libcheck/check)
 
 Compile on
- - Debian 9.1.0 (stable)
+ ✓ Debian 9.1.0 (stable)
  - Debian testing (2017-07-31 22:41)
  ✓ Ubuntu 16.04.3 LTS
  ✓ Ubuntu Server 16.04.3 LTS
