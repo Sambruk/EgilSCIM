@@ -24,8 +24,19 @@ and
 
 ### Compile
 
-`test_server` uses openssl and libuuid. On Fedora 26, libuuid can be
-installed with `sudo dnf install libuuid-devel`.
+`test_server` uses openssl and libuuid.
+
+#### Fedora 26 Workstation
+
+```
+sudo dnf install openssl-devel libuuid-devel
+```
+
+#### Ubuntu 16.04.3 LTS
+
+```
+sudo apt-get install libssl-dev uuid-dev
+```
 
 ```
 cd /path/to/SimpleSCIM/test_server
