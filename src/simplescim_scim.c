@@ -20,6 +20,7 @@ struct var_ent {
 };
 
 static const char *simplescim_cert;
+static const char *simplescim_key;
 static const char *simplescim_pinnedpubkey;
 static const char *simplescim_scim_url;
 static const char *simplescim_scim_resource_identifier;
@@ -33,6 +34,8 @@ static int simplescim_scim_get_variables()
 	struct var_ent variables[] = {
 		{"cert",
 		 &simplescim_cert},
+		{"key",
+		 &simplescim_key},
 		{"pinnedpubkey",
 		 &simplescim_pinnedpubkey},
 		{"scim-url",
@@ -87,6 +90,7 @@ static int simplescim_scim_init()
 	/* Initialise simplescim_scim_send */
 	err = simplescim_scim_send_init(
 		simplescim_cert,
+		simplescim_key,
 		simplescim_pinnedpubkey
 	);
 

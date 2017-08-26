@@ -16,6 +16,7 @@
  */
 int simplescim_scim_send_init(
 	const char *cert,
+	const char *key,
 	const char *pinnedpubkey
 );
 

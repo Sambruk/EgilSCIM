@@ -13,6 +13,7 @@ struct http_response {
 };
 
 static const char *simplescim_scim_send_cert;
+static const char *simplescim_scim_send_key;
 static const char *simplescim_scim_send_pinnedpubkey;
 
 static char simplescim_scim_send_errbuf[CURL_ERROR_SIZE];
@@ -248,6 +249,23 @@ static int simplescim_scim_send(
 		return -1;
 	}
 
+	/* Set private key */
+
+	errnum = curl_easy_setopt(
+		curl,
+		CURLOPT_SSLKEY,
+		simplescim_scim_send_key
+	);
+
+	if (errnum != CURLE_OK) {
+		simplescim_scim_send_print_curl_error(
+			"curl_easy_setopt(CURLOPT_SSLKEY)",
+			errnum
+		);
+		curl_easy_cleanup(curl);
+		return -1;
+	}
+
 	/* Set pinned public key */
 
 	errnum = curl_easy_setopt(
@@ -471,6 +489,7 @@ static int simplescim_scim_send(
  */
 int simplescim_scim_send_init(
 	const char *cert,
+	const char *key,
 	const char *pinnedpubkey
 )
 {
@@ -487,6 +506,7 @@ int simplescim_scim_send_init(
 	}
 
 	simplescim_scim_send_cert = cert;
+	simplescim_scim_send_key = key;
 	simplescim_scim_send_pinnedpubkey = pinnedpubkey;
 
 	return 0;
