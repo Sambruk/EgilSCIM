@@ -119,7 +119,7 @@ cache-file = /etc/SimpleSCIM/cache/test.cache
 # Certificate variables
 
 cert = /etc/SimpleSCIM/cert/cert.pem
-cert = /etc/SimpleSCIM/cert/key.pem
+key = /etc/SimpleSCIM/cert/key.pem
 pinnedpubkey = sha256//XYj98rkYBIYzCAc0NBYfooMUN38eq6xpQZOZP0b/jK8=
 
 # SCIM variables
