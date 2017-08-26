@@ -78,7 +78,8 @@ variables:
   the SCIM resource identifier in the cache.
 * `cache-file` specifies the configuration file's cache file used to
   remember previous executions of the configuration file.
-* `cert` is the path to the client's certificate file.
+* `cert` is the path to the client's certificate file (PEM).
+* `key` is the path to the client's private key file (PEM).
 * `pinnedpubkey` is the server's hashed public key, e.g.
   `sha256//XYj98rkYBIYzCAc0NBYfooMUN38eq6xpQZOZP0b/jK8=`.
 * `scim-url` specifies the protocol, host and resource that will
@@ -118,6 +119,7 @@ cache-file = /etc/SimpleSCIM/cache/test.cache
 # Certificate variables
 
 cert = /etc/SimpleSCIM/cert/cert.pem
+cert = /etc/SimpleSCIM/cert/key.pem
 pinnedpubkey = sha256//XYj98rkYBIYzCAc0NBYfooMUN38eq6xpQZOZP0b/jK8=
 
 # SCIM variables
