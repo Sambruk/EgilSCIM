@@ -72,10 +72,10 @@ variables:
   that should be set to `TRUE` if only attribute descriptions are
   wanted. It should be set to `FALSE` if both attribute descriptions
   and attribute values are wanted.
-* `user-unique-identifier` is the attribute that uniquely identifies
-  a user.
-* `user-scim-resource-identifier` is the attribute that will contain
-  the SCIM resource identifier in the cache.
+* `user-unique-identifier` is the user attribute that uniquely
+  identifies a user.
+* `user-scim-resource-identifier` is the user attribute that will
+  contain the SCIM resource identifier in the cache.
 * `cache-file` specifies the configuration file's cache file used to
   remember previous executions of the configuration file.
 * `cert` is the path to the client's certificate file (PEM).
