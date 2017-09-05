@@ -1,0 +1,28 @@
+<template> ::= <replace> <template>
+             | <text> <template>
+             | ε
+
+<replace>  ::= '${' <ws>* <rule> <ws>* '}'
+<text>     ::= [^('${')]*
+
+<rule>     ::= 'switch' <ws>* <switch>
+             | 'for' <ws>* <for>
+             | 'end'
+             | <var>
+
+<switch>   ::= <var> <ws>* ('case' <ws>* <case> <ws>*)* 'default' <ws>* <default>
+<case>     ::= <string> <ws>* ':' <ws>* <string>
+<default>  ::= ':' <ws>* <string>
+
+<string>   ::= '"' [^('"')]* '"'
+             | "'" [^("'")]* "'"
+
+<for>      ::= <iter-var> <ws>* 'in' <ws>* <user-var>
+
+<var>      ::= <user-var> | <iter-var>
+<user-var> ::= <id>
+<iter-var> ::= '$' <id>
+
+<id>       ::= [-_a-zA-Z0-9]+
+
+<ws>       ::= [ \t\n\v\f\r]

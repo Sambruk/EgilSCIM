@@ -1,3 +1,11 @@
+SimpleSCIM:
+ - Pick and apply a free/libre and open source license
+ - Enable StartTLS for ldap://
+ - Enable SASL (?)
+ - Add install script
+ - Migrate to the GNU Build System
+ - Modify cache format to not include the unique identifier
+
 uthash.h:
  - Add as git submodule
 
@@ -7,23 +15,30 @@ simplescim_scim_json.c:
    - Traverse AST for every user
 
 tests:
- - Implement using check
+ - Implement using check (?)
    (https://github.com/libcheck/check)
 
 Compile on
- ✓ Debian 9.1.0 (stable)
- - Debian testing (2017-07-31 22:41)
  ✓ Ubuntu 16.04.3 LTS
  ✓ Ubuntu Server 16.04.3 LTS
+ - Red Hat Enterprise Linux
+ - openSUSE Tumbleweed
+ - openSUSE Leap
+ - SUSE Linux Enterprise Server
+ ✓ CentOS 7
+ ✓ Debian 9.1.0 (stable)
+ - Debian testing
+ - Oracle Linux
+ - Oracle Solaris
+ - Mageia / Mandriva
+ - ClearOS
+ - Arch Linux
  ✓ Fedora 26 Workstation
  ✓ Fedora 26 Server
- - RHEL (CentOS)
- - ClearOS
- - SLES (OpenSUSE)
- - Oracle Linux
- - Mageia / Mandriva
- - Arch Linux
- - Gentoo Linux
  - Slackware
- - OpenBSD / FreeBSD (?)
- - Oracle Solaris (?)
+ - Gentoo Linux
+ - FreeBSD
+ - OpenBSD
+ - NetBSD
+ - DragonFly BSD
+ - macOS

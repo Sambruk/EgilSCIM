@@ -26,6 +26,12 @@ and
 
 `test_server` uses openssl and libuuid.
 
+#### CentOS 7
+
+```
+sudo yum install openssl-devel libuuid-devel
+```
+
 #### Fedora 26 Workstation
 
 ```
@@ -72,20 +78,31 @@ pinnedpubkey = sha256//wody0BSEtvWoP+DX5KRuCUjq4uSTRvXLOe6vjehxWNY=
 ...
 ```
 
+### Open port in firewall
+
+This step is not necessary in Fedora 26 Workstation or Ubuntu 16.04.3
+LTS, but at least in CentOS 7 it is necessary to open the port used
+by the server.
+
+```
+sudo firewall-cmd --zone=public --add-port=<port>/tcp --permanent
+sudo firewall-cmd --reload
+```
+
 ### Start the server
 
 ```
-./test_server port test-cert.pem test-key.pem
+./test_server <port> test-cert.pem test-key.pem
 ```
 
 Ensure that the configuration file has these lines:
 
 ```
-scim-url = https://localhost:port/Users
+scim-url = https://localhost:<port>/Users
 scim-resource-identifier = id
 ```
 
-where `port` is the port entered when starting the server.
+where `<port>` is the port entered when starting the server.
 
 ### Test SimpleSCIM
 
