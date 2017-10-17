@@ -6,6 +6,7 @@ VALGRIND = valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes
 all: SimpleSCIM
 
 SimpleSCIM: \
+	uthash.h \
 	simplescim_main.o \
 	simplescim_error_string.o \
 	simplescim_arbval.o \
@@ -26,6 +27,7 @@ SimpleSCIM: \
 	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 SimpleSCIM_simulate: \
+	uthash.h \
 	simplescim_main.o \
 	simplescim_error_string.o \
 	simplescim_arbval.o \
@@ -46,6 +48,7 @@ SimpleSCIM_simulate: \
 	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 simplescim_cache_file_print: \
+	uthash.h \
 	simplescim_cache_file_print.o \
 	simplescim_error_string.o \
 	simplescim_arbval.o \
@@ -59,6 +62,9 @@ simplescim_cache_file_print: \
 	simplescim_cache_file.o
 	@echo "LINK $@"
 	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+uthash.h:
+	curl https://raw.githubusercontent.com/troydhanson/uthash/master/src/uthash.h > uthash.h
 
 simplescim_main.o: \
 	simplescim_main.c \
@@ -321,3 +327,4 @@ clean: \
 	clean_test_object \
 	clean_executable \
 	clean_test_executable
+	rm -f uthash.h
