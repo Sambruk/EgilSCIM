@@ -58,9 +58,10 @@ make clean
     sudo make install
     cd ..
     git clone git://github.com/MaxWallstedt/SimpleSCIM.git
-    cd SimpleSCIM/src/
-    sed -i -e "s/\-pedantic\ //g" Makefile
+    cd SimpleSCIM
+    sed -i -e "s/\-pedantic\ //g" src/Makefile
     make
+    sudo make install
 
 Run SimpleSCIM with:
 
@@ -71,16 +72,18 @@ Run SimpleSCIM with:
     sudo dnf update
     sudo dnf install git gcc json-c-devel openldap-devel libcurl-devel
     git clone git://github.com/MaxWallstedt/SimpleSCIM.git
-    cd SimpleSCIM/src/
+    cd SimpleSCIM
     make
+    sudo make install
 
 ## Ubuntu 16.04.3 LTS / Ubuntu Server 16.04.3 LTS
 
     sudo apt-get update && sudo apt-get upgrade
     sudo apt-get install git make pkg-config libjson0 libjson0-dev libldap2-dev libcurl4-openssl-dev
     git clone git://github.com/MaxWallstedt/SimpleSCIM.git
-    cd SimpleSCIM/src/
+    cd SimpleSCIM
     make
+    sudo make install
 
 ## Debian 9.1.0 (stable)
 
@@ -88,5 +91,6 @@ Run SimpleSCIM with:
     apt-get update && apt-get dist-upgrade
     apt-get install git make gcc pkg-config libjson-c-dev libldap2-dev libcurl4-openssl-dev
     git clone git://github.com/MaxWallstedt/SimpleSCIM.git
-    cd SimpleSCIM/src/
+    cd SimpleSCIM/
     make
+    make install
