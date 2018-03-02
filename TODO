@@ -1,13 +1,15 @@
 SimpleSCIM:
- - Pick and apply a free/libre and open source license
+ - Use flex/bison for parsers when possible
  - Enable StartTLS for ldap://
  - Enable SASL (?)
  - Add install script
- - Migrate to the GNU Build System
+ - Migrate to the GNU Build System (?)
  - Modify cache format to not include the unique identifier
+ - Modify cache format to include separate meta attributes
+ - Change configuration file variables scim-create and scim-update to scim-object
 
 uthash.h:
- - Add as git submodule
+ - Add as git submodule (?)
 
 simplescim_scim_json.c:
  - Rewrite parser:
