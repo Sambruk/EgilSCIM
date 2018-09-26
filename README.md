@@ -1,6 +1,6 @@
 # SimpleSCIM
 
-This is development below described project implementing groups,
+This is development of the project described below implementing groups,
 mainly for sending information of students and teachers and how they
 organised in groups.
 
