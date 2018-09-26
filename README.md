@@ -1,5 +1,14 @@
 # SimpleSCIM
 
+This is development below described project implementing groups,
+mainly for sending information of students and teachers and how they
+organised in groups.
+
+The code is forked from as per below and rewritten to c++
+
+Original Readme below
+
+---
 This directory contains SimpleSCIM.
 
 SimpleSCIM is a program under development with the intended purpose
