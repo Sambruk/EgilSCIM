@@ -48,9 +48,9 @@ static struct object g_users[] = {
 				    {"pidSchoolUnit", 1, {"12345678"}},
 				    {"l", 1, {"test1"}},
 				    {"email", 3, {
-						                 "test1@examples.com",
-						                 "test1@email.com",
-						                 "spam@hotmail.com"
+						                 "test1#examples.com",
+						                 "test1#email.com",
+						                 "spam#hotmail.com"
 				                 }}
 		    }},
 		{6, {
@@ -60,9 +60,9 @@ static struct object g_users[] = {
 				    {"pidSchoolUnit", 1, {"12345678"}},
 				    {"l", 1, {"test2"}},
 				    {"email", 3, {
-						                 "test2@example.com",
-						                 "test2@email.com",
-						                 "test2@gmail.com"
+						                 "test2#example.com",
+						                 "test2#email.com",
+						                 "test2#gmail.com"
 				                 }}
 		    }},
 		{6, {
@@ -72,9 +72,9 @@ static struct object g_users[] = {
 				    {"pidSchoolUnit", 1, {"12345678"}},
 				    {"l", 1, {"test3"}},
 				    {"email", 3, {
-						                 "test3@example.com",
-						                 "test3@email.com",
-						                 "test3@pmail.com"
+						                 "test3#example.com",
+						                 "test3#email.com",
+						                 "test3#pmail.com"
 				                 }}
 		    }}
 };
@@ -84,7 +84,7 @@ static struct object g_users[] = {
 //		{"cid", 1, {"geo"}},
 //		{"displayName", 1, {"Geografi"}},
 //		{"email", 1, {
-//			"geografi@skola.se"
+//			"geografi#skola.se"
 //		}},
 //		{"members", 2, {
 //			"test1",
@@ -95,7 +95,7 @@ static struct object g_users[] = {
 //		{"gid", 1, {"Historia"}},
 //		{"displayName", 1, {"Historia"}},
 //		{"email", 1, {
-//			"historia@skolan.se"
+//			"historia#skolan.se"
 //		}},
 //		{"members", 3, {
 //			"test1",
