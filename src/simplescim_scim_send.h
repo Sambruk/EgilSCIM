@@ -1,5 +1,5 @@
 /**
- * Copyright © 2017-2018  Max Wällstedt <max.wallstedt@gmail.com>
+ * Copyright © 2017-2018  Max Wällstedt <>
  *
  * This file is part of SimpleSCIM.
  *
