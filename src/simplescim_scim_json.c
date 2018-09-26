@@ -568,7 +568,7 @@ static int simplescim_scim_json_parser_case(
 
 	simplescim_scim_json_parser_skip_ws(parser);
 
-	if (parser->json[0] == ':') {
+	if (parser->json[0] != ':') {
 		simplescim_scim_json_parser_syntax_error_expected(
 			parser,
 			"':'"
@@ -623,7 +623,7 @@ static int simplescim_scim_json_parser_default(
 
 	simplescim_scim_json_parser_skip_ws(parser);
 
-	if (parser->json[0] == ':') {
+	if (parser->json[0] != ':') {
 		simplescim_scim_json_parser_syntax_error_expected(
 			parser,
 			"':'"
