@@ -23,13 +23,10 @@
 
 #include "simplescim_ldap.hpp"
 
-#include <stdlib.h>
-#include <string.h>
 #include <set>
 #include <uuid/uuid.h>
 
 #include "utility/simplescim_error_string.hpp"
-//#include "moved_out/value_list.hpp"
 #include "model/base_object.hpp"
 #include "model/object_list.hpp"
 #include "config_file.hpp"
@@ -86,7 +83,8 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 	string_vector id_cred = conf.get_vector(type + "-GUID-generation-ids");
 
 	if (id_cred.size() != 2) {
-		std::cerr << type << "-GUID-generation-ids must be 2 relations like StudentGroup.GUID SchoolUnit.GUID" << std::endl;
+		std::cerr << type << "-GUID-generation-ids must be 2 relations like StudentGroup.GUID SchoolUnit.GUID"
+		          << std::endl;
 		return nullptr;
 	}
 	auto student_groups = get_object_list_by_type(master_type.first, pair_map());
@@ -94,7 +92,8 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 
 	for (const auto &student_group : *student_groups) {
 		base_object generated_object(type);
-		generated_object.add_attribute(pair_to_string(local_relation), student_group.second->get_values(local_relation.second));
+		generated_object.add_attribute(pair_to_string(local_relation),
+		                               student_group.second->get_values(local_relation.second));
 
 		string_vector members = student_group.second->get_values(remote_relation);
 		for (auto &&member: members) {
@@ -122,16 +121,15 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 			}
 		}
 
-			std::pair<std::string, std::string> p1 = string_to_pair(id_cred.at(0));
-			std::pair<std::string, std::string> p2 = string_to_pair(id_cred.at(1));
-			std::string uuid = store_relation(persister, generated_object, p1, p2);
-			generated->add_object(uuid, std::move(generated_object));
+		std::pair<std::string, std::string> p1 = string_to_pair(id_cred.at(0));
+		std::pair<std::string, std::string> p2 = string_to_pair(id_cred.at(1));
+		std::string uuid = store_relation(persister, generated_object, p1, p2);
+		generated->add_object(uuid, std::move(generated_object));
 
 	}
 
 	return generated;
 }
-
 
 /**
  * Generate new Objects of this type
@@ -251,8 +249,6 @@ std::string store_relation(local_id_store &persister, base_object &generated_obj
 	}
 	return uuid;
 }
-
-
 
 /**
  * for type that have "meta data", i.e. a reference to another type, fetch the corresponding

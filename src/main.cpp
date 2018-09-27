@@ -35,8 +35,13 @@
 int main(int argc, char *argv[]) {
 	config_file &config = config_file::instance();
 
+	if (check_params(argc, argv) != 0)
+		return 1;
+
+
 	for (int i = 1; i < argc; ++i) {
 		/** Load configuration file */
+		std::cout << "processing: " << argv[i] << std::endl;
 		int err = config.load(argv[i]);
 
 		if (err == -1) {

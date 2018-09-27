@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 project(EgilSCIMClient CXX)
 
+set (GroupSCIM_VERSION_MAJOR 1)
+set (GroupSCIM_VERSION_MINOR 0)
+configure_file (
+        "${PROJECT_SOURCE_DIR}/src/utility/GroupSCIM_config.h.in"
+        "${PROJECT_BINARY_DIR}/GroupSCIM_config.h"
+)
+
+include_directories("${PROJECT_BINARY_DIR}")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow -fexceptions -fsanitize=address")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope Wshadow-compatible-local")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope -Wshadow-uncaptured-local")
