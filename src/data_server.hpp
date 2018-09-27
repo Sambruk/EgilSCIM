@@ -17,7 +17,7 @@ class data_server {
 	std::map<std::string, std::shared_ptr<object_list>> static_data;
 	// dynamic data is objects like User, they are loaded as a consequence of loading
 	// groups and generated data.
-	// The distiction is if we can say "it is loaded or not" v.s. it grows as we load
+	// The distinction is if we can say "it is loaded or not" v.s. it grows as we load
 	// other data
 	std::map<std::string, std::shared_ptr<object_list>> dynamic_data;
 	string_vector static_types;
@@ -47,6 +47,7 @@ public:
 
 	std::shared_ptr<base_object>
 	find_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value);
+
 	std::shared_ptr<object_list> get_by_type(const std::string &type) const;
 
 	/**
@@ -61,31 +62,26 @@ public:
 
 	void preload();
 
-	void add(const std::string &type, object_list &&list);
 
-	void add(const std::string &type, const object_list &list);
+	void add(const std::string& type, std::shared_ptr<object_list> list);
 
 	void add(const std::string &type, base_object &&object);
 
 private:
 	/**
-	* static_data is loaded once, this will assert if called with existing type
+	* static_data is loaded once
 	* @param type
 	* @param list
 	*/
-	void add_static(const std::string &type, object_list &&list);
-
-	void add_static(const std::string &type, const object_list &list);
+	void add_static(const std::string &type, std::shared_ptr<object_list> list);
 
 	/**
-	 * add dynamic data, this is appended to as static data is load
+	 * add dynamic data, this is appended to as static data is loaded
 	 * @param type
 	 * @param list
 	 */
-	void add_dynamic(const std::string &type, object_list &&list);
 
-	void add_dynamic(const std::string &type, const object_list &list);
-
+	void add_dynamic(const std::string &type, std::shared_ptr<object_list> list);
 };
 
 

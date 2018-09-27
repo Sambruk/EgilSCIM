@@ -24,7 +24,7 @@ void data_server::load() {
 			if (sourceType == "ldap") {
 				std::shared_ptr<object_list> l = ldap_get(ldap, type);
 				if (l)
-					add(type, std::move(*l));
+					add(type, l);
 				else
 					std::cout << type << " returned nullptr" << std::endl;
 			}
@@ -75,32 +75,19 @@ std::shared_ptr<object_list> data_server::get_static_by_type(const std::string &
 	return std::make_shared<object_list>();
 }
 
-void data_server::add_dynamic(const std::string &type, object_list &&list) {
+
+void data_server::add_dynamic(const std::string &type, std::shared_ptr<object_list> list) {
 	auto type_data = dynamic_data.find(type);
 	if (type_data == dynamic_data.end())
-		dynamic_data.emplace(std::make_pair(type,
-		                                    std::make_shared<object_list>(std::move(list))));
+		dynamic_data.emplace(std::make_pair(type, list));
 	else
-		*type_data->second += std::move(list);
+		*type_data->second += *list;
+
 }
 
-void data_server::add_dynamic(const std::string &type, const object_list &list) {
-	auto type_data = dynamic_data.find(type);
-	if (type_data == dynamic_data.end())
-		dynamic_data.emplace(std::make_pair(type,
-		                                    std::make_shared<object_list>(list)));
-	else
-		*type_data->second += list;
-}
 
-void data_server::add_static(const std::string &type, object_list &&list) {
-	//assert(static_data.find(type) == static_data.end());
-	static_data.emplace(std::make_pair(type, std::make_shared<object_list>(std::move(list))));
-}
-
-void data_server::add_static(const std::string &type, const object_list &list) {
-	//	assert(static_data.find(type) == static_data.end());
-	static_data.emplace(std::make_pair(type, std::make_shared<object_list>(list)));
+void data_server::add_static(const std::string &type, std::shared_ptr<object_list> list) {
+	static_data.emplace(std::make_pair(type, list));
 }
 
 void data_server::add(const std::string &type, base_object &&object) {
@@ -108,20 +95,15 @@ void data_server::add(const std::string &type, base_object &&object) {
 	if (list)
 		list->add_object(object.get_uid(true), std::move(object));
 	else {
-		object_list newList;
-		newList.add_object(object.get_uid(true), std::move(object));
+		auto newList = std::make_shared<object_list>();
+		newList->add_object(object.get_uid(true), std::move(object));
 		add(type, newList);
 	}
 }
 
-void data_server::add(const std::string &type, object_list &&list) {
-	if (std::find(dynamic_types.begin(), dynamic_types.end(), type) != dynamic_types.end())
-		add_dynamic(type, std::move(list));
-	else
-		add_static(type, std::move(list));
-}
 
-void data_server::add(const std::string &type, const object_list &list) {
+
+void data_server::add(const std::string &type, std::shared_ptr<object_list> list) {
 	if (std::find(dynamic_types.begin(), dynamic_types.end(), type) != dynamic_types.end())
 		add_dynamic(type, list);
 	else
@@ -133,6 +115,7 @@ data_server::find_object_by_attribute(const std::string &type, const std::string
 	auto list = get_by_type(type);
 	return list->get_object_for_attribute(attrib, value);
 }
+
 
 
 

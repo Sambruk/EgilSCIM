@@ -57,7 +57,7 @@ std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, co
 		ldap_wrapper ldap;
 		if (ldap.search(type, q->second))
 			list = ldap.ldap_to_user_list();
-		server.add(type, *list);
+		server.add(type, list);
 	}
 	return list;
 }
