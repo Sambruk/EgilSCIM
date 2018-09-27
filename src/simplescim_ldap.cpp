@@ -252,16 +252,6 @@ std::string store_relation(local_id_store &persister, base_object &generated_obj
 	return uuid;
 }
 
-std::shared_ptr<object_list> ldap_get_generated(const std::string &type) {
-	if (type == "Activity")
-		return ldap_get_generated_activity(type);
-	else if (type == "Employment")
-		return ldap_get_generated_employment(type);
-	else {
-		std::cout << "upps" << std::endl;
-		return std::make_shared<object_list>();
-	}
-}
 
 
 /**
@@ -337,6 +327,16 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 	}
 }
 
+std::shared_ptr<object_list> ldap_get_generated(const std::string &type) {
+	if (type == "Activity")
+		return ldap_get_generated_activity(type);
+	else if (type == "Employment")
+		return ldap_get_generated_employment(type);
+	else {
+		std::cerr << type << " can't be generated" << std::endl;
+		return std::make_shared<object_list>();
+	}
+}
 
 /**
  * Reads user data from LDAP into a user list object
