@@ -11,3 +11,5 @@
 *.log
 *.out
 *.toc
+.idea/*
+cmake-build-debug/*
