@@ -502,7 +502,7 @@ int scim_json_parser::iter_start() {
 	/* Get LDAP variable values */
 
 	value_map map;
-	for (int i = 0; i < ldap_variables.size(); i++) {
+	for (unsigned int i = 0; i < ldap_variables.size(); i++) {
 		const string_vector &values = user.get_values(ldap_variables.at(i));
 		map.emplace(std::make_pair(iter_variables.at(i), values));
 	}

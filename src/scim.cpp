@@ -87,7 +87,7 @@ void ScimActions::simplescim_scim_clear() const {
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int ScimActions::perform(const object_list &current, const object_list &cached) const {
+int ScimActions::perform(const data_server &current, const object_list &cached) const {
 	int err;
 
 	/* Initialise SCIM */
@@ -99,12 +99,10 @@ int ScimActions::perform(const object_list &current, const object_list &cached) 
 	std::string types_string = config_file::instance().get("scim-type-send-order");
 	string_vector types = string_to_vector(types_string);
 	for (auto &&type : types) {
-		if (!conf.get_bool(type + "-dump-mode")) {
-			std::shared_ptr<object_list> allOfType = current.get_all_for_type(type);
-			err = allOfType->process_changes(cached, *this, type);
-			if (err != 0) {
-				std::cerr << "failed to send " << type << std::endl;
-			}
+		std::shared_ptr<object_list> allOfType = current.get_by_type(type);
+		err = allOfType->process_changes(cached, *this, type);
+		if (err != 0) {
+			std::cerr << "failed to send " << type << std::endl;
 		}
 	}
 
@@ -311,7 +309,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 			                                          JSON_C_TO_STRING_PRETTY)
 //	                                                                                      		,
 //	                                          (const char **) &response_json
-			);
+	);
 
 	if (!response_json) {
 		json_object_put(jobj);

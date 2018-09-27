@@ -20,7 +20,7 @@
 #ifndef SIMPLESCIM_SCIM_JSON_H
 #define SIMPLESCIM_SCIM_JSON_H
 
-#include <json-c/json.h>
+#include <json.h>
 #include <string>
 
 class base_object;

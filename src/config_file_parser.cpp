@@ -239,7 +239,7 @@ int config_parser::rule_assign() {
 
 int config_parser::advance_to(const char c) {
 	size_t pos = std::string(cur, end).find(c);
-	if (pos == -1)
+	if (pos == std::string::npos)
 		return -1;
 	advance(pos);
 	return 0;

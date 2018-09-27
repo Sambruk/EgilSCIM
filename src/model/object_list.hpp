@@ -24,7 +24,8 @@
 #include <ostream>
 
 #include "base_object.hpp"
-#include "../scim.hpp"
+
+class ScimActions;
 
 typedef std::map<std::string, std::shared_ptr<base_object>> object_map_t;
 
@@ -56,16 +57,6 @@ public:
 				return object.second;
 		}
 		return nullptr;
-	}
-
-	[[deprecated]]
-	std::shared_ptr<object_list> get_all_for_type(const std::string &type) const {
-		auto copy = std::make_shared<object_list>();
-		for (auto &&item : objects) {
-			if (item.second->get_values("ss12000type").at(0) == type)
-				copy->objects.emplace(item);
-		}
-		return copy;
 	}
 
 	std::shared_ptr<base_object> get_object(const std::string &uid) const {

@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include "config_file.hpp"
+#include "data_server.hpp"
 #include <memory>
 
 class base_object;
@@ -60,7 +61,7 @@ public:
 		scim_new_cache = std::make_unique<object_list>();
 	}
 
-	int perform(const object_list &current, const object_list &cached) const;
+	int perform(const data_server &current, const object_list &cached) const;
 
 	class copy_func {
 		const base_object &cached;

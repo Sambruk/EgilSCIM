@@ -41,9 +41,13 @@ public:
 		dynamic_data.clear();
 	}
 
+	bool empty() {
+		return static_data.empty() && dynamic_data.empty();
+	}
+
 	std::shared_ptr<base_object>
 	find_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value);
-	std::shared_ptr<object_list> get_by_type(const std::string &type);
+	std::shared_ptr<object_list> get_by_type(const std::string &type) const;
 
 	/**
 	 * dependent data that is loaded in its entirety once
@@ -52,8 +56,6 @@ public:
 	 */
 	std::shared_ptr<object_list> get_static_by_type(const std::string &type);
 
-
-	std::shared_ptr<object_list> getAllObjects();
 
 	void load();
 

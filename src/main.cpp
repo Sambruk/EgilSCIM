@@ -47,12 +47,11 @@ int main(int argc, char *argv[]) {
 		/** Get objects from LDAP catalogue */
 		data_server &server = data_server::instance();
 		server.load();
-		std::shared_ptr<object_list> all = server.getAllObjects();
 
-
-		if (all->empty() || config.get_bool("dump-mode")) {
+		if (server.empty()) {
 			print_error();
 			config.clear();
+			server.clear();
 			continue;
 		}
 
@@ -62,14 +61,16 @@ int main(int argc, char *argv[]) {
 
 		if (cache == nullptr) {
 			print_error();
+			server.clear();
 			config.clear();
 			continue;
 		}
 
 		/** Perform SCIM operations */
-		err = ScimActions().perform(*all, *cache);
+		err = ScimActions().perform(server, *cache);
 
 		if (err == -1) {
+			server.clear();
 			print_error();
 			config.clear();
 			continue;
@@ -79,6 +80,7 @@ int main(int argc, char *argv[]) {
 
 		/* Clean up */
 		config.clear();
+		server.clear();
 	}
 
 	return 0;

@@ -1,18 +1,40 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(EgilSCIMClient CXX)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow -fexceptions -fsanitize=address")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope Wshadow-compatible-local")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope -Wshadow-uncaptured-local")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++17 ")
-#-DNDEBUG
-find_package(Boost)
-if (Boost_FOUND)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++17 -DNDEBUG")
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
+
+#find_package(OpenSSL REQUIRED)
+
+find_package(JSON-C REQUIRED)
+if (JSON-C_INCLUDE_DIR)
+    include_directories(${JSON-C_INCLUDE_DIR})
+else ()
+    message(FATAL_ERROR "We need json-c, please install")
+endif ()
+
+#find_package(OpenLDAP REQUIRED)
+#if (NOT LDAP_LIBRARY)
+#    message( FATAL_ERROR "Can't be doing ithout lddap, please install" )
+#endif()
+
+find_package(Boost REQUIRED)
+if (NOT Boost_FOUND)
+    message(FATAL_ERROR "please install boost")
+else ()
     include_directories(${Boost_INCLUDE_DIRS})
 endif ()
 
 set(LDFLAGS -lldap -llber -ljson-c -lcurl -lssl -lcrypto -luuid -lsqlite3)
 
-include_directories("${PROJECT_BINARY_DIR}" /usr/local/include/json-c /usr/local/Cellar/openldap/2.4.46/include /usr/local/opt/openssl/include)
+#include_directories("${PROJECT_BINARY_DIR}" /usr/local/include/json-c /usr/local/Cellar/openldap/2.4.46/include /usr/local/opt/openssl/include)
+include_directories("${PROJECT_BINARY_DIR} /usr/local/Cellar/openldap/2.4.46/include")
 link_libraries(${LDFLAGS})
 
 set(srcroot src)

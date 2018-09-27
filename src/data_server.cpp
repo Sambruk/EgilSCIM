@@ -54,7 +54,7 @@ void data_server::preload() {
  * @param query the query used to load the data
  * @return
  */
-std::shared_ptr<object_list> data_server::get_by_type(const std::string &type) {
+std::shared_ptr<object_list> data_server::get_by_type(const std::string &type) const {
 
 	auto stuff = static_data.find(type);
 	if (stuff != static_data.end())
@@ -73,18 +73,6 @@ std::shared_ptr<object_list> data_server::get_static_by_type(const std::string &
 		return stuff->second;
 
 	return std::make_shared<object_list>();
-}
-
-
-std::shared_ptr<object_list> data_server::getAllObjects() {
-	std::shared_ptr<object_list> all = std::make_shared<object_list>();
-	for (const auto &item : static_data) {
-		*all += *item.second;
-	}
-	for (const auto &item : dynamic_data) {
-		*all += *item.second;
-	}
-	return all;
 }
 
 void data_server::add_dynamic(const std::string &type, object_list &&list) {

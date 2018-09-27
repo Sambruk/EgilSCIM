@@ -44,9 +44,9 @@
 void load_related(const std::string &type, const std::shared_ptr<object_list> &objects);
 
 std::string
-identify_object(local_id_store &persister, base_object &generated_object,
-                const std::pair<std::string, std::string> &part_type,
-                const std::pair<std::string, std::string> &master_id);
+store_relation(local_id_store &persister, base_object &generated_object,
+               const std::pair<std::string, std::string> &part_type,
+               const std::pair<std::string, std::string> &master_id);
 
 std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, const pair_map &queries) {
 	data_server &server = data_server::instance();
@@ -80,14 +80,21 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 	std::string remote_relation = conf.get(type + "-remote-relation-id");
 	string_pair master_type = conf.get_pair(type + "-generate-key");
 	string_pair related_type = conf.get_pair(type + "-generate-remote-part");
+	string_vector scim_vars = conf.get_vector(type + "-scim-variables");
+	string_pair local_relation = conf.get_pair(type + "-local-relation-id");
+	std::string uuid_attribute = conf.get(type + "-unique-identifier");
+	string_vector id_cred = conf.get_vector(type + "-GUID-generation-ids");
+
+	if (id_cred.size() != 2) {
+		std::cerr << type << "-GUID-generation-ids must be 2 relations like StudentGroup.GUID SchoolUnit.GUID" << std::endl;
+		return nullptr;
+	}
 	auto student_groups = get_object_list_by_type(master_type.first, pair_map());
 	auto employments = get_object_list_by_type(related_type.first, pair_map());
 
 	for (const auto &student_group : *student_groups) {
 		base_object generated_object(type);
-		string_vector scim_vars = conf.get_vector(type + "-scim-variables");
-		generated_object.add_attribute(student_group.second->getSS12000type() + '.' +
-		                               "GUID", student_group.second->get_values("GUID"));
+		generated_object.add_attribute(pair_to_string(local_relation), student_group.second->get_values(local_relation.second));
 
 		string_vector members = student_group.second->get_values(remote_relation);
 		for (auto &&member: members) {
@@ -99,7 +106,7 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 
 		for (auto &&scim_var: scim_vars) {
 
-			if (scim_var == "GUID")
+			if (scim_var == uuid_attribute)
 				continue;
 
 			string_pair var_pair = string_to_pair(scim_var);
@@ -115,11 +122,10 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 			}
 		}
 
-		string_vector id_cred = conf.get_vector(type + "-GUID-generation-ids");
-		std::pair<std::string, std::string> p1 = string_to_pair(id_cred.at(0));
-		std::pair<std::string, std::string> p2 = string_to_pair(id_cred.at(1));
-		std::string uuid = identify_object(persister, generated_object, p1, p2);
-		generated->add_object(uuid, std::move(generated_object));
+			std::pair<std::string, std::string> p1 = string_to_pair(id_cred.at(0));
+			std::pair<std::string, std::string> p2 = string_to_pair(id_cred.at(1));
+			std::string uuid = store_relation(persister, generated_object, p1, p2);
+			generated->add_object(uuid, std::move(generated_object));
 
 	}
 
@@ -193,7 +199,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 					}
 				}
 				// create an id for the relation
-				std::string id = identify_object(persister, generated_object, part_type, master_id);
+				std::string id = store_relation(persister, generated_object, part_type, master_id);
 				generated->add_object(id, std::move(generated_object));
 			} else {
 				missing_ids.insert(relational_item);
@@ -213,9 +219,9 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 	return generated;
 }
 
-std::string identify_object(local_id_store &persister, base_object &generated_object,
-                            const std::pair<std::string, std::string> &part_type,
-                            const std::pair<std::string, std::string> &master_id) {
+std::string store_relation(local_id_store &persister, base_object &generated_object,
+                           const std::pair<std::string, std::string> &part_type,
+                           const std::pair<std::string, std::string> &master_id) {
 	config_file &conf = config_file::instance();
 	std::string type = generated_object.getSS12000type();
 	std::string uuid;
@@ -343,16 +349,16 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap, const std::string &typ
 	config_file &conf = config_file::instance();
 
 	std::shared_ptr<object_list> objects;
-	if (conf.get_bool(type + "-is-group")) {
-		std::cerr << type << "-is-group, don't do this" << std::endl;
-	} else if (conf.get_bool(type + "-is-generated")) {
+	if (conf.get_bool(type + "-is-generated")) {
 		objects = ldap_get_generated(type);
-		load_related(type, objects);
+		if (objects)
+			load_related(type, objects);
 	} else {
 		if (ldap.search(type)) {
 			/** Create user list. */
 			objects = ldap.ldap_to_user_list();
-			load_related(type, objects);
+			if (objects)
+				load_related(type, objects);
 		}
 	}
 

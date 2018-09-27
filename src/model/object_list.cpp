@@ -20,6 +20,7 @@
 
 #include "object_list.hpp"
 #include <iostream>
+#include "../scim.hpp"
 
 #include "../utility/simplescim_error_string.hpp"
 
@@ -27,52 +28,6 @@
  * digg out the calculated entries not in ldap
  */
 
-//std::tuple<std::map<std::string, SchoolUnit>,
-//		std::map<std::string, StudentGroup>,
-//		std::map<std::string, User>> object_list::digg() {
-//
-//	std::map<std::string, SchoolUnit> schoolUnits;
-//	std::map<std::string, StudentGroup> studentGroups;
-//	std::map<std::string, User> users;
-//
-//	for (auto &&item : objects) {
-//		std::shared_ptr<base_object> user = item.second;
-//		const value_list *code = user->get_values("pidSchoolUnit");
-//		const value_list *d_name = user->get_values("l");
-//
-//
-//		if (code == nullptr || d_name == nullptr) {
-//			std::cout << "Error reading user: " << user->get_uid()
-//			          << (code == nullptr ? " missing pidSchoolUnit" : "")
-//			          << (d_name == nullptr ? " missing displayName " : "")
-//			          << " skipping: " << std::endl;
-//			continue;
-//		}
-//		// using schoolunit code instead of externalId for now, needs to be stored anyways
-//		if (schoolUnits.find(code->at(0).c_str()) == schoolUnits.end()) {
-//			schoolUnits.emplace(
-//					std::make_pair(code->at(0), SchoolUnit("", d_name->at(0).c_str(), "", code->at(0).c_str())));
-//		}
-//
-//		const value_list *description = user->get_values("description");
-//		if (description == nullptr) {
-//			std::cout << "Error reading user: " << user->get_uid()
-//			          << " missing description "
-//			          << std::endl;
-//			continue;
-//		}
-//		//		auto studentGroups.find(description->str_at(0))
-//		if (studentGroups.find(description->at(0)) == studentGroups.end()) {
-//			studentGroups.emplace(std::make_pair(description->at(0),
-//			                                     StudentGroup("", description->at(0), code->at(0))));
-//		}
-//
-//		const value_list *userid = user->get_values("fullName");
-//		users.emplace(std::make_pair(userid->at(0),  User(*user)));
-//	}
-//
-//	return {schoolUnits, studentGroups, users};
-//}
 
 /**
  * Compares 'this' to 'cache' and performs 'copy_user_func'
