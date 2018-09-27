@@ -71,6 +71,8 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 	if (!persister.is_open())
 		return {};
 
+	std::cout << "Generating " << type << std::flush;
+
 	auto generated = std::make_shared<object_list>();
 
 	// get by type only, the type must be loaded already so no query needed
@@ -127,6 +129,7 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 		generated->add_object(uuid, std::move(generated_object));
 
 	}
+	std::cout << " - done!" << std::endl;
 
 	return generated;
 }
@@ -143,7 +146,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 	if (!persister.is_open())
 		return {};
 	std::set<std::string> missing_ids;
-	std::cout << "Generating " << type;
+	std::cout << "Generating " << type << std::flush;
 	// the relational key, e.g. User.pidSchoolUnit
 	string_pair relational_key = conf.get_pair(type + "-generate-key");
 	string_pair part_type = conf.get_pair(type + "-generate-remote-part");
@@ -206,12 +209,13 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 	}
 
 	std::cout << " - done!" << std::endl;
+
 	if (!missing_ids.empty()) {
 		std::cerr << "Missing SchoolUnits found:" << std::endl;
-		for (
-			const auto &missing_id : missing_ids) {
-			std::cerr << missing_id << std::endl;
+		for (const auto &missing_id : missing_ids) {
+			std::cerr << missing_id << ", ";
 		}
+		std::cout << std::endl;
 	}
 
 	return generated;
@@ -259,12 +263,15 @@ std::string store_relation(local_id_store &persister, base_object &generated_obj
 void load_related(const std::string &type, const std::shared_ptr<object_list> &objects) {
 	config_file &conf = config_file::instance();
 	data_server &server = data_server::instance();
-	string_vector scim_vars = conf.get_vector_sorted_unique(type + "-scim-variables");
+
 	relations_vector relations =
 			json_data_file::json_to_ldap_remote_relations(
 					conf.get(type + "-remote-relations", true));
 	if (relations.empty())
 		return;
+
+	string_vector scim_vars = conf.get_vector_sorted_unique(type + "-scim-variables");
+
 	ldap_wrapper ldap;
 
 	for (auto &&main_object: *objects) {

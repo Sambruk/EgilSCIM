@@ -33,9 +33,9 @@ class base_object;
 
 /**
  * Reads cache file specified in configuration file and
- * constructs a user list according to its contents.
- * On success, a pointer to the constructed user list is
- * returned. If the cache file doesn't exist, an empty user
+ * constructs a object list according to its contents.
+ * On success, a pointer to the constructed object list is
+ * returned. If the cache file doesn't exist, an empty object
  * list is returned. On error, NULL is returned and
  * simplescim_error_string is set to an appropriate error
  * message.
@@ -51,14 +51,18 @@ public:
 
 	~cache_file();
 
-	std::shared_ptr<object_list> get_users();
+	std::shared_ptr<object_list> get_contents();
 
-	std::shared_ptr<object_list>
-	get_users_from_file(const char *filename);
-
-	int save(const object_list *objects);
+	int save(std::shared_ptr<object_list> objects);
 
 private:
+
+	std::shared_ptr<object_list> read_objects();
+
+	std::shared_ptr<base_object> read_object(std::string *uidp);
+
+	std::shared_ptr<object_list> get_objects_from_file(const char *filename);
+
 	int write_n(const uint8_t *buf, size_t n);
 
 	int write_uint64(uint64_t n);
@@ -69,7 +73,7 @@ private:
 
 	int write_attribute(const std::string &attribute, const std::vector<std::string> &values);
 
-	int write_user(const std::string &uid, const base_object &user);
+	int write_object(const std::string &uid, const base_object &object);
 
 	int read_n(uint8_t *buf, size_t n);
 
@@ -78,11 +82,6 @@ private:
 	int read_value(std::string *avp);
 
 	int read_value_list(std::vector<std::string> *alp);
-
-	int read_users(std::shared_ptr<object_list> usersp);
-
-	std::shared_ptr<base_object> read_user(std::string *uidp);
-
 
 };
 

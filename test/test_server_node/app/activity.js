@@ -1,5 +1,5 @@
 const express = require('express');
-const simpleAuth = require('./simpleAuth');
+const appConfig = require('./config');
 const uuid = require('uuid/v1');
 const util = require('util');
 const log = require('./message_log');
@@ -8,14 +8,14 @@ let userRouter = express.Router();
 
 // Routes
 userRouter.post('/Activity', (req, res) => {
-    console.log("POST create user" + " " + new Date());
-    // console.log(util.inspect(req.body, {showHidden: false, depth: null}));
-    log("out/Activity.log", util.inspect(req.body, {showHidden: false, depth: null}));
+    console.log("POST create activity" + " " + new Date());
+    log("out/Activity.log", util.inspect(req.body, appConfig.jsonFormat));
     let resp = {"id": uuid()};
     res.status(201).json(resp);
 });
 userRouter.put('/Activity/:id', (req, res) => {
-    console.log("PUT update a user: ", req.params['id'] + " " + new Date());
+    console.log("PUT update a activity: ", req.params['id'] + " " + new Date());
+    log("out/Activity.log", util.inspect(req.body, appConfig.jsonFormat));
     console.log(req.body);
     res.status(200).send();
 });

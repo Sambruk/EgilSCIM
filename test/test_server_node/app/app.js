@@ -1,5 +1,5 @@
 
-const serverConfig = require('./config');
+const appConfig = require('./config');
 const express = require('express');
 
 const app = express();
@@ -28,17 +28,17 @@ app.use(require('./schoolunitgroup'));
 app.use(require('./employment'));
 app.use(require('./activity'));
 
-if (serverConfig.https) {
+if (appConfig.https) {
 // Listen over https
-    serverConfig.secureServer
-        .createServer(serverConfig.httpsOptions, app)
-        .listen(serverConfig.port, () => {
-            console.log("Listening on " + serverConfig.port + " with ssl/tls");
+    appConfig.secureServer
+        .createServer(appConfig.httpsOptions, app)
+        .listen(appConfig.port, () => {
+            console.log("Listening on " + appConfig.port + " with ssl/tls");
         });
 } else {
 // Listen over plaintext
-    app.listen(serverConfig.port, () => {
-        console.log("Listening on " + serverConfig.port + " unencrypted");
+    app.listen(appConfig.port, () => {
+        console.log("Listening on " + appConfig.port + " unencrypted");
     });
 }
 

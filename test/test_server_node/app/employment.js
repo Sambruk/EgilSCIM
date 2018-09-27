@@ -1,5 +1,5 @@
 const express = require('express');
-const simpleAuth = require('./simpleAuth');
+const appConfig = require('./config');
 const uuid = require('uuid/v1');
 let userRouter = express.Router();
 const util = require('util');
@@ -9,14 +9,13 @@ const inspect_config = {showHidden: false, depth: null};
 // Routes
 userRouter.post('/Employment', (req, res) => {
     console.log("POST create employment" + " " + new Date());
-    let data = util.inspect(req.body, {showHidden: false, depth: null});
-    log("out/Employment.log", util.inspect(req.body, {showHidden: false, depth: null}));
-    // console.log(util.inspect(req.body, {showHidden: false, depth: null}));
+    log("out/Employment.log", util.inspect(req.body, appConfig.jsonFormat));
     let resp = {"id": uuid()};
     res.status(201).json(resp);
 });
 userRouter.put('/Employment/:id', (req, res) => {
     console.log("PUT update an employment: ", req.params['id'] + " " + new Date());
+    log("out/Employment.log", util.inspect(req.body, appConfig.jsonFormat));
     console.log(req.body);
     res.status(200).send();
 });

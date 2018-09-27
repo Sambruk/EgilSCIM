@@ -158,17 +158,17 @@ int cache_file::read_value_list(string_vector *alp) {
 }
 
 /**
- * Reads one user from 'fd' and stores it in 'userp', and
- * stores the user's unique identifier in 'uidp'.
+ * Reads one object from 'fd' and stores it in 'userp', and
+ * stores the object's unique identifier in 'uidp'.
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-std::shared_ptr<base_object> cache_file::read_user(std::string *uidp) {
+std::shared_ptr<base_object> cache_file::read_object(std::string *uidp) {
 	std::string uid;
 	int err;
 
-	/** Read user's unique identifier */
+	/** Read object's unique identifier */
 	err = read_value(&uid);
 
 	if (err == -1) {
@@ -189,7 +189,7 @@ std::shared_ptr<base_object> cache_file::read_user(std::string *uidp) {
 		return nullptr;
 	}
 
-	std::shared_ptr<base_object> user = std::make_shared<base_object>(type);
+	auto object = std::make_shared<base_object>(type);
 
 	/* Read attributes */
 	for (uint64_t i = 0; i < n_attributes; ++i) {
@@ -210,21 +210,21 @@ std::shared_ptr<base_object> cache_file::read_user(std::string *uidp) {
 			return nullptr;
 		}
 
-		user->add_attribute(attribute, std::move(values));
+		object->add_attribute(attribute, std::move(values));
 	}
 
 	*uidp = uid;
-	return user;
+	return object;
 
 }
 
 /**
- * Reads users from 'fd' and stores them in 'usersp'.
+ * Reads objects from 'fd' and stores them in 'usersp'.
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int cache_file::read_users(std::shared_ptr<object_list> usersp) {
+std::shared_ptr<object_list> cache_file::read_objects() {
 	std::string uid;
 	uint64_t n_users;
 	int err;
@@ -233,39 +233,37 @@ int cache_file::read_users(std::shared_ptr<object_list> usersp) {
 	err = read_uint64(&n_users);
 
 	if (err == -1) {
-		return -1;
+		return std::make_shared<object_list>();
 	}
 
-	/* Allocate user list */
-	object_list users;
+	/* Allocate object list */
+	auto objects = std::make_shared<object_list>();
 
 	/* Read all objects */
 	for (uint64_t i = 0; i < n_users; ++i) {
 
-		std::shared_ptr<base_object> user = read_user(&uid);
+		std::shared_ptr<base_object> object = read_object(&uid);
 
-		if (user == nullptr) {
-			return -1;
+		if (object == nullptr) {
+			return std::make_shared<object_list>();
 		}
 
-		users.add_object(uid, std::move(*user));
+		objects->add_object(uid, std::move(*object));
 	}
 
-	*usersp = users;
-
-	return 0;
+	return objects;
 }
 
 /**
  * Reads cache file specified in configuration file and
- * constructs a user list according to its contents.
- * On success, a pointer to the constructed user list is
- * returned. If the cache file doesn't exist, an empty user
+ * constructs a object list according to its contents.
+ * On success, a pointer to the constructed object list is
+ * returned. If the cache file doesn't exist, an empty object
  * list is returned. On error, nullptr is returned and
  * simplescim_error_string is set to an appropriate error
  * message.
  */
-std::shared_ptr<object_list> cache_file::get_users() {
+std::shared_ptr<object_list> cache_file::get_contents() {
 
 	/* Get the cache file's name from configuration file */
 	cache_file_filename = config_file::instance().get("cache-file");
@@ -277,17 +275,16 @@ std::shared_ptr<object_list> cache_file::get_users() {
 	if (cache_file_filename == "nocache")
 		return std::make_shared<object_list>();
 
-	return get_users_from_file(cache_file_filename.c_str());
+	return get_objects_from_file(cache_file_filename.c_str());
 
 }
 
-std::shared_ptr<object_list> cache_file::get_users_from_file(const char *filename) {
-	int err;
+std::shared_ptr<object_list> cache_file::get_objects_from_file(const char *filename) {
 
 	cache_file_filename = filename;
 
 	/* Check if cache file exists.
-	   If not, return an empty user list. */
+	   If not, return an empty object list. */
 	if (access(filename, F_OK) == -1) {
 		return std::make_shared<object_list>();
 	}
@@ -300,20 +297,17 @@ std::shared_ptr<object_list> cache_file::get_users_from_file(const char *filenam
 		return nullptr;
 	}
 
-	/* Read user list from cache file */
+	/* Read object list from cache file */
 
-	std::shared_ptr<object_list> list = std::make_shared<object_list>();
-	err = read_users(list);
+	std::shared_ptr<object_list> list = read_objects();;
 
-	if (err == -1) {
-		close(cache_file_fd);
-		return nullptr;
-	}
 
 	close(cache_file_fd);
 
 	return list;
 }
+
+
 /**
  * ******************************************************************************
  * ******************************************************************************
@@ -427,7 +421,7 @@ int cache_file::write_value_list(const string_vector &al) {
 }
 
 /**
- * Writes one user attribute and its values to
+ * Writes one object attribute and its values to
  * 'simplescim_cache_file_fd'.
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
@@ -465,12 +459,12 @@ int cache_file::write_attribute(const std::string &attribute, const string_vecto
 }
 
 /**
- * Writes one user to 'simplescim_cache_file_fd'.
+ * Writes one object to 'simplescim_cache_file_fd'.
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int cache_file::write_user(const std::string &uid, const base_object &user) {
+int cache_file::write_object(const std::string &uid, const base_object &object) {
 	int err;
 
 	/* Write unique_identifier_length and unique_identifier */
@@ -480,7 +474,7 @@ int cache_file::write_user(const std::string &uid, const base_object &user) {
 		return -1;
 	}
 
-	std::string type = user.getSS12000type();
+	std::string type = object.getSS12000type();
 	if (type.empty()) {
 		std::cerr << "trying to cache an object without type " << uid << std::endl;
 		return -1;
@@ -493,7 +487,7 @@ int cache_file::write_user(const std::string &uid, const base_object &user) {
 	}
 
 	/* Write n_attributes */
-	err = write_uint64(user.number_of_attributes());
+	err = write_uint64(object.number_of_attributes());
 
 	if (err == -1) {
 		return -1;
@@ -501,7 +495,7 @@ int cache_file::write_user(const std::string &uid, const base_object &user) {
 
 	/* Write attributes */
 
-	for (auto &&attib : user.attributes) {
+	for (auto &&attib : object.attributes) {
 		err = write_attribute(attib.first, attib.second);
 		if (err == -1)
 			return err;
@@ -511,13 +505,13 @@ int cache_file::write_user(const std::string &uid, const base_object &user) {
 }
 
 /**
- * Writes 'users' to cache file specified in configuration
+ * Writes 'objects' to cache file specified in configuration
  * file.
  * On success, zero is returned. On error, -1 is returned
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int cache_file::save(const object_list *objects) {
+int cache_file::save(std::shared_ptr<object_list> objects) {
 	int err;
 
 	/* Get cache file's name */
@@ -537,7 +531,7 @@ int cache_file::save(const object_list *objects) {
 		return -1;
 	}
 
-	/* Write n_users */
+	/* Write n_objects */
 	err = cache_file::instance().write_uint64(objects->size());
 
 	if (err == -1) {
@@ -546,7 +540,7 @@ int cache_file::save(const object_list *objects) {
 	}
 
 	for (auto &&item : objects->objects) {
-		err = write_user(item.first, *item.second);
+		err = write_object(item.first, *item.second);
 		if (err == -1)
 			break;
 	}

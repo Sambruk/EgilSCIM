@@ -1,5 +1,5 @@
 const express = require('express');
-const simpleAuth = require('./simpleAuth');
+const appConfig = require('./config');
 const uuid = require('uuid/v1');
 let userRouter = express.Router();
 const util = require('util');
@@ -8,14 +8,13 @@ const log = require('./message_log');
 // Routes
 userRouter.post('/StudentGroup', (req, res) => {
     console.log("POST create StudentGroup" + " " + new Date());
-    let data = util.inspect(req.body, {showHidden: false, depth: null});
-    log("out/StudentGroup.log", util.inspect(req.body, {showHidden: false, depth: null}));
-    // console.log(util.inspect(req.body, {showHidden: false, depth: null}));
+    log("out/StudentGroup.log", util.inspect(req.body, appConfig.jsonFormat));
     let resp = {"id": uuid()};
     res.status(201).json(resp);
 });
 userRouter.put('/StudentGroup/:id', (req, res) => {
     console.log("PUT update an StudentGroup: ", req.params['id'] + " " + new Date());
+    log("out/StudentGroup.log", util.inspect(req.body, appConfig.jsonFormat));
     console.log(req.body);
     res.status(200).send();
 });

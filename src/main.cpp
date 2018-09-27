@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 
 
 		/** Get objects from cache file */
-		std::shared_ptr<object_list> cache = cache_file::instance().get_users();
+		std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
 
 		if (cache == nullptr) {
 			print_error();

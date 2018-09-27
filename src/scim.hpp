@@ -48,7 +48,7 @@ struct variables {
 };
 
 class ScimActions {
-	std::unique_ptr<object_list> scim_new_cache;
+	std::shared_ptr<object_list> scim_new_cache;
 	variables vars = variables();
 	const config_file &conf = config_file::instance();
 

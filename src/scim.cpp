@@ -103,21 +103,17 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
 		err = allOfType->process_changes(cached, *this, type);
 		if (err != 0) {
 			std::cerr << "failed to send " << type << std::endl;
+			return -1;
 		}
 	}
 
 	/* Save new cache file */
-	err = cache_file::instance().save(scim_new_cache.get());
-
-	if (err == -1) {
-		simplescim_scim_clear();
-		return -1;
-	}
+	err = cache_file::instance().save(scim_new_cache);
 
 	/* Clean up */
 	simplescim_scim_clear();
 
-	return 0;
+	return err;
 }
 
 int ScimActions::copy_func::operator()(const ScimActions &actions) {
