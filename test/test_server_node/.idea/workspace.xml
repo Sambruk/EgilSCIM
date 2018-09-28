@@ -3,19 +3,14 @@
   <component name="ChangeListManager">
     <list default="true" id="62d90064-e013-4009-bf68-08119a2e4654" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../../src/cache_file.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cache_file.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/cache_file.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/cache_file.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/data_server.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/data_server.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/data_server.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/data_server.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/json_data_file.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/json_data_file.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/ldap_wrapper.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/ldap_wrapper.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../src/model/object_list.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/model/object_list.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../src/scim.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/scim.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/scim.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/scim.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../src/simplescim_ldap.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/simplescim_ldap.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/activity.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/activity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/config.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/employment.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/employment.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schoolunit.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/schoolunit.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schoolunitgroup.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/schoolunitgroup.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/studentgroup.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/studentgroup.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/users.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/users.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -220,8 +215,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/users.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="91">
-              <caret line="7" column="26" lean-forward="true" selection-start-line="7" selection-start-column="26" selection-end-line="7" selection-end-column="26" />
+            <state relative-caret-position="351">
+              <caret line="27" selection-start-line="27" selection-end-line="27" />
             </state>
           </provider>
         </entry>
@@ -452,24 +447,24 @@
       <workItem from="1537763184721" duration="6531000" />
       <workItem from="1537851623052" duration="2573000" />
       <workItem from="1537963631763" duration="1422000" />
-      <workItem from="1538045766271" duration="3910000" />
+      <workItem from="1538045766271" duration="6030000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="116720000" />
+    <option name="totallyTimeSpent" value="118840000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-1092" y="55" width="972" height="1122" extended-state="0" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.22688173" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.22688173" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="npm" order="2" side_tool="true" />
       <window_info id="Favorites" order="3" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32997987" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32969216" />
-      <window_info anchor="bottom" id="Debug" order="3" visible="true" weight="0.32174778" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.32174778" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -717,8 +712,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/users.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="91">
-          <caret line="7" column="26" lean-forward="true" selection-start-line="7" selection-start-column="26" selection-end-line="7" selection-end-column="26" />
+        <state relative-caret-position="351">
+          <caret line="27" selection-start-line="27" selection-end-line="27" />
         </state>
       </provider>
     </entry>

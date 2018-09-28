@@ -20,8 +20,17 @@ class data_server {
 	// The distinction is if we can say "it is loaded or not" v.s. it grows as we load
 	// other data
 	std::map<std::string, std::shared_ptr<object_list>> dynamic_data;
+
+	// when relational objects are loaded they will later be requested by
+	// another key than GUID.
+	// This requires a search of all objects by attribute. This cache intercepts that and
+	// is indexed by <type><attribute><id>. It holds weak pointers
+	std::map<std::string, std::weak_ptr<base_object>> alt_key_cache;
+
 	string_vector static_types;
 	string_vector dynamic_types;
+
+
 
 	data_server(const data_server &other) = default;
 
@@ -62,10 +71,11 @@ public:
 
 	void preload();
 
+	void cache_relation(const std::string& key, std::weak_ptr<base_object> object);
 
 	void add(const std::string& type, std::shared_ptr<object_list> list);
 
-	void add(const std::string &type, base_object &&object);
+	void add(const std::string &type, std::shared_ptr<base_object> object);
 
 private:
 	/**

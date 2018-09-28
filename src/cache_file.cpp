@@ -248,7 +248,7 @@ std::shared_ptr<object_list> cache_file::read_objects() {
 			return std::make_shared<object_list>();
 		}
 
-		objects->add_object(uid, std::move(*object));
+		objects->add_object(uid, object);
 	}
 
 	return objects;

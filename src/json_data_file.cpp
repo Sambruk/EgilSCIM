@@ -39,7 +39,7 @@ void json_data_file::get_users(std::shared_ptr<object_list> list) {
 		object.add_attribute("groupName", std::move(groupName));
 		object.add_attribute("externalId", {id});
 		object.add_attribute("members", std::move(idList));
-		list->add_object(id, std::move(object));
+		list->add_object(id, std::make_shared<base_object>(object));
 	} catch (const boost::exception &ex) {
 		std::cerr << "Failed to read json file: " << filename << boost::diagnostic_information(ex);
 	} catch (...) {

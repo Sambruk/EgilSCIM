@@ -99,7 +99,7 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 
 		string_vector members = student_group.second->get_values(remote_relation);
 		for (auto &&member: members) {
-			auto employment = employments->get_object_for_attribute(remote_relation, member);
+			auto employment = data_server::instance().find_object_by_attribute(related_type.first, remote_relation, member);
 			if (employment) {
 				generated_object.append_values(pair_to_string(related_type), {employment->get_uid()});
 			}
@@ -126,7 +126,7 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 		std::pair<std::string, std::string> p1 = string_to_pair(id_cred.at(0));
 		std::pair<std::string, std::string> p2 = string_to_pair(id_cred.at(1));
 		std::string uuid = store_relation(persister, generated_object, p1, p2);
-		generated->add_object(uuid, std::move(generated_object));
+		generated->add_object(uuid, std::make_shared<base_object>(generated_object));
 
 	}
 	std::cout << " - done!" << std::endl;
@@ -176,8 +176,11 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 			base_object generated_object(type);
 			generated_object.add_attribute(pair_to_string(relational_key), {relational_item});
 
+			// don't ask data_server for missing id's if we already know it's missing
+			if (missing_ids.find(relational_item) != missing_ids.end())
+				continue;
 			std::shared_ptr<base_object> related_object;
-			related_object = related_list->get_object_for_attribute(related_id.second, relational_item);
+			related_object = data_server::instance().find_object_by_attribute(part_type.first, related_id.second, relational_item);
 
 			if (related_object) {
 				std::pair master_id = conf.get_pair(type + "-local-relation-id");
@@ -201,7 +204,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 				}
 				// create an id for the relation
 				std::string id = store_relation(persister, generated_object, part_type, master_id);
-				generated->add_object(id, std::move(generated_object));
+				generated->add_object(id, std::make_shared<base_object>(generated_object));
 			} else {
 				missing_ids.insert(relational_item);
 			}
@@ -281,8 +284,7 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 				if (relation_source) {
 					string_vector values = main_object.second->get_values(relation.local_attibute);
 					if (values.size() == 1) {
-						auto remote_object = relation_source->get_object_for_attribute(relation.remote_attribute,
-						                                                               values.at(0));
+						auto remote_object = server.find_object_by_attribute(relation.type, relation.remote_attribute, values.at(0));
 						for (auto &&var : scim_vars) {
 							string_pair p = string_to_pair(var);
 							if (p.first == relation.type) {
@@ -321,7 +323,8 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 						auto id = main_object.second->get_values("GUID");
 						remote->append_values(type + ".GUID", id, true);
 						// add the new entity to the server
-						server.add(relation.type, std::move(*remote));
+						server.cache_relation(relation.type + relation.remote_attribute + value, remote);
+						server.add(relation.type, remote);
 					}
 				}
 

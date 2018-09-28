@@ -50,11 +50,19 @@ public:
 		objects.clear();
 	}
 
-	std::shared_ptr<base_object> get_object_for_attribute(const std::string &a, const std::string &id) {
+	std::shared_ptr<base_object> get_object_for_attribute(const std::string &attribute, const std::string &id) {
 		for (const auto &object : objects) {
-			const string_vector &athing = object.second->get_values(a);
-			if (!athing.empty() && athing.at(0) == id)
-				return object.second;
+			const string_vector &values = object.second->get_values(attribute);
+			if (!values.empty() && values.size() > 1) {
+				std::cerr << "Expected single value for "
+				          << object.second->getSS12000type()
+				          << " " << attribute << " " << id
+				          << " found: " << values.size() << std::endl;
+			}
+			for (auto && value: values) {
+				if (value == id)
+					return object.second;
+			}
 		}
 		return nullptr;
 	}
@@ -83,12 +91,12 @@ public:
 //		objects.emplace(std::make_pair(uid, object));
 //	}
 
-	void add_object(const std::string &uid, base_object &&object) {
+	void add_object(const std::string &uid, std::shared_ptr<base_object> object) {
 		auto record = objects.find(uid);
 		if (record != objects.end()) {
 			objects.erase(uid);
 		}
-		objects.emplace(std::make_pair(uid, std::make_shared<base_object>(std::move(object))));
+		objects.emplace(std::make_pair(uid, object));
 	}
 
 	object_list &operator+=(const object_list &other) {

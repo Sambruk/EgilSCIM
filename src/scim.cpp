@@ -122,7 +122,7 @@ int ScimActions::copy_func::operator()(const ScimActions &actions) {
 	}
 
 	actions.scim_new_cache->add_object(cached.get_uid(),
-	                                   base_object(cached));
+	                                   std::make_shared<base_object>(cached));
 
 	return 0;
 
@@ -240,7 +240,7 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
 		return -1;
 	}
 
-	actions.scim_new_cache->add_object(uid, std::move(copied_user));
+	actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
 
 
 	/* Clean up */
@@ -316,7 +316,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 	json_object_put(jobj);
 
 	/* Insert copied object into new cache */
-	actions.scim_new_cache->add_object(uid, std::move(copied_user));
+	actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
 
 	return 0;
 

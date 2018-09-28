@@ -90,17 +90,16 @@ void data_server::add_static(const std::string &type, std::shared_ptr<object_lis
 	static_data.emplace(std::make_pair(type, list));
 }
 
-void data_server::add(const std::string &type, base_object &&object) {
+void data_server::add(const std::string &type, std::shared_ptr<base_object> object) {
 	auto list = get_by_type(type);
 	if (list)
-		list->add_object(object.get_uid(true), std::move(object));
+		list->add_object(object->get_uid(true), object);
 	else {
 		auto newList = std::make_shared<object_list>();
-		newList->add_object(object.get_uid(true), std::move(object));
+		newList->add_object(object->get_uid(true), object);
 		add(type, newList);
 	}
 }
-
 
 
 void data_server::add(const std::string &type, std::shared_ptr<object_list> list) {
@@ -110,10 +109,49 @@ void data_server::add(const std::string &type, std::shared_ptr<object_list> list
 		add_static(type, list);
 }
 
+void data_server::cache_relation(const std::string &key, std::weak_ptr<base_object> object) {
+	alt_key_cache.emplace(std::make_pair(key, object));
+}
+#define TEST_CACHE 0
 std::shared_ptr<base_object>
 data_server::find_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value) {
+
+#if TEST_CACHE
+	std::cout << type << " " << attrib << " " << value;
+#endif
+	auto found_pair = alt_key_cache.find(type + attrib + value);
+
+	if (found_pair != alt_key_cache.end()) {
+		if (auto sp = found_pair->second.lock()) {
+#if TEST_CACHE
+			std::cout << " Cache hit" << std::endl;
+#endif
+			return sp;
+		}
+#if TEST_CACHE
+		else {
+			std::cout << " Cached object invalid" << std::endl;
+		}
+#endif
+	}
+
+#if TEST_CACHE
+	std::cout << " Cache miss";
+#endif
 	auto list = get_by_type(type);
-	return list->get_object_for_attribute(attrib, value);
+	auto result = list->get_object_for_attribute(attrib, value);
+	if (result) {
+#if TEST_CACHE
+		std::cout << "!";
+#endif
+		cache_relation(type + attrib + value, result);
+	}
+#if TEST_CACHE
+	else
+		std::cout << "?";
+	std::cout << std::endl;
+#endif
+	return result;
 }
 
 
