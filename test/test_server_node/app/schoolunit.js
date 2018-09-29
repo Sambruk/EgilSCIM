@@ -12,8 +12,9 @@ userRouter.post('/SchoolUnit', (req, res) => {
     let resp = {"id": uuid()};
     res.status(201).json(resp);
 });
-userRouter.put('/SchoolUnit/:id', (req, res) => {
-    console.log("PUT update an SchoolUnit: ", req.params['id'] + " " + new Date());
+// userRouter.put('/SchoolUnit/:id', (req, res) => {
+userRouter.put('/SchoolUnit', (req, res) => {
+    console.log("PUT update an SchoolUnit: " + new Date());
     log("out/SchoolUnit.log", util.inspect(req.body, appConfig.jsonFormat));
     console.log(req.body);
     res.status(200).send();

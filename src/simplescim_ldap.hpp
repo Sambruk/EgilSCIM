@@ -33,5 +33,6 @@ class object_list;
  * message.
  */
 std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap, const std::string &type);
+void load_related(const std::string &type, const std::shared_ptr<object_list> &objects);
 
 #endif

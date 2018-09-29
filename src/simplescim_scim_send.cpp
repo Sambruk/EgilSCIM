@@ -432,12 +432,16 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
 	if (response_code != 201) {
 		simplescim_error_string_set_prefix("simplescim_scim_send_create");
 		std::string message;
-		if (response_code == 413) {
+		if (response_code == 409) {
+			message = " object already exists";
+			simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+			                                    message.c_str());
+		} if (response_code == 413) {
 			message = " data to " + url + " to large.";
+			simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+			                                    message.c_str());
+			return {};
 		}
-		simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-		                                    message.c_str());
-		return {};
 	}
 	return result;
 }

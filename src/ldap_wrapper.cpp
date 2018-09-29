@@ -3,6 +3,7 @@
 //
 
 #include "ldap_wrapper.hpp"
+#include "simplescim_ldap.hpp"
 
 bool ldap_wrapper::ldap_get_variables() {
 
@@ -22,7 +23,7 @@ bool ldap_wrapper::ldap_get_variables() {
 }
 
 bool ldap_wrapper::ldap_get_type_variables() {
-	std::string type_filters = config_file::instance().get(type + "-ldap-filter");
+	std::string type_filters = config_file::instance().get(type + "-ldap-filter", true);
 	if (type_filters.find("queries") != std::string::npos) {
 		multi_queries = json_data_file::json_to_ldap_query(type_filters);
 	}
@@ -269,6 +270,7 @@ std::shared_ptr<object_list> ldap_wrapper::ldap_to_user_list() {
 
 		/** Insert user into user list. */
 		users->add_object(uid, user);
+		load_related(user->getSS12000type(), users);
 	}
 	return users;
 }

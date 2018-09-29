@@ -142,22 +142,28 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
  */
 std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &type) {
 	config_file &conf = config_file::instance();
+	data_server &server = data_server::instance();
 	local_id_store persister;
 	if (!persister.is_open())
-		return {};
+		return nullptr;
 	std::set<std::string> missing_ids;
 	std::cout << "Generating " << type << std::flush;
 	// the relational key, e.g. User.pidSchoolUnit
 	string_pair relational_key = conf.get_pair(type + "-generate-key");
 	string_pair part_type = conf.get_pair(type + "-generate-remote-part");
 
-	pair_map queries = json_data_file::json_to_ldap_query(conf.get(type + "-ldap-filter"));
+	pair_map queries = json_data_file::json_to_ldap_query(conf.get(type + "-ldap-filter", true));
+	auto master_list = server.get_by_type(relational_key.first);
+	auto related_list = server.get_by_type(part_type.first);
 
-	auto master_list = data_server::instance().get_static_by_type(relational_key.first);
-	if (master_list->empty())
+	if (!master_list || master_list->empty()) {
+		if (queries.empty()) {
+			std::cerr << type << " requested but " << type << "-ldap-filter is missing" << std::endl;
+			return nullptr;
+		}
 		master_list = get_object_list_by_type(relational_key.first, queries);
-	auto related_list = data_server::instance().get_static_by_type(part_type.first);
-	if (related_list->empty())
+	}
+	if (!related_list || related_list->empty())
 		related_list = get_object_list_by_type(part_type.first, queries);
 
 	string_pair related_id = conf.get_pair(type + "-remote-relation-id");
@@ -167,6 +173,8 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 	ldap_wrapper ldap;
 
 	for (const auto &a_master: *master_list) {
+		if (!a_master.second->has_attribute_with_value(conf.get(type + "-type-attribute"), conf.get(type + "-type-value")))
+			continue;
 
 		string_vector relational_items = a_master.second->get_values(relational_key.second);
 
@@ -218,7 +226,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 		for (const auto &missing_id : missing_ids) {
 			std::cerr << missing_id << ", ";
 		}
-		std::cout << std::endl;
+		std::cerr << std::endl;
 	}
 
 	return generated;
@@ -282,32 +290,38 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 			if (relation.method == "object") {
 				auto relation_source = data_server::instance().get_by_type(relation.type);
 				if (relation_source) {
-					string_vector values = main_object.second->get_values(relation.local_attibute);
+					string_vector values = main_object.second->get_values(relation.local_attribute);
 					if (values.size() == 1) {
-						auto remote_object = server.find_object_by_attribute(relation.type, relation.remote_attribute, values.at(0));
-						for (auto &&var : scim_vars) {
-							string_pair p = string_to_pair(var);
-							if (p.first == relation.type) {
-								string_vector v = remote_object->get_values(p.second);
-								main_object.second->add_attribute(var, v);
+						auto remote_object = server.find_object_by_attribute(relation.type,
+								relation.remote_attribute, values.at(0));
+						if (remote_object) {
+							for (auto &&var : scim_vars) {
+								string_pair p = string_to_pair(var);
+								if (p.first == relation.type) {
+									string_vector v = remote_object->get_values(p.second);
+									main_object.second->add_attribute(var, v);
+								}
 							}
 						}
 					}
 				}
 			} else if (relation.method == "ldap") {
-				string_vector values = main_object.second->get_values(relation.local_attibute);
+				string_vector values = main_object.second->get_values(relation.local_attribute);
 				for (auto &&value : values) {
+					// first check it if's cached already
 					std::shared_ptr<base_object> remote = server.find_object_by_attribute(relation.type,
 					                                                                      relation.remote_attribute,
 					                                                                      value);
 					if (!remote) {
-						if (ldap.search(relation.type, {value, "(objectClass=*)"})) {
+
+						auto filter = relation.get_ldap_filter(value);
+
+						if (ldap.search(relation.type, filter)) {
 							auto response = ldap.ldap_to_user_list();
 							if (response->size() != 1)
 								std::cout << relation.type + " not found with: " << value << std::endl;
 							else {
 								remote = response->begin()->second;
-								remote->add_attribute(relation.remote_attribute, {value});
 							}
 						}
 					}
@@ -363,8 +377,6 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap, const std::string &typ
 		if (ldap.search(type)) {
 			/** Create user list. */
 			objects = ldap.ldap_to_user_list();
-			if (objects)
-				load_related(type, objects);
 		}
 	}
 

@@ -36,6 +36,13 @@ class data_server {
 
 	data_server() = default;
 
+	bool isStatic(const std::string &type) const {
+		for (auto && v : static_types) {
+			if (v == type)
+				return true;
+		}
+		return false;
+	}
 
 public:
 	static data_server &instance() {

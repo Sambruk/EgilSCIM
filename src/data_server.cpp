@@ -32,6 +32,7 @@ void data_server::load() {
 	} else {
 		std::cout << "can't connect to ldap" << std::endl;
 	}
+
 	preload();
 }
 
@@ -39,11 +40,6 @@ void data_server::load() {
 void data_server::preload() {
 	data_cache_vector caches = json_data_file::json_to_ldap_cache_requests(
 			config_file::instance().get("user-caches"));
-
-//	for (const auto &cache : caches) {
-//
-//	}
-
 }
 
 
@@ -55,16 +51,15 @@ void data_server::preload() {
  * @return
  */
 std::shared_ptr<object_list> data_server::get_by_type(const std::string &type) const {
+	auto list = static_data.find(type);
+	if (list != static_data.end())
+		return list->second;
 
-	auto stuff = static_data.find(type);
-	if (stuff != static_data.end())
-		return stuff->second;
+	list = dynamic_data.find(type);
+	if (list != dynamic_data.end())
+		return list->second;
 
-	stuff = dynamic_data.find(type);
-	if (stuff != dynamic_data.end())
-		return stuff->second;
-
-	return std::make_shared<object_list>();
+	return nullptr;
 }
 
 std::shared_ptr<object_list> data_server::get_static_by_type(const std::string &type) {
@@ -139,6 +134,8 @@ data_server::find_object_by_attribute(const std::string &type, const std::string
 	std::cout << " Cache miss";
 #endif
 	auto list = get_by_type(type);
+	if (!list)
+		return nullptr;
 	auto result = list->get_object_for_attribute(attrib, value);
 	if (result) {
 #if TEST_CACHE

@@ -13,8 +13,9 @@ userRouter.post('/Employment', (req, res) => {
     let resp = {"id": uuid()};
     res.status(201).json(resp);
 });
-userRouter.put('/Employment/:id', (req, res) => {
-    console.log("PUT update an employment: ", req.params['id'] + " " + new Date());
+// userRouter.put('/Employment/:id', (req, res) => {
+userRouter.put('/Employment', (req, res) => {
+    console.log("PUT update an employment: " + new Date());
     log("out/Employment.log", util.inspect(req.body, appConfig.jsonFormat));
     console.log(req.body);
     res.status(200).send();

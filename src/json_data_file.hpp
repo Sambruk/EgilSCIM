@@ -12,9 +12,37 @@
 struct relations {
 	std::string type;
 	std::string remote_attribute;
-	std::string local_attibute;
+	std::string remote_ldap_base;
+	std::string remote_ldap_filter;
+	std::string local_attribute;
 	std::string method;
+
+	std::string get_remote_ldap_filter(const std::string &variable) {
+		if (variable.empty())
+			return remote_ldap_filter;
+		else {
+			std::string f(remote_ldap_filter.substr(0, remote_ldap_filter.find('$')));
+			f += variable + ')';
+			return f;
+		}
+	}
+	std::string get_remote_ldap_base(const std::string &variable) {
+		if (variable.empty())
+			return remote_ldap_base;
+		else {
+			std::string f(remote_ldap_base.substr(0, remote_ldap_base.find('$')));
+			f += variable;
+			return f;
+		}
+	}
+	std::pair<std::string, std::string> get_ldap_filter(const std::string &variable) {
+		if (remote_ldap_base == "${value}")
+			return std::make_pair(get_remote_ldap_base(variable), get_remote_ldap_filter(""));
+		else
+			return std::make_pair(get_remote_ldap_base(""), get_remote_ldap_filter(variable));
+	}
 };
+
 struct data_cache {
 	std::string type;
 	std::string index_attribute;
@@ -25,6 +53,7 @@ struct data_cache {
 typedef std::map<std::string, std::pair<std::string, std::string>> pair_map;
 typedef std::vector<relations> relations_vector;
 typedef std::vector<data_cache> data_cache_vector;
+
 class json_data_file {
 	std::string filename;
 	std::stringstream json;
@@ -40,6 +69,7 @@ public:
 
 	static data_cache_vector
 	json_to_ldap_cache_requests(const std::string &json) noexcept;
+
 	static relations_vector
 	json_to_ldap_remote_relations(const std::string &json) noexcept;
 

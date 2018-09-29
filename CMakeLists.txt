@@ -1,21 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
 project(EgilSCIMClient CXX)
 
-set (GroupSCIM_VERSION_MAJOR 1)
-set (GroupSCIM_VERSION_MINOR 0)
-configure_file (
+set(GroupSCIM_VERSION_MAJOR 1)
+set(GroupSCIM_VERSION_MINOR 1)
+configure_file(
         "${PROJECT_SOURCE_DIR}/src/utility/GroupSCIM_config.h.in"
         "${PROJECT_BINARY_DIR}/GroupSCIM_config.h"
 )
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow -fexceptions -fsanitize=address")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope Wshadow-compatible-local")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope -Wshadow-uncaptured-local")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++17 ")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++17 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wshadow -fexceptions -fsanitize=address")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address-use-after-scope -Wshadow-uncaptured-local")
+if (APPLE)
+    #all ldap deprecated on apple plattforms, don't really care som much at this point
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+endif ()
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -Wall ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
@@ -30,7 +33,7 @@ endif ()
 
 #find_package(OpenLDAP REQUIRED)
 #if (NOT LDAP_LIBRARY)
-#    message( FATAL_ERROR "Can't be doing ithout lddap, please install" )
+#    message( FATAL_ERROR "Can't be doing without ldap, please install" )
 #endif()
 
 find_package(Boost REQUIRED)

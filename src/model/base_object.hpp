@@ -77,6 +77,16 @@ public:
 	size_t size() {
 		return attributes.size();
 	}
+	bool has_attribute_with_value(const std::string& a, const std::string& v) {
+		auto values = attributes.find(a);
+		if (values != attributes.end()) {
+			for (auto value : values->second) {
+				if (value == v)
+					return true;
+			}
+		}
+		return false;
+	}
 
 	attrib_map::const_iterator begin() const {
 		return attributes.begin();

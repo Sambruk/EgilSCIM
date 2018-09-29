@@ -100,10 +100,14 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
 	string_vector types = string_to_vector(types_string);
 	for (auto &&type : types) {
 		std::shared_ptr<object_list> allOfType = current.get_by_type(type);
-		err = allOfType->process_changes(cached, *this, type);
-		if (err != 0) {
-			std::cerr << "failed to send " << type << std::endl;
-			return -1;
+		if (!allOfType) {
+			std::cerr << "cant send " << type << ", missing" << std::endl;
+		} else {
+			err = allOfType->process_changes(cached, *this, type);
+			if (err != 0) {
+				std::cerr << "failed to send " << type << std::endl;
+				return -1;
+			}
 		}
 	}
 
@@ -141,11 +145,14 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
 	std::string urlified = unifyurl(object.get_uid());
 	std::string endpoint = config_file::instance().get(object.getSS12000type() + "-scim-url-endpoint");
 	url += '/' + endpoint + '/' + urlified;
-
-
+//	std::cout << "Delete: " << url << std::endl;
 	/* Send SCIM delete request */
-	return scim_sender::instance().send_delete(url);
+	int err = scim_sender::instance().send_delete(url);
 
+	if (err != 0)
+		actions.scim_new_cache->add_object(object.get_uid(), std::make_shared<base_object>(object));
+
+	return err;
 }
 
 int ScimActions::create_func::operator()(const ScimActions &actions) {
@@ -159,7 +166,7 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
 	if (type == "base") {
 		type = "User";
 	}
-	std::string create_var = type + "-scim-create";
+	std::string create_var = type + "-scim-json-template";
 	std::string template_json = actions.conf.get(create_var);
 	std::string parsed_json = scim_json_parse(template_json, copied_user);
 
@@ -181,6 +188,12 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
 	std::string url = config_file::instance().get("scim-url");
 	std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
 	url += '/' + endpoint;
+
+//	const string_vector &v = create.get_values("GUID");
+//	std::string id;
+//	if (v.size() == 1)
+//		id = v.at(0);
+//	std::cout << "Create: " << url << "( " << id << " )"<< std::endl;
 
 	/* Send SCIM create request */
 	std::optional<std::string>
@@ -269,7 +282,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 	if (type == "base") {
 		type = "User";
 	}
-	std::string create_var = type + "-scim-create";
+	std::string create_var = type + "-scim-json-template";
 	std::string template_json = config_file::instance().get(create_var);
 	std::string parsed_json = scim_json_parse(template_json, copied_user);
 
@@ -297,8 +310,9 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 	std::string unified = unifyurl(object.get_uid());
 	std::string url = config_file::instance().get("scim-url");
 	std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
-	url += '/' + endpoint + '/' + unified;
+	url += '/' + endpoint; //+ '/' + unified;
 
+//	std::cout << "Update: " << url << std::endl;
 	std::optional<std::string>
 			response_json = scim_sender::instance().send_update(
 			url, json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_SPACED |
@@ -307,16 +321,18 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 //	                                          (const char **) &response_json
 	);
 
+	/* Insert copied object into new cache */
 	if (!response_json) {
+		actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(object));
 		json_object_put(jobj);
 		return -1;
+	} else {
+		actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
 	}
 
 //	free(response_json);
 	json_object_put(jobj);
 
-	/* Insert copied object into new cache */
-	actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
 
 	return 0;
 
