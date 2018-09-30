@@ -1,19 +1,10 @@
-# Copyright (C) 2007-2009 LuaDist.
-# Created by Peter Kapec <kapecp@gmail.com>
-# Redistribution and use of this file is allowed according to the terms of the MIT license.
-# For details see the COPYRIGHT file distributed with LuaDist.
-#	Note:
-#		Searching headers and libraries is very simple and is NOT as powerful as scripts
-#		distributed with CMake, because LuaDist defines directories to search for.
-#		Everyone is encouraged to contact the author with improvements. Maybe this file
-#		becomes part of CMake distribution sometimes.
-
 # - Find sqlite3
 # Find the native SQLITE3 headers and libraries.
 #
 # SQLITE3_INCLUDE_DIRS	- where to find sqlite3.h, etc.
 # SQLITE3_LIBRARIES	- List of libraries when using sqlite.
 # SQLITE3_FOUND	- True if sqlite found.
+find_package(PkgConfig)
 
 # Look for the header file.
 FIND_PATH(SQLITE3_INCLUDE_DIR NAMES sqlite3.h)
@@ -35,3 +26,4 @@ ELSE(SQLITE3_FOUND)
 ENDIF(SQLITE3_FOUND)
 
 MARK_AS_ADVANCED(SQLITE3_INCLUDE_DIRS SQLITE3_LIBRARIES)
+

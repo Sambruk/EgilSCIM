@@ -3,18 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="62d90064-e013-4009-bf68-08119a2e4654" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/../../CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/data_server.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/data_server.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/data_server.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/data_server.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../cmake/Modules/FindSQLite3.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/../../cmake/Modules/FindSQLite3.cmake" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../src/json_data_file.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/json_data_file.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/ldap_wrapper.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/ldap_wrapper.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/scim.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/scim.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/simplescim_ldap.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/simplescim_ldap.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/activity.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/activity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/employment.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/employment.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schoolunit.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/schoolunit.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schoolunitgroup.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/schoolunitgroup.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/studentgroup.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/studentgroup.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/users.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/users.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -179,8 +170,11 @@
     <session id="-888598628">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
+          <entry key="project.closed" value="2" />
+          <entry key="project.open.time.7" value="1" />
           <entry key="project.open.time.8" value="1" />
-          <entry key="project.opened" value="1" />
+          <entry key="project.open.time.9" value="1" />
+          <entry key="project.opened" value="3" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -355,8 +349,8 @@
     <servers />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1103" />
-    <option name="y" value="153" />
+    <option name="x" value="319" />
+    <option name="y" value="75" />
     <option name="width" value="972" />
     <option name="height" value="1004" />
   </component>
@@ -451,16 +445,17 @@
       <workItem from="1537763184721" duration="6531000" />
       <workItem from="1537851623052" duration="2573000" />
       <workItem from="1537963631763" duration="1422000" />
-      <workItem from="1538045766271" duration="9731000" />
+      <workItem from="1538045766271" duration="10318000" />
+      <workItem from="1538284510505" duration="8000" />
+      <workItem from="1538284539532" duration="1207000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="122541000" />
+    <option name="totallyTimeSpent" value="124343000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1103" y="153" width="972" height="1004" extended-state="0" />
-    <editor active="true" />
+    <frame x="319" y="75" width="972" height="1004" extended-state="0" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.22688173" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -607,23 +602,9 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/json.json" />
     <entry file="file://$PROJECT_DIR$/out/User.log" />
-    <entry file="file://$PROJECT_DIR$/out/Activity.log">
-      <provider selected="true" editor-type-id="LogFileEditorProvider">
-        <state relative-caret-position="-91" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/out/Employment.log">
-      <provider selected="true" editor-type-id="LogFileEditorProvider">
-        <state relative-caret-position="-211" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/out/SchoolUnit.log">
-      <provider selected="true" editor-type-id="LogFileEditorProvider">
-        <state relative-caret-position="338">
-          <caret line="26" column="29" selection-start-line="26" selection-start-column="29" selection-end-line="26" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/out/Activity.log" />
+    <entry file="file://$PROJECT_DIR$/out/Employment.log" />
+    <entry file="file://$PROJECT_DIR$/out/SchoolUnit.log" />
     <entry file="file://$APPLICATION_CONFIG_DIR$/javascript/nodejs/10.4.1/core-modules/util.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-98">
@@ -649,20 +630,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="13">
           <caret line="1" column="12" selection-start-line="1" selection-end-line="2" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/message_log.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="15" selection-start-line="15" selection-end-line="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/routes.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="34" column="22" selection-start-line="34" selection-start-column="22" selection-end-line="34" selection-end-column="22" />
         </state>
       </provider>
     </entry>
@@ -705,6 +672,20 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="221">
           <caret line="17" column="45" selection-start-line="17" selection-start-column="45" selection-end-line="17" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/message_log.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="15" selection-start-line="15" selection-end-line="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/routes.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="442">
+          <caret line="34" column="22" selection-start-line="34" selection-start-column="22" selection-end-line="34" selection-end-column="22" />
         </state>
       </provider>
     </entry>

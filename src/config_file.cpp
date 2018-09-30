@@ -160,8 +160,14 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
 	auto val = variables.find(variable);
 	if (val != variables.end())
 		return val->second;
-	else if (!silent) {
-		std::cerr << "config_file::get: variable missing: " << variable << std::endl;
+	else {
+		if (variable == "remote_ldap_filter")
+			std::cerr << variable << " renamed to ldap_filter. Please change the configuration" << std::endl;
+		if (variable == "remote_ldap_base")
+			std::cerr << variable << " renamed to ldap_base. Please change the configuration" << std::endl;
+		if (!silent) {
+			std::cerr << "config_file::get: variable missing: " << variable << std::endl;
+		}
 	}
 	return empty;
 }

@@ -24,6 +24,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 #find_package(OpenSSL REQUIRED)
 
+find_package(CURL REQUIRED)
+if (CURL_FOUND)
+    include_directories(${CURL_INCLUDE_DIRS})
+endif ()
+
 find_package(JSON-C REQUIRED)
 if (JSON-C_INCLUDE_DIR)
     include_directories(${JSON-C_INCLUDE_DIR})

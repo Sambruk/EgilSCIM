@@ -69,8 +69,8 @@ relations_vector json_data_file::json_to_ldap_remote_relations(const std::string
 			r.type = rels.first;
 			r.remote_attribute = rels.second.get<std::string>("remote_attribute");
 
-			r.remote_ldap_base = rels.second.get<std::string>("remote_ldap_base");
-			r.remote_ldap_filter = rels.second.get<std::string>("remote_ldap_filter");
+			r.remote_ldap_base = rels.second.get<std::string>("ldap_base");
+			r.remote_ldap_filter = rels.second.get<std::string>("ldap_filter");
 
 			r.local_attribute = rels.second.get<std::string>("local_attribute");
 			r.method = rels.second.get<std::string>("method");
