@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(EgilSCIMClient CXX)
 
 set(GroupSCIM_VERSION_MAJOR 1)
-set(GroupSCIM_VERSION_MINOR 1)
+set(GroupSCIM_VERSION_MINOR 2)
+
 configure_file(
         "${PROJECT_SOURCE_DIR}/src/utility/GroupSCIM_config.h.in"
         "${PROJECT_BINARY_DIR}/GroupSCIM_config.h"
@@ -13,7 +14,7 @@ include_directories("${PROJECT_BINARY_DIR}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wshadow -fexceptions -fsanitize=address")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address-use-after-scope -Wshadow-uncaptured-local")
 if (APPLE)
-    #all ldap deprecated on apple plattforms, don't really care som much at this point
+    #all ldap deprecated on apple platforms
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 endif ()
 

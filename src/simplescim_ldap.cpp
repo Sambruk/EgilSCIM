@@ -80,7 +80,7 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 	string_pair master_type = conf.get_pair(type + "-generate-key");
 	string_pair related_type = conf.get_pair(type + "-generate-remote-part");
 	string_vector scim_vars = conf.get_vector(type + "-scim-variables");
-	string_pair local_relation = conf.get_pair(type + "-local-relation-id");
+	string_pair local_relation = conf.get_pair(type + "-generate-local-part");
 	std::string uuid_attribute = conf.get(type + "-unique-identifier");
 	string_vector id_cred = conf.get_vector(type + "-GUID-generation-ids");
 
@@ -191,7 +191,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 			related_object = data_server::instance().find_object_by_attribute(part_type.first, related_id.second, relational_item);
 
 			if (related_object) {
-				std::pair master_id = conf.get_pair(type + "-local-relation-id");
+				std::pair master_id = conf.get_pair(type + "-generate-local-part");
 
 				string_vector scim_vars = conf.get_vector_sorted_unique(type + "-scim-variables");
 				scim_vars.emplace_back(conf.get(type + "-hidden-attributes", true));
@@ -348,14 +348,18 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 }
 
 std::shared_ptr<object_list> ldap_get_generated(const std::string &type) {
+	std::shared_ptr<object_list> list;
 	if (type == "Activity")
-		return ldap_get_generated_activity(type);
+		list = ldap_get_generated_activity(type);
 	else if (type == "Employment")
-		return ldap_get_generated_employment(type);
+		list = ldap_get_generated_employment(type);
 	else {
 		std::cerr << type << " can't be generated" << std::endl;
 		return std::make_shared<object_list>();
 	}
+	if (list)
+		load_related(type, list);
+	return list;
 }
 
 /**
@@ -371,11 +375,8 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap, const std::string &typ
 	std::shared_ptr<object_list> objects;
 	if (conf.get_bool(type + "-is-generated")) {
 		objects = ldap_get_generated(type);
-		if (objects)
-			load_related(type, objects);
 	} else {
 		if (ldap.search(type)) {
-			/** Create user list. */
 			objects = ldap.ldap_to_user_list();
 		}
 	}

@@ -139,13 +139,13 @@ data_server::find_object_by_attribute(const std::string &type, const std::string
 	auto result = list->get_object_for_attribute(attrib, value);
 	if (result) {
 #if TEST_CACHE
-		std::cout << "!";
+		std::cout << " - cached";
 #endif
 		cache_relation(type + attrib + value, result);
 	}
 #if TEST_CACHE
 	else
-		std::cout << "?";
+		std::cout << " - not found";
 	std::cout << std::endl;
 #endif
 	return result;
