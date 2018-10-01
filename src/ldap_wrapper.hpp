@@ -54,15 +54,6 @@ public:
 		initialised = ldap_init();
 	}
 
-	explicit ldap_wrapper(std::string t) : type(std::move(t)) {
-		initialised = ldap_init();
-	}
-
-	explicit ldap_wrapper(std::string t, std::pair<std::string, std::string> filter) :
-			type(std::move(t)), override_filter(std::move(filter)) {
-		initialised = ldap_init();
-	}
-
 	~ldap_wrapper() {
 		ldap_close();
 	}
