@@ -14,20 +14,43 @@
 
 class ldap_wrapper {
 	const config_file &config = config_file::instance();
+
+	LDAPMessage *simplescim_ldap_res = nullptr;
+
 	/**
 	 * LDAP state variables
 	 */
+	class connection {
+		connection() = default;
 
-	LDAP *simplescim_ldap_ld = nullptr;
-	LDAPMessage *simplescim_ldap_res = nullptr;
+	public:
+		std::string ldap_uri{};
+		std::string ldap_who{};
+		std::string ldap_password{};
+		LDAP *simplescim_ldap_ld = nullptr;
+
+		int get_variables();
+
+		static connection &instance() {
+			static connection con;
+			return con;
+		}
+
+		/**
+		 * Initialises LDAP session.
+ 		*/
+		bool ldap_init();
+
+		void ldap_close();
+
+		bool initialised = false;
+
+	};
 
 	/**
 	 * Configuration file variables
 	 */
 
-	std::string ldap_uri{};
-	std::string ldap_who{};
-	std::string ldap_password{};
 	std::string ldap_base{};
 	std::string ldap_scope{};
 	std::string ldap_filter{};
@@ -42,30 +65,39 @@ class ldap_wrapper {
 	 * Prints an error message concerning LDAP to
 	 * simplescim_error_string.
 	 */
-	void ldap_print_error(int err, const char *func) {
+	static void ldap_print_error(int err, const char *func) {
 		simplescim_error_string_set_prefix("%s", func);
 		simplescim_error_string_set_message("%s", ldap_err2string(err));
 	}
 
-	bool initialised = false;
 public:
 
 	explicit ldap_wrapper() {
-		initialised = ldap_init();
+		if (!connection::instance().initialised) {
+			connection::instance().ldap_init();
+		}
+		ldap_get_variables();
 	}
 
 	~ldap_wrapper() {
-		ldap_close();
+		if (simplescim_ldap_res != nullptr) {
+			/* Disregard the return value. */
+			ldap_msgfree(simplescim_ldap_res);
+			simplescim_ldap_res = nullptr;
+		}
 	}
 
 	/**
 	 * Terminates an LDAP session and frees any dynamically
 	 * allocated memory associated with it.
 	 */
-	void ldap_close();
+	void ldap_close() {
+		connection::instance().ldap_close();
+
+	}
 
 	bool valid() {
-		return initialised;
+		return connection::instance().initialised;
 	}
 
 	/**
@@ -75,10 +107,6 @@ public:
 
 	bool ldap_get_type_variables();
 
-	/**
-	 * Initialises LDAP session.
-	 */
-	bool ldap_init();
 
 	/**
 	 * Performs the LDAP search operation.

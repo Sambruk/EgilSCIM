@@ -7,9 +7,6 @@
 
 bool ldap_wrapper::ldap_get_variables() {
 
-	ldap_uri = config.get("ldap-uri");
-	ldap_who = config.get("ldap-who");
-	ldap_password = config.get("ldap-passwd");
 	ldap_base = config.get("ldap-base");
 	ldap_scope = config.get("ldap-scope");
 	ldap_filter = config.get("ldap-filter");
@@ -30,57 +27,9 @@ bool ldap_wrapper::ldap_get_type_variables() {
 	return true;
 }
 
-bool ldap_wrapper::ldap_init() {
-	int ldap_version = LDAP_VERSION3;
-	struct berval cred{};
-	int err;
-
-	/* Get configuration file variables related to LDAP */
-
-	err = ldap_get_variables();
-
-	if (err == -1) {
-		return false;
-	}
-
-	/* Initialise LDAP session */
-
-	err = ldap_initialize(&simplescim_ldap_ld, ldap_uri.c_str());
-
-	if (err != LDAP_SUCCESS) {
-		ldap_print_error(err, "ldap_initialize");
-		return false;
-	}
-
-	/* Set protocol version */
-
-	err = ldap_set_option(simplescim_ldap_ld, LDAP_OPT_PROTOCOL_VERSION, &ldap_version);
-
-	if (err != LDAP_OPT_SUCCESS) {
-		ldap_print_error(err, "ldap_set_option");
-		ldap_close();
-		return false;
-	}
-
-	/* Perform bind */
-
-	cred.bv_val = (char *) ldap_password.c_str();
-	cred.bv_len = ldap_password.length();
-
-	err = ldap_sasl_bind_s(simplescim_ldap_ld, ldap_who.c_str(), LDAP_SASL_SIMPLE, &cred, nullptr, nullptr,
-	                       nullptr);
-
-	if (err != LDAP_SUCCESS) {
-		ldap_print_error(err, "ldap_sasl_bind_s");
-		ldap_close();
-		return false;
-	}
-
-	return true;
-}
 
 bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string, std::string> &filters) {
-	if (!initialised)
+	if (!connection::instance().initialised)
 		return false;
 
 	if (!intype.empty())
@@ -107,7 +56,7 @@ bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string
 		simplescim_error_string_set_message("variable \"ldap-scope\" has invalid value \"%s\"\n"
 		                                    "variable \"ldap-scope\" must have one of the following values:\n"
 		                                    " BASE ONELEVEL SUBTREE CHILDREN", ldap_scope.c_str());
-		return -1;
+		return false;
 	}
 
 
@@ -159,7 +108,8 @@ bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string
 	}
 
 	/** Search */
-	err = ldap_search_ext_s(simplescim_ldap_ld, filter_val.first.c_str(), scope_val, filter_val.second.c_str(),
+	err = ldap_search_ext_s(connection::instance().simplescim_ldap_ld, filter_val.first.c_str(), scope_val,
+	                        filter_val.second.c_str(),
 	                        attrs_val,
 	                        attrsonly_val,
 	                        nullptr, nullptr, nullptr, -1, &simplescim_ldap_res);
@@ -188,15 +138,15 @@ std::shared_ptr<base_object> ldap_wrapper::entry_to_user(LDAPMessage *entry) {
 	attrib_map attributes;
 
 	/** Create the user object. */
-	for (char *attr = ldap_first_attribute(simplescim_ldap_ld, entry, &ber);
-	     attr != nullptr; attr = ldap_next_attribute(simplescim_ldap_ld, entry, ber)) {
+	for (char *attr = ldap_first_attribute(connection::instance().simplescim_ldap_ld, entry, &ber);
+	     attr != nullptr; attr = ldap_next_attribute(connection::instance().simplescim_ldap_ld, entry, ber)) {
 
 		/** Get and clone 'vals'. */
-		berval **vals = ldap_get_values_len(simplescim_ldap_ld, entry, attr);
+		berval **vals = ldap_get_values_len(connection::instance().simplescim_ldap_ld, entry, attr);
 
 		if (vals == nullptr) {
 			int ld_errno;
-			int err = ldap_get_option(simplescim_ldap_ld, LDAP_OPT_RESULT_CODE, &ld_errno);
+			int err = ldap_get_option(connection::instance().simplescim_ldap_ld, LDAP_OPT_RESULT_CODE, &ld_errno);
 
 			if (err != LDAP_OPT_SUCCESS) {
 				ldap_print_error(err, "ldap_get_option");
@@ -248,9 +198,9 @@ std::shared_ptr<object_list> ldap_wrapper::ldap_to_user_list() {
 
 	/** Initialise user list */
 	users = std::make_shared<object_list>();
-
-	for (entry = ldap_first_entry(simplescim_ldap_ld, simplescim_ldap_res);
-	     entry != nullptr; entry = ldap_next_entry(simplescim_ldap_ld, entry)) {
+	connection &con = connection::instance();
+	for (entry = ldap_first_entry(con.simplescim_ldap_ld, simplescim_ldap_res);
+	     entry != nullptr; entry = ldap_next_entry(con.simplescim_ldap_ld, entry)) {
 
 		/* Create the user. */
 
@@ -275,12 +225,64 @@ std::shared_ptr<object_list> ldap_wrapper::ldap_to_user_list() {
 	return users;
 }
 
-void ldap_wrapper::ldap_close() {
-	if (simplescim_ldap_res != nullptr) {
-		/* Disregard the return value. */
-		ldap_msgfree(simplescim_ldap_res);
-		simplescim_ldap_res = nullptr;
+bool ldap_wrapper::connection::ldap_init() {
+	int ldap_version = LDAP_VERSION3;
+	struct berval cred{};
+	int err;
+
+	/* Get configuration file variables related to LDAP */
+
+	err = get_variables();
+
+	if (err == -1) {
+		return false;
 	}
+
+	/* Initialise LDAP session */
+
+	err = ldap_initialize(&simplescim_ldap_ld, ldap_uri.c_str());
+
+	if (err != LDAP_SUCCESS) {
+		ldap_print_error(err, "ldap_initialize");
+		return false;
+	}
+
+	/* Set protocol version */
+
+	err = ldap_set_option(simplescim_ldap_ld, LDAP_OPT_PROTOCOL_VERSION, &ldap_version);
+
+	if (err != LDAP_OPT_SUCCESS) {
+		ldap_print_error(err, "ldap_set_option");
+		ldap_close();
+		return false;
+	}
+
+	/* Perform bind */
+
+	cred.bv_val = (char *) ldap_password.c_str();
+	cred.bv_len = ldap_password.length();
+
+	err = ldap_sasl_bind_s(simplescim_ldap_ld, ldap_who.c_str(), LDAP_SASL_SIMPLE, &cred, nullptr, nullptr,
+	                       nullptr);
+
+	if (err != LDAP_SUCCESS) {
+		ldap_print_error(err, "ldap_sasl_bind_s");
+		ldap_close();
+		return false;
+	}
+	initialised = true;
+	return true;
+}
+
+int ldap_wrapper::connection::get_variables() {
+	config_file &con = config_file::instance();
+	ldap_uri = con.get("ldap-uri");
+	ldap_who = con.get("ldap-who");
+	ldap_password = con.get("ldap-passwd");
+	return 0;
+}
+
+void ldap_wrapper::connection::ldap_close() {
 
 	if (simplescim_ldap_ld != nullptr) {
 		/* Disregard the return value. */

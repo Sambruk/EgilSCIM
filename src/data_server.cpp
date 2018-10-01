@@ -17,12 +17,23 @@ void data_server::load() {
 
 	std::shared_ptr<object_list> all = std::make_shared<object_list>();
 	string_vector types = config.get_vector("scim-type-load-order");
-	ldap_wrapper ldap;
-	if (ldap.valid()) {
+	struct closer {
+		ldap_wrapper ldap;
+		ldap_wrapper &get() {
+			return ldap;
+		}
+		~closer() {
+			ldap.ldap_close();
+		}
+		operator ldap_wrapper() {
+			return ldap;
+		}
+	} ldap;
+	if (ldap.get().valid()) {
 		for (const auto &type : types) {
 			std::string sourceType = config.get(type + "-scim-data-source");
 			if (sourceType == "ldap") {
-				std::shared_ptr<object_list> l = ldap_get(ldap, type);
+				std::shared_ptr<object_list> l = ldap_get(ldap.get(), type);
 				if (l)
 					add(type, l);
 				else

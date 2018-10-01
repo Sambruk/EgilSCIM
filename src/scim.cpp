@@ -148,7 +148,7 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
 	/* Send SCIM delete request */
 	int err = scim_sender::instance().send_delete(url);
 
-	if (err != 404) { // don't recache if object not found on server
+	if (err != 0 && err != 404) { // Recache if delete failed, 404 is no failure
 		actions.scim_new_cache->add_object(object.get_uid(), std::make_shared<base_object>(object));
 	}
 
