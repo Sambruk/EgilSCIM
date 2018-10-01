@@ -37,11 +37,6 @@ else ()
     message(FATAL_ERROR "We need json-c, please install")
 endif ()
 
-#find_package(OpenLDAP REQUIRED)
-#if (NOT LDAP_LIBRARY)
-#    message( FATAL_ERROR "Can't be doing without ldap, please install" )
-#endif()
-
 find_package(Boost REQUIRED)
 if (NOT Boost_FOUND)
     message(FATAL_ERROR "please install boost")
@@ -51,7 +46,6 @@ endif ()
 
 set(LDFLAGS -lldap -llber -ljson-c -lcurl -lssl -lcrypto -luuid -lsqlite3)
 
-#include_directories("${PROJECT_BINARY_DIR}" /usr/local/include/json-c /usr/local/Cellar/openldap/2.4.46/include /usr/local/opt/openssl/include)
 include_directories("${PROJECT_BINARY_DIR} /usr/local/Cellar/openldap/2.4.46/include")
 link_libraries(${LDFLAGS})
 
@@ -62,5 +56,3 @@ set(SOURCES ${srcroot}/scim_json_parse.cpp ${srcroot}/utility/simplescim_error_s
 add_executable(EgilSCIMClient ${SOURCES} ${srcroot}/simplescim_ldap.cpp ${srcroot}/main.cpp)
 add_executable(EgilSCIMClientPrint ${SOURCES} ${srcroot}/simplescim_ldap.cpp ${srcroot}/utility/simplescim_cache_file_print.cpp)
 
-#add_executable(EgilSCIMClientSimulated ${SOURCES} ${srcroot}/simplescim_ldap_simulate.cpp ${srcroot}/main.cpp)
-#add_executable(testserver test/test_server/test_server.cpp)
