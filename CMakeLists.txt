@@ -60,7 +60,7 @@ set(SOURCES ${srcroot}/scim_json_parse.cpp ${srcroot}/utility/simplescim_error_s
 
 
 add_executable(EgilSCIMClient ${SOURCES} ${srcroot}/simplescim_ldap.cpp ${srcroot}/main.cpp)
+add_executable(EgilSCIMClientPrint ${SOURCES} ${srcroot}/simplescim_ldap.cpp ${srcroot}/utility/simplescim_cache_file_print.cpp)
 
 #add_executable(EgilSCIMClientSimulated ${SOURCES} ${srcroot}/simplescim_ldap_simulate.cpp ${srcroot}/main.cpp)
-#add_executable(EgilSCIMClientPrint ${SOURCES} ${srcroot}/utility/simplescim_cache_file_print.cpp)
 #add_executable(testserver test/test_server/test_server.cpp)

@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="62d90064-e013-4009-bf68-08119a2e4654" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../../CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../../CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../cmake/Modules/FindSQLite3.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/../../cmake/Modules/FindSQLite3.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../src/json_data_file.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../src/json_data_file.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="62d90064-e013-4009-bf68-08119a2e4654" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -170,7 +165,7 @@
     <session id="-888598628">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="2" />
+          <entry key="project.closed" value="3" />
           <entry key="project.open.time.7" value="1" />
           <entry key="project.open.time.8" value="1" />
           <entry key="project.open.time.9" value="1" />
@@ -276,8 +271,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/schoolunit.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="208">
-              <caret line="16" column="45" selection-start-line="16" selection-start-column="45" selection-end-line="16" selection-end-column="45" />
+            <state relative-caret-position="91">
+              <caret line="7" column="9" lean-forward="true" selection-start-line="7" selection-start-column="9" selection-end-line="7" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -447,12 +442,12 @@
       <workItem from="1537963631763" duration="1422000" />
       <workItem from="1538045766271" duration="10318000" />
       <workItem from="1538284510505" duration="8000" />
-      <workItem from="1538284539532" duration="1207000" />
+      <workItem from="1538284539532" duration="1214000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="124343000" />
+    <option name="totallyTimeSpent" value="124350000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="319" y="75" width="972" height="1004" extended-state="0" />
@@ -464,7 +459,7 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32997987" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32969216" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.36445445" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.36445445" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -698,8 +693,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/schoolunit.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="208">
-          <caret line="16" column="45" selection-start-line="16" selection-start-column="45" selection-end-line="16" selection-end-column="45" />
+        <state relative-caret-position="91">
+          <caret line="7" column="9" lean-forward="true" selection-start-line="7" selection-start-column="9" selection-end-line="7" selection-end-column="9" />
         </state>
       </provider>
     </entry>

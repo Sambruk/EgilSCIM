@@ -23,7 +23,7 @@
 #include "simplescim_error_string.hpp"
 #include "../model/object_list.hpp"
 #include "../cache_file.hpp"
-
+#include "../config_file.hpp"
 static int print_attr(const std::string &attribute, const string_vector &values) {
 
 	for (const auto &value : values) {
@@ -44,13 +44,14 @@ static int print_user(const std::string &uid, const base_object &user) {
 }
 
 int main(int argc, char *argv[]) {
-
+	config_file &config = config_file::instance();
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s cache-file\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
+	int err = config.load(argv[1]);
 
-	auto users = cache_file::instance().get_users_from_file(argv[1]);
+	auto users = cache_file::instance().get_contents();
 
 	if (users == nullptr) {
 		fprintf(stderr, "%s\n", simplescim_error_string_get());

@@ -156,19 +156,21 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 	auto master_list = server.get_by_type(relational_key.first);
 	auto related_list = server.get_by_type(part_type.first);
 
-	if (!master_list || master_list->empty()) {
-		if (queries.empty()) {
-			std::cerr << type << " requested but " << type << "-ldap-filter is missing" << std::endl;
-			return nullptr;
-		}
-		master_list = get_object_list_by_type(relational_key.first, queries);
-	}
+//	if (!master_list || master_list->empty()) {
+//		if (queries.empty()) {
+//			std::cerr << type << " requested but " << type << "-ldap-filter is missing" << std::endl;
+//			return nullptr;
+//		}
+//		master_list = get_object_list_by_type(relational_key.first, queries);
+//	}
 	if (!related_list || related_list->empty())
 		related_list = get_object_list_by_type(part_type.first, queries);
 
 	string_pair related_id = conf.get_pair(type + "-remote-relation-id");
 
 	auto generated = std::make_shared<object_list>();
+	if (!master_list)
+		return generated;
 
 	ldap_wrapper ldap;
 
@@ -357,7 +359,7 @@ std::shared_ptr<object_list> ldap_get_generated(const std::string &type) {
 		std::cerr << type << " can't be generated" << std::endl;
 		return std::make_shared<object_list>();
 	}
-	if (list)
+	if (list && !list->empty())
 		load_related(type, list);
 	return list;
 }

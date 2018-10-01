@@ -101,13 +101,13 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
 	for (auto &&type : types) {
 		std::shared_ptr<object_list> allOfType = current.get_by_type(type);
 		if (!allOfType) {
-			std::cerr << "cant send " << type << ", missing" << std::endl;
-		} else {
-			err = allOfType->process_changes(cached, *this, type);
-			if (err != 0) {
-				std::cerr << "failed to send " << type << std::endl;
-				return -1;
-			}
+//			std::cerr << "cant send " << type << ", missing" << std::endl;
+			allOfType = std::make_shared<object_list>();
+		}
+		err = allOfType->process_changes(cached, *this, type);
+		if (err != 0) {
+			std::cerr << "failed to send " << type << std::endl;
+			return -1;
 		}
 	}
 
@@ -145,12 +145,12 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
 	std::string urlified = unifyurl(object.get_uid());
 	std::string endpoint = config_file::instance().get(object.getSS12000type() + "-scim-url-endpoint");
 	url += '/' + endpoint + '/' + urlified;
-//	std::cout << "Delete: " << url << std::endl;
 	/* Send SCIM delete request */
 	int err = scim_sender::instance().send_delete(url);
 
-	if (err != 0)
+	if (err != 404) { // don't recache if object not found on server
 		actions.scim_new_cache->add_object(object.get_uid(), std::make_shared<base_object>(object));
+	}
 
 	return err;
 }

@@ -513,7 +513,7 @@ int scim_sender::send_delete(const std::string &url) {
 	if (response_code != 204) {
 		simplescim_error_string_set_prefix("simplescim_scim_send_delete");
 		simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 204L);
-		return -1;
+		return response_code;
 	}
 
 	return 0;
