@@ -33,6 +33,13 @@ would expand to `{"userType": "Student"}` if the value of `type` is
 `EmpType1` and to `{"userType": "Unknown"}` if the value of `type` is
 anything else.
 
+## Relational data
+Some objects have relations to other objects, such as group has members.
+The other objects fields can be referred to with it's type and it's attribute.
+
+```
+GroupName.attributeName
+```
 
 ## Iterative variable replacement
 
@@ -69,6 +76,37 @@ would expand to
   
  ]
 }
+```
+Often it's required to list more than one field from relational items. E.g. some groups
+need id and name for each of it's members. List the relational variables like this:
+```
+{
+ "members": [
+  ${for $i $n in Staff.id Staff.name}
+  {
+   "id":"${$i}",
+   "name":"${$n}"
+  },
+  ${end}
+ ]
+}
+    
+```
+Might expand to
+```
+{
+ "members": [
+  {
+   "id":"25E2F4FD-DCB2-40A2-9773-5EA616C9F412",
+   "name":"Tor Modem"
+  },
+  {
+   "id":"404AF0A1-0BCE-4A59-9961-53AB7FEFA8DE",
+   "name":"Bob The Builder"
+  }
+ ]
+}
+
 ```
 
 Both *Simple* and *Conditional* variable replacements can be used

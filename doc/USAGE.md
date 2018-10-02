@@ -63,32 +63,23 @@ required variable names are:
 * `ldap-base` is the DN of the entry at which to start the search.
 * `ldap-scope` is the scope of the search, i.e. `BASE`, `ONELEVEL`,
   `SUBTREE` or `CHILDREN`.
+
+
 * `ldap-filter` is the filter to apply in the search. Leave empty for
   the filter `(objectClass=*)`.
-* `ldap-attrs` is a comma separated list of attribute descriptions to
-  return from matching entries. Leave empty to return all attributes.
-* `ldap-attrsonly` is a boolean variable (i.e. `TRUE` or `FALSE`)
-  that should be set to `TRUE` if only attribute descriptions are
-  wanted. It should be set to `FALSE` if both attribute descriptions
-  and attribute values are wanted.
-* `user-unique-identifier` is the user attribute that uniquely
-  identifies a user.
-* `user-scim-resource-identifier` is the user attribute that will
-  contain the SCIM resource identifier in the cache.
+
 * `cache-file` specifies the configuration file's cache file used to
   remember previous executions of the configuration file.
 * `cert` is the path to the client's certificate file (PEM).
 * `key` is the path to the client's private key file (PEM).
 * `pinnedpubkey` is the server's hashed public key, e.g.
   `sha256//XYj98rkYBIYzCAc0NBYfooMUN38eq6xpQZOZP0b/jK8=`.
-* `scim-url` specifies the protocol, host and resource that will
-  receive the SCIM request, e.g. `http://example.com/User`.
+* `scim-url` specifies the protocol and host that will
+  receive the SCIM request, e.g. `http://example.com/`.
 * `scim-resource-identifier` specifies which variable in the returned
   JSON object that contains the SCIM resource identifier.
-* `scim-create` specifies the JSON object to send when creating a new
-  object.
-* `scim-update` specifies the JSON object to send when updating a
-   remote object.
+* `<type>-scim-json-templa` specifies the JSON object to send when creating and
+    updating a new object.
 
 ### Template
 

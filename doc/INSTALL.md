@@ -2,9 +2,7 @@
 
 SimpleSCIM currently depends on the following C libraries:
 
-* `uthash` (included in the repository for now) for hash tables.
 * `libldap` from OpenLDAP for fetching identity information using LDAP.
-* `json-c` to parse the JSON objects from the configuration file.
 * `libcurl` to send the SCIM request.
 
 To compile SimpleSCIM, execute the following command from the
@@ -44,53 +42,31 @@ the SimpleSCIM root directory:
 make clean
 ```
 
-# Distribution Specific Installation Instructions
-
-## CentOS 7
-
-    sudo yum update
-    sudo yum install git autoconf automake libtool gcc-c++ openssl-devel gcc json-c-devel openldap-devel
-    git clone git://github.com/curl/curl.git
-    cd curl
-    ./buildconf
-    ./configure
-    make
-    sudo make install
-    cd ..
-    git clone git://github.com/MaxWallstedt/SimpleSCIM.git
-    cd SimpleSCIM
-    sed -i -e "s/\-pedantic\ //g" src/Makefile
-    make
-    sudo make install
 
 Run SimpleSCIM with:
 
     LD_LIBRARY_PATH=/usr/local/lib SimpleSCIM file...
 
-## Fedora 26 Workstation / Fedora 26 Server
-
-    sudo dnf update
-    sudo dnf install git gcc json-c-devel openldap-devel libcurl-devel
-    git clone git://github.com/MaxWallstedt/SimpleSCIM.git
-    cd SimpleSCIM
-    make
-    sudo make install
-
-## Ubuntu 16.04.3 LTS / Ubuntu Server 16.04.3 LTS
-
+## Ubuntu 18.04
     sudo apt-get update && sudo apt-get upgrade
-    sudo apt-get install git make pkg-config libjson0 libjson0-dev libldap2-dev libcurl4-openssl-dev
-    git clone git://github.com/MaxWallstedt/SimpleSCIM.git
-    cd SimpleSCIM
+    sudo apt install git cmake pkg-config  libldap2-dev libcurl4-openssl-dev libboost-dev libsqlite3-dev uuid-dev
+    git clone git://github.com/ola-mattsson/GroupSCIM.git
+    cd GroupSCIM
+    mkdir build
+    cd build
+    cmake ..
     make
-    sudo make install
 
-## Debian 9.1.0 (stable)
-
-    su -
-    apt-get update && apt-get dist-upgrade
-    apt-get install git make gcc pkg-config libjson-c-dev libldap2-dev libcurl4-openssl-dev
-    git clone git://github.com/MaxWallstedt/SimpleSCIM.git
-    cd SimpleSCIM/
+## MacOS X 10.13
+    Install Xcode
+    Install HomeBrew
+    brew install cmake openssl openldap
+    git clone git://github.com/ola-mattsson/GroupSCIM.git
+    cd GroupSCIM
+    mkdir build
+    cd build
+    cmake ..
     make
-    make install
+    
+## Windows
+    Instructions not yet available, it's wip

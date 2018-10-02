@@ -3,44 +3,31 @@ SimpleSCIM:
  - Enable StartTLS for ldap://
  - Enable SASL (?)
  - Add install script
- - Migrate to the GNU Build System (?)
- - Modify cache format to not include the unique identifier
- - Modify cache format to include separate meta attributes
- - Change configuration file variables scim-create and scim-update to scim-object
+ ✓ Change configuration file variables scim-create and scim-update to scim-object
 
-uthash.h:
- - Add as git submodule (?)
-
-simplescim_scim_json.c:
- - Rewrite parser:
-   - Construct AST ONCE
-   - Traverse AST for every user
-
-tests:
- - Implement using check (?)
-   (https://github.com/libcheck/check)
 
 Compile on
- ✓ Ubuntu 16.04.3 LTS
- ✓ Ubuntu Server 16.04.3 LTS
+ - Ubuntu 16.04.3 LTS
+ ✓ Ubuntu 18.04 LTS
+ - Ubuntu Server 16.04.3 LTS
  - Red Hat Enterprise Linux
  - openSUSE Tumbleweed
  - openSUSE Leap
  - SUSE Linux Enterprise Server
- ✓ CentOS 7
- ✓ Debian 9.1.0 (stable)
+ - CentOS 7
+ - Debian 9.1.0 (stable)
  - Debian testing
  - Oracle Linux
  - Oracle Solaris
  - Mageia / Mandriva
  - ClearOS
  - Arch Linux
- ✓ Fedora 26 Workstation
- ✓ Fedora 26 Server
+ - Fedora 26 Workstation
+ - Fedora 26 Server
  - Slackware
  - Gentoo Linux
  - FreeBSD
  - OpenBSD
  - NetBSD
  - DragonFly BSD
- - macOS
+ ✓ macOS
