@@ -42,8 +42,8 @@ else ()
     include_directories(${Boost_INCLUDE_DIRS})
 endif ()
 
-set(LDFLAGS -lldap -llber -ljson-c -lcurl -lssl -lcrypto -luuid -lsqlite3)
-
+set(LDFLAGS -lldap -llber -ljson-c -lcurl -luuid -lsqlite3)
+#-lssl -lcrypto
 include_directories("${PROJECT_BINARY_DIR} /usr/local/Cellar/openldap/2.4.46/include")
 link_libraries(${LDFLAGS})
 
