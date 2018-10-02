@@ -320,15 +320,16 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 
 						if (ldap.search(relation.type, filter)) {
 							auto response = ldap.ldap_to_user_list();
-							if (response->size() != 1)
-								std::cout << relation.type + " not found with: " << value << std::endl;
-							else {
+							if (response->size() == 1)
 								remote = response->begin()->second;
-							}
+							else if (response->size() == 1)
+								std::cout << " expected single result for: " << relation.type << " " << value << std::endl;
 						}
 					}
 					if (remote) {
-
+						 // from the newly loaded related object, grab some info from it
+						 // e.g. a StudentGroup loads Students, grab their names and GUIDs
+						 // it is whatever is in the json-config with the related objects TYPE
 						for (auto &&var : scim_vars) {
 							string_pair p = string_to_pair(var);
 							if (p.first == relation.type) {
@@ -336,8 +337,15 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 								main_object.second->append_values(var, v);
 							}
 						}
-						auto id = main_object.second->get_values("GUID");
-						remote->append_values(type + ".GUID", id, true);
+						// Sometimes the related object need some info about this object, hand it down
+						auto relations_scim_vars = conf.get_vector(relation.type + "-scim-variables");
+						for (auto &&var : relations_scim_vars) {
+							string_pair p = string_to_pair(var);
+							if (p.first == type) {
+								auto id = main_object.second->get_values(p.second);
+								remote->append_values(type + "." + p.second, id, true);
+							}
+						}
 						// add the new entity to the server
 						server.cache_relation(relation.type + relation.remote_attribute + value, remote);
 						server.add(relation.type, remote);
