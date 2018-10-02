@@ -15,7 +15,10 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with SimpleSCIM.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *
+ * Further development with groups and relations support
+ * by Ola Mattsson - IT informa for Sambruk
+*/
 
 #ifndef SIMPLESCIM_CONFIG_FILE_H
 #define SIMPLESCIM_CONFIG_FILE_H

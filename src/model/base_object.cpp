@@ -16,6 +16,9 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with SimpleSCIM.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Further development with groups and relations support
+ * by Ola Mattsson - IT informa for Sambruk
  */
 
 #include <map>
@@ -94,14 +97,5 @@ std::ostream &operator<<(std::ostream &os, const base_object &object) {
 	}
 
 	os << "}";
-//	os << "{";
-//	for (auto &&attribute: object.attributes) {
-//		os << "\n\t" << attribute.first << "\n\t{\n\t\t";
-//		for (auto &&item : attribute.second) {
-//			os << item << ", ";
-//			}
-//		os << "\n\t},";
-//		}
-//	os << "\n}";
 	return os;
 }

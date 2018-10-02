@@ -18,10 +18,7 @@ Set up `GroupSCIM` as described in docs int the docs folder
 
 ### Construct configuration file
 
-Modify supplied configuration file examples as described in
-<https://github.com/MaxWallstedt/SimpleSCIM/blob/master/README.md>
-and
-<https://github.com/MaxWallstedt/SimpleSCIM/blob/master/JSON-REPLACEMENT-RULES.md>
+Modify supplied configuration file examples as described in the doc folder
 
 ### Setup
 
@@ -79,20 +76,20 @@ scim-resource-identifier = id
 
 where `<port>` is the port entered when starting the server.
 
-### Test SimpleSCIM
+### Test GroupSCIM
 
-Running `SimpleSCIM` with the configuration file should now cause the
-server to print the incoming requests from `SimpleSCIM` without
-processing them at all. Running `SimpleSCIM` again with the same
+Running `GroupSCIM` with the configuration file should now cause the
+server to print the incoming requests from `GroupSCIM` without
+processing them at all. Running `GroupSCIM` again with the same
 configuration file should only report users being copied, meaning no
 requests are sent to `test_server`. If any attribute or user in the
 data source is altered, added or removed, only these changes will be
-sent the next time `SimpleSCIM` is executed with the same
+sent the next time `GroupSCIM` is executed with the same
 configuration file. To inspect the content of the cache, run these
 commands:
 
 ```
-cd /path/to/SimpleSCIM/src
+cd /path/to/GroupSCIM/src
 make simplescim_cache_file_print
 ./simplescim_cache_file_print cache-file
 ```
