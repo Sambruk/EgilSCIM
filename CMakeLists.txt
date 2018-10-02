@@ -28,13 +28,6 @@ if (CURL_FOUND)
     include_directories(${CURL_INCLUDE_DIRS})
 endif ()
 
-find_package(JSON-C REQUIRED)
-if (JSON-C_INCLUDE_DIR)
-    include_directories(${JSON-C_INCLUDE_DIR})
-else ()
-    message(FATAL_ERROR "We need json-c, please install")
-endif ()
-
 find_package(Boost REQUIRED)
 if (NOT Boost_FOUND)
     message(FATAL_ERROR "please install boost")
@@ -42,7 +35,7 @@ else ()
     include_directories(${Boost_INCLUDE_DIRS})
 endif ()
 
-set(LDFLAGS -lldap -llber -ljson-c -lcurl -luuid -lsqlite3)
+set(LDFLAGS -lldap -llber -lcurl -luuid -lsqlite3)
 #-lssl -lcrypto
 include_directories("${PROJECT_BINARY_DIR} /usr/local/Cellar/openldap/2.4.46/include")
 link_libraries(${LDFLAGS})

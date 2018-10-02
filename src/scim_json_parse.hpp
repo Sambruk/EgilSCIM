@@ -20,8 +20,12 @@
 #ifndef SIMPLESCIM_SCIM_JSON_H
 #define SIMPLESCIM_SCIM_JSON_H
 
-#include <json.h>
 #include <string>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/exception/diagnostic_information.hpp>
+#include <boost/exception_ptr.hpp>
+
 
 class base_object;
 

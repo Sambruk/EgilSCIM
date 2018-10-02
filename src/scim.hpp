@@ -62,6 +62,7 @@ public:
 	}
 
 	int perform(const data_server &current, const object_list &cached) const;
+	bool verify_json(const std::string &json) const ;
 
 	class copy_func {
 		const base_object &cached;
@@ -97,6 +98,7 @@ public:
 
 		int operator()(const ScimActions &);
 	};
+
 };
 
 

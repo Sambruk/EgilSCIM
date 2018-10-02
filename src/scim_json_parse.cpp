@@ -34,6 +34,7 @@
 
 typedef std::optional<std::string> optional_string;
 typedef std::string::const_iterator str_iter;
+
 typedef std::map<std::string, string_vector> value_map;
 
 struct scim_json_iter {
@@ -84,7 +85,7 @@ public:
 	const base_object &user;
 	size_t line;
 	size_t col;
-	std::string outputString;
+	std::string output_string;
 
 	std::shared_ptr<scim_json_iter> iteration_stack;
 
@@ -102,6 +103,8 @@ public:
 			iteration_stack = iter->get_next();
 		}
 	}
+
+	void remove_trailing_commas();
 
 	/**
 	 * Progresses the parser's input by one character.
@@ -300,7 +303,6 @@ int scim_json_parser::parse() {
 			}
 		} else {
 			err = copy_char(*j_iter);
-
 			if (err == -1) {
 				return -1;
 			}
@@ -317,8 +319,47 @@ int scim_json_parser::parse() {
 		return -1;
 	}
 
+	remove_trailing_commas();
 	return 0;
 }
+
+/**
+ * Arrays has a comma at the end, e.g.
+ * ["tag":"value","tag":"value","tag":"value",]
+ * that last one needs to go, it's wrong and
+ * boost::propertytree doesn't accept it
+ */
+void scim_json_parser::remove_trailing_commas() {
+
+	auto end = output_string.end();
+	bool found_block_end;
+	bool inside_string = false;
+
+	for (auto && iter = output_string.begin(); iter != end; iter++) {
+
+		// let strings have commas so
+		// pop in and out of strings
+		if (*iter == '\"')
+			inside_string = !inside_string;
+
+		if (!inside_string && *iter == ',') {
+			auto walker = iter;
+			// the next character can be whitespace of \"
+			// if it is ] or }, the comma needs to be erased
+			found_block_end = false;
+			while (walker != end && !found_block_end) {
+				if (*walker == '\"')
+					break; // all good, move on
+				if (*walker == ']' || *walker == '}') {
+					*iter = ' ';
+					found_block_end = true;
+				}
+				walker++;
+			}
+		}
+	}
+}
+
 
 int scim_json_parser::parse_replacement() {
 	int err;
@@ -723,21 +764,7 @@ optional_string scim_json_parser::get_value(const std::string &variable) {
 }
 
 int scim_json_parser::replace(const std::string &value) {
-	outputString += value;
-
-
-	//	int err;
-//	str_iter val = value.begin();
-//	while (*val != '\0') {
-//		err = copy_char(*val);
-//
-//		if (err == -1) {
-//			return -1;
-//		}
-//
-//		++val;
-//	}
-
+	output_string += value;
 	return 0;
 }
 
@@ -788,7 +815,7 @@ void scim_json_parser::skip_ws() {
 
 int scim_json_parser::copy_char(char c) {
 
-	outputString += c;
+	output_string += c;
 	return 0;
 }
 
@@ -816,10 +843,10 @@ std::string scim_json_parse(const std::string &json, const base_object &user) {
 	scim_json_parser parser(json, user);
 	err = parser.parse();
 
+
 	if (err == -1) {
 		return "";
 	}
-//	std::cout << parser.outputString << std::endl;
 
-	return parser.outputString;
+	return parser.output_string;
 }

@@ -120,6 +120,24 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
 	return err;
 }
 
+bool ScimActions::verify_json(const std::string & json) const {
+	if (json.empty())
+		return false;
+	namespace pt = boost::property_tree;
+	pt::ptree root;
+	std::stringstream os;
+
+	os << json;
+	try {
+		pt::read_json(os, root);
+	} catch (const boost::exception &ex) {
+		std::cout << json << std::endl;
+		std::cerr << "Failed to parse json " << boost::diagnostic_information(ex);
+		return false;
+	}
+	return true;
+}
+
 int ScimActions::copy_func::operator()(const ScimActions &actions) {
 	if (cached.get_uid().empty()) {
 		return -1;
@@ -156,117 +174,35 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
 }
 
 int ScimActions::create_func::operator()(const ScimActions &actions) {
-//	struct json_object *scim_id_obj;
-	struct json_object *jobj;
-	enum json_tokener_error jerr;
 
 	base_object copied_user(create);
+
 	/* Create JSON object for object */
 	std::string type = copied_user.getSS12000type();
 	if (type == "base") {
 		type = "User";
 	}
-	std::string create_var = type + "-scim-json-template";
-	std::string template_json = actions.conf.get(create_var);
+
+	std::string template_json = actions.conf.get(type + "-scim-json-template");
 	std::string parsed_json = scim_json_parse(template_json, copied_user);
 
-	if (parsed_json.empty()) {
-		std::cerr << "ScimActions::create_func: Failed to parse json" << std::endl;
+	if (!actions.verify_json(parsed_json))
 		return -1;
-	}
-
-	/* Verify JSON string */
-	jobj = json_tokener_parse_verbose(parsed_json.c_str(), &jerr);
-	if (jobj == nullptr) {
-		std::cout << parsed_json << std::endl;
-		simplescim_error_string_set_prefix("create_object_func:"
-		                                   "json_tokener_parse_verbose");
-		simplescim_error_string_set_message("%s", json_tokener_error_desc(jerr));
-		return -1;
-	}
 
 	std::string url = config_file::instance().get("scim-url");
 	std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
 	url += '/' + endpoint;
 
-//	const string_vector &v = create.get_values("GUID");
-//	std::string id;
-//	if (v.size() == 1)
-//		id = v.at(0);
-//	std::cout << "Create: " << url << "( " << id << " )"<< std::endl;
-
 	/* Send SCIM create request */
-	std::optional<std::string>
-			response_json = scim_sender::instance().send_create(url,
-			                                                    json_object_to_json_string_ext(jobj,
-			                                                                                   JSON_C_TO_STRING_SPACED |
-			                                                                                   JSON_C_TO_STRING_PRETTY)
-//	                                                                               ,
-//	                                          (const char **) &response_json
-	);
-	if (!response_json) {
-		json_object_put(jobj);
-		return -1;
-	}
-
-	json_object_put(jobj);
-
-	/* Get SCIM resource identifier */
-	jobj = json_tokener_parse_verbose(response_json->c_str(), &jerr);
-
-	if (jobj == nullptr) {
-		std::cout << parsed_json << std::endl;
-		simplescim_error_string_set_prefix("create_object_func:"
-		                                   "json_tokener_parse_verbose");
-		simplescim_error_string_set_message("%s", json_tokener_error_desc(jerr));
-		return -1;
-	}
-
-
-//	if (!json_object_object_get_ex(jobj, actions.vars.get("scim-resource-identifier").c_str(), &scim_id_obj)) {
-//		simplescim_error_string_set_prefix("create_object_func:"
-//		                                   "json_object_object_get_ex");
-//		simplescim_error_string_set_message("variable \"%s\" is not present in JSON response",
-//		                                    actions.vars.get("scim-resource-identifier").c_str());
-//		json_object_put(jobj);
-//		return -1;
-//	}
-
-//	if (!json_object_is_type(scim_id_obj, json_type_string)) {
-//		simplescim_error_string_set_prefix("create_object_func:"
-//		                                   "json_object_is_type");
-//		simplescim_error_string_set_message("variable \"%s\" is not a string in JSON response",
-//		                                    actions.vars.get("scim-resource-identifier").c_str());
-//		json_object_put(jobj);
-//		return -1;
-//	}
-
-//	const char *scim_id_str = json_object_get_string(scim_id_obj);
-
-	/* Copy object */
-//	base_object copied_user(create);
-
+	std::optional<std::string> response_json = scim_sender::instance().send_create(url, parsed_json);
 	std::string uid = copied_user.get_uid();
 
-	if (uid.empty()) {
-		json_object_put(jobj);
-		return -1;
-	}
-
 	actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
-
-
-	/* Clean up */
-	json_object_put(jobj);
 
 	return 0;
 }
 
 int ScimActions::update_func::operator()(const ScimActions &actions) {
-//	char *response_json;
-	struct json_object *jobj;
-	enum json_tokener_error jerr;
-//	int err;
 
 	/* Copy object */
 	base_object copied_user(object);
@@ -286,53 +222,24 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 	std::string template_json = config_file::instance().get(create_var);
 	std::string parsed_json = scim_json_parse(template_json, copied_user);
 
-	if (parsed_json.empty()) {
+	if (!actions.verify_json(parsed_json)) {
 		return -1;
 	}
-
-	/* Verify JSON string */
-	jobj = json_tokener_parse_verbose(parsed_json.c_str(), &jerr);
-
-	if (jobj == nullptr) {
-		std::cout << parsed_json << std::endl;
-		simplescim_error_string_set_prefix("update_object_func:"
-		                                   "json_tokener_parse_verbose");
-		simplescim_error_string_set_message("%s", json_tokener_error_desc(jerr));
-		return -1;
-	}
-
-	/**
-	 * Send SCIM update request
-	 * todo !! use externalid/whatever uuid we produce
-	 * */
-
 
 	std::string unified = unifyurl(object.get_uid());
 	std::string url = config_file::instance().get("scim-url");
 	std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
 	url += '/' + endpoint; //+ '/' + unified;
 
-//	std::cout << "Update: " << url << std::endl;
-	std::optional<std::string>
-			response_json = scim_sender::instance().send_update(
-			url, json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_SPACED |
-			                                          JSON_C_TO_STRING_PRETTY)
-//	                                                                                      		,
-//	                                          (const char **) &response_json
-	);
+	std::optional<std::string> response_json = scim_sender::instance().send_update(url, parsed_json);
 
 	/* Insert copied object into new cache */
 	if (!response_json) {
 		actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(object));
-		json_object_put(jobj);
 		return -1;
 	} else {
 		actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
 	}
-
-//	free(response_json);
-	json_object_put(jobj);
-
 
 	return 0;
 
