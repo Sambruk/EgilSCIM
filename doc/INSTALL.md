@@ -61,6 +61,16 @@ Run SimpleSCIM with:
     make
     sudo make install
 
+## Fedora 28
+    sudo dnf install git gcc-c++ cmake openldap-devel libcurl-devel boost-devel sqlite-devel libuuid-devel
+    git clone git://github.com/ola-mattsson/GroupSCIM.git
+    cd GroupSCIM
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    
 ## MacOS X 10.13
     Install Xcode (tool chain is installed with Xcode)
     Install HomeBrew
