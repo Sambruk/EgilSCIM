@@ -57,6 +57,7 @@ typedef std::vector<data_cache> data_cache_vector;
 class json_data_file {
 	std::string filename;
 	std::stringstream json;
+	static std::map<std::string, pair_map> json_cache;
 
 public:
 

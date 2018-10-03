@@ -5,6 +5,26 @@
 #include "ldap_wrapper.hpp"
 #include "simplescim_ldap.hpp"
 
+ldap_wrapper::ldap_wrapper() {
+	if (!connection::instance().initialised) {
+		connection::instance().ldap_init();
+	}
+	ldap_get_variables();
+
+	std::vector<std::string> attributes_v = config_file::instance().get_vector_sorted_unique("all-scim-variables");
+	for (auto && a: attributes_v) {
+		if (a.find('.') != std::string::npos)
+			ldap_attrs += string_to_pair(a).second + ' ';
+		else
+			ldap_attrs += a;
+		ldap_attrs += ",";
+	}
+
+	if (*ldap_attrs.rbegin() == ',')
+		ldap_attrs.erase(ldap_attrs.length() - 1, 1);
+
+}
+
 bool ldap_wrapper::ldap_get_variables() {
 
 	ldap_base = config.get("ldap-base");
@@ -20,10 +40,10 @@ bool ldap_wrapper::ldap_get_variables() {
 }
 
 bool ldap_wrapper::ldap_get_type_variables() {
-	std::string type_filters = config_file::instance().get(type + "-ldap-filter", true);
-	if (type_filters.find("queries") != std::string::npos) {
-		multi_queries = json_data_file::json_to_ldap_query(type_filters);
-	}
+//	std::string type_filters = config_file::instance().get(type + "-ldap-filter", true);
+//	if (type_filters.find("queries") != std::string::npos) {
+		multi_queries = json_data_file::json_to_ldap_query(type);
+//	}
 	return true;
 }
 
@@ -75,19 +95,7 @@ bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string
 
 	/** Parse attrs */
 	char **attrs_val;
-	std::string attributes{};
-	std::vector<std::string> attributes_v = config_file::instance().get_vector_sorted_unique("all-scim-variables");
-	std::for_each(attributes_v.begin(), attributes_v.end(), [&attributes](const auto &a) {
-		if (a.find('.') != std::string::npos)
-			attributes += string_to_pair(a).second + ' ';
-		else
-			attributes += a;
-		attributes += ",";
-	});
-
-	if (*attributes.rbegin() == ',')
-		attributes.erase(attributes.length() - 1, 1);
-	int err = simplescim_ldap_attrs_parser(attributes.c_str(), &attrs_val);
+	int err = simplescim_ldap_attrs_parser(ldap_attrs.c_str(), &attrs_val);
 
 	if (err == -1) {
 		return false;

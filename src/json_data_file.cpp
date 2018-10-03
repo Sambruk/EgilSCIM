@@ -114,16 +114,23 @@ data_cache_vector json_data_file::json_to_ldap_cache_requests(const std::string 
 
 	return values;
 }
+std::map<std::string, pair_map> json_data_file::json_cache;
 
-pair_map json_data_file::json_to_ldap_query(const std::string &json) noexcept {
+pair_map json_data_file::json_to_ldap_query(const std::string &type) noexcept {
+	std::string filter_json = config_file::instance().get(type + "-ldap-filter", true);
+	auto cached_json = json_cache.find(type);
+	if (cached_json != json_cache.end())
+		return cached_json->second;
+
+
 	pair_map values;
 
-	if (json.empty())
+	if (filter_json.empty())
 		return values;
 
 	try {
 		std::stringstream json_stream;
-		json_stream << json;
+		json_stream << filter_json;
 		namespace pt = boost::property_tree;
 		pt::ptree root;
 		pt::read_json(json_stream, root);
@@ -133,12 +140,12 @@ pair_map json_data_file::json_to_ldap_query(const std::string &json) noexcept {
 			values.emplace(queries.first, std::make_pair(base, filter));
 		}
 	} catch (const boost::exception &ex) {
-		std::cerr << "Failed to read json\n" << json << std::endl <<
+		std::cerr << "Failed to read json\n" << filter_json << std::endl <<
 		          boost::diagnostic_information(ex);
 	} catch (...) {
-		std::cout << "Failed to read json\n" << json << std::endl;
+		std::cout << "Failed to read json\n" << filter_json << std::endl;
 	}
-
+	json_cache.emplace(std::make_pair(type, values));
 	return values;
 }
 

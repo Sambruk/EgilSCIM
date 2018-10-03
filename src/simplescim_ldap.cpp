@@ -155,17 +155,10 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 	string_pair relational_key = conf.get_pair(type + "-generate-key");
 	string_pair part_type = conf.get_pair(type + "-generate-remote-part");
 
-	pair_map queries = json_data_file::json_to_ldap_query(conf.get(type + "-ldap-filter", true));
+	pair_map queries = json_data_file::json_to_ldap_query(type);
 	auto master_list = server.get_by_type(relational_key.first);
 	auto related_list = server.get_by_type(part_type.first);
 
-//	if (!master_list || master_list->empty()) {
-//		if (queries.empty()) {
-//			std::cerr << type << " requested but " << type << "-ldap-filter is missing" << std::endl;
-//			return nullptr;
-//		}
-//		master_list = get_object_list_by_type(relational_key.first, queries);
-//	}
 	if (!related_list || related_list->empty())
 		related_list = get_object_list_by_type(part_type.first, queries);
 

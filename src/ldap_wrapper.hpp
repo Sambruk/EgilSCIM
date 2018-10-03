@@ -72,12 +72,7 @@ class ldap_wrapper {
 
 public:
 
-	explicit ldap_wrapper() {
-		if (!connection::instance().initialised) {
-			connection::instance().ldap_init();
-		}
-		ldap_get_variables();
-	}
+	explicit ldap_wrapper();
 
 	~ldap_wrapper() {
 		if (simplescim_ldap_res != nullptr) {
