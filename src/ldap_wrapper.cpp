@@ -35,8 +35,8 @@ bool ldap_wrapper::ldap_get_variables() {
 
 	ldap_base = config.get("ldap-base");
 	ldap_scope = config.get("ldap-scope");
-	ldap_filter = config.get("ldap-filter");
-	ldap_attrs = config.get("ldap-attrs");
+	ldap_filter = config.get("ldap-filter", true);
+	ldap_attrs = config.get("ldap-attrs", true);
 	ldap_attrsonly = config.get("ldap-attrsonly");
 	if (!ldap_attrs.empty())
 		std::cout
