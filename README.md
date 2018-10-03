@@ -1,27 +1,21 @@
-# SimpleSCIM
+# GroupSCIM
 
-This is development of the project described below implementing groups,
-mainly for sending information of students and teachers and how they
+This is a further development of the SimpleSCIM poc project implementing groups,
+mainly for sending information of students and teachers and how they are
 organised in groups.
+It is not limited to this, though. The programme can
+read many types of relations from an ldap source and create Group scim messages
+of any type. Special treatment for types not availiable in ldap has been implemented.
+Those types are not required though.
 
-The code is forked from as per below and rewritten to c++
+Configuration examples will be made availiable
 
-Original Readme below
-
----
-This directory contains SimpleSCIM.
-
-SimpleSCIM is a program under development with the intended purpose
-of demonstrating the usefulness of the SCIM protocol for
-automatically managing user accounts in remote systems, and to be a
-basic implementation of a SCIM client to be expanded upon.
-
-The directory `src` contains the source code for SimpleSCIM, the
-directory `test` contains test code for SimpleSCIM, the directory
-`doc` contains detailed documentation for using SimpleSCIM and the
+The directory `src` contains the source code for GroupSCIM, the
+directory `test` contains test code for GroupSCIM, the directory
+`doc` contains detailed documentation for using GroupSCIM and the
 directory `res` contains other resources.
 
-SimpleSCIM is free software, distributed under the terms of the GNU
+GroupSCIM is free software, distributed under the terms of the GNU
 General Public License as published by the Free Software Foundation,
 version 3 of the License.  For more information, see the file
 `COPYING`.
