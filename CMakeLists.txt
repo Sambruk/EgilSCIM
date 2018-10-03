@@ -24,7 +24,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 find_package(CURL REQUIRED)
-if (CURL_FOUND)
+if (NOT CURL_FOUND)
+    message(FATAL_ERROR "please install curl")
+else()
     include_directories(${CURL_INCLUDE_DIRS})
 endif ()
 
@@ -36,8 +38,7 @@ else ()
 endif ()
 
 set(LDFLAGS -lldap -llber -lcurl -luuid -lsqlite3)
-#-lssl -lcrypto
-include_directories("${PROJECT_BINARY_DIR} /usr/local/Cellar/openldap/2.4.46/include")
+
 link_libraries(${LDFLAGS})
 
 set(srcroot src)
