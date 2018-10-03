@@ -53,6 +53,9 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	int err = config.load(argv[1]);
+	if (err == -1) {
+		std::cout << "Failed to load configuration " << argv[1]<< std::endl;
+	}
 
 	auto users = cache_file::instance().get_contents();
 
