@@ -2,6 +2,7 @@
 // Created by Ola Mattsson on 2018-09-22.
 //
 
+#include <set>
 #include "ldap_wrapper.hpp"
 #include "simplescim_ldap.hpp"
 
@@ -11,13 +12,18 @@ ldap_wrapper::ldap_wrapper() {
 	}
 	ldap_get_variables();
 
-	std::vector<std::string> attributes_v = config_file::instance().get_vector_sorted_unique("all-scim-variables");
-	for (auto && a: attributes_v) {
+	std::vector<std::string> attributes = config_file::instance().get_vector("all-scim-variables");
+	std::set<std::string> unique_strings;
+
+	for (auto && a: attributes) {
 		if (a.find('.') != std::string::npos)
-			ldap_attrs += string_to_pair(a).second + ' ';
+			unique_strings.emplace(string_to_pair(a).second);
 		else
-			ldap_attrs += a;
-		ldap_attrs += ",";
+			unique_strings.emplace(a);
+	}
+
+	for (auto && a: unique_strings) {
+		ldap_attrs += a + ",";
 	}
 
 	if (*ldap_attrs.rbegin() == ',')
