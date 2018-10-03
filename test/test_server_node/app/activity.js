@@ -17,7 +17,6 @@ userRouter.post('/Activity', (req, res) => {
 userRouter.put('/Activity', (req, res) => {
     console.log("PUT update a activity: " + new Date());
     log("out/Activity.log", util.inspect(req.body, appConfig.jsonFormat));
-    console.log(req.body);
     res.status(200).send();
 });
 

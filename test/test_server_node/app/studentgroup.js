@@ -16,7 +16,6 @@ userRouter.post('/StudentGroup', (req, res) => {
 userRouter.put('/StudentGroup', (req, res) => {
     console.log("PUT update an StudentGroup: " + new Date());
     log("out/StudentGroup.log", util.inspect(req.body, appConfig.jsonFormat));
-    console.log(req.body);
     res.status(200).send();
 });
 
