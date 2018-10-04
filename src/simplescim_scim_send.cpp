@@ -1,7 +1,3 @@
-#include <utility>
-
-#include <utility>
-
 /**
  * Copyright © 2017-2018  Max Wällstedt <>
  *

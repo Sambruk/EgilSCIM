@@ -5,7 +5,6 @@
 #include <set>
 #include "ldap_wrapper.hpp"
 #include "simplescim_ldap.hpp"
-#include "uuid/uuid.h"
 
 ldap_wrapper::ldap_wrapper() {
 	if (!connection::instance().initialised) {

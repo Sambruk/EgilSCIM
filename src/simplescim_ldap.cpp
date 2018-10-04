@@ -23,8 +23,6 @@
 #include "simplescim_ldap.hpp"
 
 #include <set>
-#include <uuid/uuid.h>
-
 #include "utility/simplescim_error_string.hpp"
 #include "model/base_object.hpp"
 #include "model/object_list.hpp"
