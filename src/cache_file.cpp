@@ -525,7 +525,7 @@ int cache_file::save(std::shared_ptr<object_list> objects) {
 		return -1;
 	}
 
-	/* Open cache file for writing (mode 0664) */
+		/* Open cache file for writing (mode 0664) */
 	cache_file_fd = open(cache_file_filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
 	                     S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 

@@ -50,7 +50,7 @@ void data_server::load() {
 
 void data_server::preload() {
 	data_cache_vector caches = json_data_file::json_to_ldap_cache_requests(
-			config_file::instance().get("user-caches"));
+			config_file::instance().get("user-caches", true));
 }
 
 

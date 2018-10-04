@@ -1,7 +1,3 @@
-#include <utility>
-
-#include <utility>
-
 /**
  * Copyright © 2017-2018  Max Wällstedt <>
  *
@@ -175,6 +171,12 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 			continue;
 
 		string_vector relational_items = a_master.second->get_values(relational_key.second);
+		if (relational_items.empty()) {
+
+			std::cout << " Creating Employment: " << type
+			          << "-generate-key with value not found with "
+			          << pair_to_string(relational_key) << std::endl;
+		}
 
 		// for each entry create a new relational object and
 		// decorate it with some more attributes from the config.
@@ -215,6 +217,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
 				missing_ids.insert(relational_item);
 			}
 		}
+
 	}
 
 	std::cout << " - done!" << std::endl;
