@@ -6,7 +6,7 @@
 #define EGILSCIMCLIENT_LDAP_WRAPPER_HPP
 
 #include <ldap.h>
-#include <uuid/uuid.h>
+//#include <uuid/uuid.h>
 #include "config_file.hpp"
 #include "json_data_file.hpp"
 #include "utility/simplescim_error_string.hpp"

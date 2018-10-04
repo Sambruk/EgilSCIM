@@ -5,6 +5,7 @@
 #include <set>
 #include "ldap_wrapper.hpp"
 #include "simplescim_ldap.hpp"
+#include "uuid/uuid.h"
 
 ldap_wrapper::ldap_wrapper() {
 	if (!connection::instance().initialised) {
@@ -15,14 +16,14 @@ ldap_wrapper::ldap_wrapper() {
 	std::vector<std::string> attributes = config_file::instance().get_vector("all-scim-variables");
 	std::set<std::string> unique_strings;
 
-	for (auto && a: attributes) {
+	for (auto &&a: attributes) {
 		if (a.find('.') != std::string::npos)
 			unique_strings.emplace(string_to_pair(a).second);
 		else
 			unique_strings.emplace(a);
 	}
 
-	for (auto && a: unique_strings) {
+	for (auto &&a: unique_strings) {
 		ldap_attrs += a + ",";
 	}
 
@@ -48,7 +49,7 @@ bool ldap_wrapper::ldap_get_variables() {
 bool ldap_wrapper::ldap_get_type_variables() {
 //	std::string type_filters = config_file::instance().get(type + "-ldap-filter", true);
 //	if (type_filters.find("queries") != std::string::npos) {
-		multi_queries = json_data_file::json_to_ldap_query(type);
+	multi_queries = json_data_file::json_to_ldap_query(type);
 //	}
 	return true;
 }
@@ -146,6 +147,11 @@ bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string
 	return true;
 }
 
+//#include <boost/uuid/uuid.hpp>
+//#include <boost/uuid/uuid_generators.hpp>
+//#include <boost/uuid/uuid_io.hpp>
+//#include <boost/lexical_cast.hpp>
+
 std::shared_ptr<base_object> ldap_wrapper::entry_to_user(LDAPMessage *entry) {
 	BerElement *ber;
 
@@ -185,6 +191,9 @@ std::shared_ptr<base_object> ldap_wrapper::entry_to_user(LDAPMessage *entry) {
 		for (size_t i = 0; i < len; ++i) {
 			if (attr_clone == "GUID") {
 				char ascii[100];
+//				char *tmp = vals[i]->bv_val;
+//				std::string stmp = tmp;
+//				boost::uuids::uuid u = boost::lexical_cast<boost::uuids::uuid>(stmp);
 				uuid_unparse((unsigned char *) vals[i]->bv_val, ascii);
 				list.emplace_back(ascii);
 			} else {

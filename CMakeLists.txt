@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(EgilSCIMClient CXX)
 
 set(GroupSCIM_VERSION_MAJOR 1)
-set(GroupSCIM_VERSION_MINOR 3)
+set(GroupSCIM_VERSION_MINOR 4)
 
 configure_file(
         "${PROJECT_SOURCE_DIR}/src/utility/GroupSCIM_config.h.in"
