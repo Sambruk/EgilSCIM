@@ -37,7 +37,7 @@ else ()
     include_directories(${Boost_INCLUDE_DIRS})
 endif ()
 
-set(LDFLAGS -lldap -llber -lcurl -lsqlite3)
+set(LDFLAGS -lldap -llber -lcurl -luuid -lsqlite3)
 
 link_libraries(${LDFLAGS})
 
