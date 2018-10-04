@@ -147,11 +147,6 @@ bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string
 	return true;
 }
 
-//#include <boost/uuid/uuid.hpp>
-//#include <boost/uuid/uuid_generators.hpp>
-//#include <boost/uuid/uuid_io.hpp>
-//#include <boost/lexical_cast.hpp>
-
 std::shared_ptr<base_object> ldap_wrapper::entry_to_user(LDAPMessage *entry) {
 	BerElement *ber;
 
@@ -190,12 +185,8 @@ std::shared_ptr<base_object> ldap_wrapper::entry_to_user(LDAPMessage *entry) {
 		std::string attr_clone = attr;
 		for (size_t i = 0; i < len; ++i) {
 			if (attr_clone == "GUID") {
-				char ascii[100];
-//				char *tmp = vals[i]->bv_val;
-//				std::string stmp = tmp;
-//				boost::uuids::uuid u = boost::lexical_cast<boost::uuids::uuid>(stmp);
-				uuid_unparse((unsigned char *) vals[i]->bv_val, ascii);
-				list.emplace_back(ascii);
+				std::string st = uuid_util::instance().un_parse_uuid(vals[i]->bv_val);
+				list.emplace_back(st);
 			} else {
 				list.emplace_back(std::string(vals[i]->bv_val));
 			}

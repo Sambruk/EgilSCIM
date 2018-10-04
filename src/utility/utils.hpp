@@ -8,6 +8,12 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
+
 std::string unifyurl(const std::string &s);
 
 std::vector<std::string> string_to_vector(const std::string &s);
@@ -26,5 +32,21 @@ void print_status(const char *config_file_name);
 
 int check_params(int argc, char **argv);
 
+class uuid_util
+{
+	boost::uuids::random_generator generator;
+
+	uuid_util() = default;
+public:
+	static uuid_util &instance() {
+		static uuid_util gen;
+		return gen;
+	}
+	std::string generate();
+
+
+	std::string un_parse_uuid(char * val);
+
+};
 
 #endif //SIMPLESCIM_UTILS_HPP

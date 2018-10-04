@@ -4,26 +4,7 @@
 
 #include "local_id_store.hpp"
 #include <string.h>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 
-
-class uuid_generator
-{
-	boost::uuids::random_generator generator;
-
-	uuid_generator() = default;
-public:
-	static uuid_generator &instance() {
-		static uuid_generator gen;
-		return gen;
-	}
-	std::string get() {
-		boost::uuids::uuid uuid = generator();
-		return boost::uuids::to_string(uuid);
-	}
-};
 
 
 bool local_id_store::open_db(const std::string &name) {
@@ -103,14 +84,8 @@ std::optional<std::string> local_id_store::get_relational_id(const string_pair &
 	}
 }
 
-std::string local_id_store::generateUUID() {
-
-	std::string id = uuid_generator::instance().get();
-	return id;
-}
-
 std::optional<std::string> local_id_store::create_relational_id(const string_pair &index_fields) {
-	std::string newUUID = generateUUID();
+	std::string newUUID = uuid_util::instance().generate();
 
 	std::stringstream buf;
 	buf << "insert into relations "

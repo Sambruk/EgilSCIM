@@ -67,8 +67,6 @@ public:
 
 	std::optional<std::string> get_relational_id(const string_pair &index_fields);
 
-	std::string generateUUID();
-
 	/**
 	 * generates a UUID and stores it along with it's related id's
 	 * @param index_fields

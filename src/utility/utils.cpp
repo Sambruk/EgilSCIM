@@ -8,7 +8,7 @@
 #include "GroupSCIM_config.h"
 #include "simplescim_error_string.hpp"
 
-void print_usage(const std::string app_name) {
+void print_usage(const std::string &app_name) {
 	std::cout << app_name
 	          << " Version "
 	          << GroupSCIM_VERSION_MAJOR << '.'
@@ -32,7 +32,6 @@ int check_params(int argc, char **argv) {
 	}
 	return 0;
 }
-
 
 std::vector<std::string> string_to_vector(const std::string &s) {
 	if (s.empty())
@@ -157,11 +156,24 @@ std::string unifyurl(const std::string &s) {
 
 std::string toUpper(const std::string &s) {
 	std::string out(s);
-	return toUpper(out);
+	std::transform(s.begin(), s.end(), out.begin(), ::toupper);
+	return out;
 }
 
 std::string &toUpper(std::string &s) {
-	for (auto &&c: s)
-		c = static_cast<char>(std::toupper(c));
+	std::transform(s.begin(), s.end(), s.begin(), ::toupper);
 	return s;
+}
+
+std::string uuid_util::generate() {
+	boost::uuids::uuid uuid = generator();
+	std::string id = boost::uuids::to_string(uuid);
+	return toUpper(id);
+}
+
+std::string uuid_util::un_parse_uuid(char *val) {
+	boost::uuids::uuid uuid{};
+	::memcpy(&uuid, val, 16);
+	auto st = boost::lexical_cast<std::string>(uuid);
+	return toUpper(st);
 }
