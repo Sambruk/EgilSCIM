@@ -200,8 +200,10 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
 	/* Send SCIM create request */
 	std::optional<std::string> response_json = scim_sender::instance().send_create(url, parsed_json);
 	std::string uid = copied_user.get_uid();
-
-	actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
+	if (response_json)
+		actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
+	else
+		return -1;
 
 	return 0;
 }

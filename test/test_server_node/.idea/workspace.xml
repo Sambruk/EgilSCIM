@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="62d90064-e013-4009-bf68-08119a2e4654" name="Default Changelist" comment="" />
+    <list default="true" id="62d90064-e013-4009-bf68-08119a2e4654" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/app/config.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/config.js" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -165,11 +167,11 @@
     <session id="-888598628">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="3" />
+          <entry key="project.closed" value="4" />
           <entry key="project.open.time.7" value="1" />
           <entry key="project.open.time.8" value="1" />
-          <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="3" />
+          <entry key="project.open.time.9" value="2" />
+          <entry key="project.opened" value="4" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -344,8 +346,8 @@
     <servers />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="319" />
-    <option name="y" value="75" />
+    <option name="x" value="964" />
+    <option name="y" value="66" />
     <option name="width" value="972" />
     <option name="height" value="1004" />
   </component>
@@ -356,7 +358,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -373,6 +374,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -443,14 +445,16 @@
       <workItem from="1538045766271" duration="10318000" />
       <workItem from="1538284510505" duration="8000" />
       <workItem from="1538284539532" duration="1214000" />
+      <workItem from="1538571773994" duration="51000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="124350000" />
+    <option name="totallyTimeSpent" value="124401000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="319" y="75" width="972" height="1004" extended-state="0" />
+    <frame x="964" y="66" width="972" height="1004" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.22688173" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />

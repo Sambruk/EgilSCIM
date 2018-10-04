@@ -12,7 +12,6 @@
 #include <sstream>
 #include "config_file.hpp"
 #include "model/base_object.hpp"
-#include <uuid/uuid.h>
 #include <fstream>
 
 /**

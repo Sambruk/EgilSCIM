@@ -4,6 +4,27 @@
 
 #include "local_id_store.hpp"
 #include <string.h>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
+
+class uuid_generator
+{
+	boost::uuids::random_generator generator;
+
+	uuid_generator() = default;
+public:
+	static uuid_generator &instance() {
+		static uuid_generator gen;
+		return gen;
+	}
+	std::string get() {
+		boost::uuids::uuid uuid = generator();
+		return boost::uuids::to_string(uuid);
+	}
+};
+
 
 bool local_id_store::open_db(const std::string &name) {
 	std::ifstream f(db_file);
@@ -38,7 +59,7 @@ bool local_id_store::open_db(const std::string &name) {
 	return db_is_ready;
 }
 
-int local_id_store::dummy_callback(void *NotUsed, int argc, char **argv, char **azColName) {
+int local_id_store::dummy_callback(void *, int argc, char **argv, char **azColName) {
 	int i;
 	for (i = 0; i < argc; i++) {
 		printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
@@ -46,7 +67,7 @@ int local_id_store::dummy_callback(void *NotUsed, int argc, char **argv, char **
 	return 0;
 }
 
-int local_id_store::get_id_callback(void *id, int argc, char **argv, char **azColName) {
+int local_id_store::get_id_callback(void *id, int argc, char **argv, char **) {
 
 	if (argc != 1) {
 		std::cout << "query returned > 1 id. that's not right, this "
@@ -83,13 +104,9 @@ std::optional<std::string> local_id_store::get_relational_id(const string_pair &
 }
 
 std::string local_id_store::generateUUID() {
-	char uuid_str[37];
-	uuid_t uuid;
 
-	uuid_generate(uuid);
-	uuid_unparse(uuid, uuid_str);
-	return uuid_str;
-
+	std::string id = uuid_generator::instance().get();
+	return id;
 }
 
 std::optional<std::string> local_id_store::create_relational_id(const string_pair &index_fields) {
