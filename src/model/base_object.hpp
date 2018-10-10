@@ -29,12 +29,10 @@
 #include <iostream>
 #include <algorithm>
 
-typedef std::pair<std::string, std::string> string_pair;
-
-typedef std::string attrib_name;
-
-typedef std::vector<std::string> string_vector;
-typedef std::map<attrib_name, string_vector> attrib_map;
+using string_pair = std::pair<std::string, std::string>;
+using attrib_name = std::string;
+using string_vector = std::vector<std::string>;
+using attrib_map = std::map<attrib_name, string_vector>;
 
 class base_object {
 	attrib_map attributes{};

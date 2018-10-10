@@ -50,9 +50,9 @@ struct data_cache {
 	std::string filter;
 
 };
-typedef std::map<std::string, std::pair<std::string, std::string>> pair_map;
-typedef std::vector<relations> relations_vector;
-typedef std::vector<data_cache> data_cache_vector;
+using pair_map = std::map<std::string, std::pair<std::string, std::string>>;
+using relations_vector = std::vector<relations>;
+using data_cache_vector = std::vector<data_cache> ;
 
 class json_data_file {
 	std::string filename;

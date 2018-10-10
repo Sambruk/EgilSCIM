@@ -33,7 +33,7 @@
  * error message.
  */
 class config_parser {
-	typedef std::string::const_iterator iter;
+	using iter = std::string::const_iterator;
 	iter start;
 	iter cur;
 	iter end;

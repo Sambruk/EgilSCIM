@@ -30,7 +30,7 @@
 
 class ScimActions;
 
-typedef std::map<std::string, std::shared_ptr<base_object>> object_map_t;
+using object_map_t = std::map<std::string, std::shared_ptr<base_object>>;
 
 class object_list {
 	object_map_t objects{};

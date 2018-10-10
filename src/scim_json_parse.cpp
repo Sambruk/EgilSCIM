@@ -33,10 +33,10 @@
 #include "model/base_object.hpp"
 #include "utility/utils.hpp"
 
-typedef std::optional<std::string> optional_string;
-typedef std::string::const_iterator str_iter;
+using optional_string = std::optional<std::string>;
+using str_iter = std::string::const_iterator;
 
-typedef std::map<std::string, string_vector> value_map;
+using value_map = std::map<std::string, string_vector>;
 
 struct scim_json_iter {
 	value_map iter_value;
