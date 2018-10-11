@@ -1,14 +1,16 @@
 # Test server for GroupSCIM
 
-Docs rudely ripped from adjacent `test_server`
+Docs rudely ripped from adjacent `SimpleSCIM test server`
 
-`test_server_node` is a very simple server using openssl with the purpose
+`test_server_node` is a simple server using openssl with the purpose
 of testing the current set up of `GroupSCIM`. All `test_server_node` does
 is send a HTTP response with the expected response code of a
 successful SCIM transaction. When a user is created, a UUID is
 generated and is returned as the only field in the returned JSON
-object. `test_server_node` does not save the data received from the
-client, so retrieving data from `test_server_node` is not possible.
+object. `test_server_node` does not process the data received from the
+client, so retrieving data from `test_server_node` is not possible. However
+the scim messages are stored in a file by type in the 'out' folder adjacent
+to the app folder. 
 
 ## Usage
 
@@ -26,6 +28,7 @@ Modify supplied configuration file examples as described in the doc folder
 Install nodejs
 cd into test/test_server_node
 npm install
+mkdir out
 ```
 
 ### Generate server certificate and private key
@@ -78,22 +81,10 @@ where `<port>` is the port entered when starting the server.
 
 ### Test GroupSCIM
 
-Running `GroupSCIM` with the configuration file should now cause the
-server to print the incoming requests from `GroupSCIM` without
-processing them at all. Running `GroupSCIM` again with the same
-configuration file should only report users being copied, meaning no
-requests are sent to `test_server`. If any attribute or user in the
-data source is altered, added or removed, only these changes will be
-sent the next time `GroupSCIM` is executed with the same
-configuration file. To inspect the content of the cache, run these
-commands:
-
+The 'out' folder contains all the scim messages sent to the test server. Each type as it's own
+file, e.g. StudentGroup.log, SchoolUnit.log.
+To get a live log of the out put as the client is run cd into the out folder and type for example:
 ```
-cd /path/to/GroupSCIM/src
-make simplescim_cache_file_print
-./simplescim_cache_file_print cache-file
+tail -f StudentGroup.log
 ```
-
-where `cache-file` is the cache file specified in the configuration
-file. The cache file is only created if a user is successfully sent
-to the server.
+This prints the last 10 lines and waits for futher updates.
