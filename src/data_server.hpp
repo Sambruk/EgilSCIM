@@ -74,7 +74,7 @@ public:
 	std::shared_ptr<object_list> get_static_by_type(const std::string &type);
 
 
-	void load();
+	bool load();
 
 	void preload();
 

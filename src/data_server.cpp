@@ -10,27 +10,31 @@
  * load all data from
  * store each type in the data map with the type as key
  */
-void data_server::load() {
-	config_file &config = config_file::instance();
-	static_types = string_to_vector(config.get("scim-static-types"));
-	dynamic_types = string_to_vector(config.get("scim-dynamic-types"));
+bool data_server::load() {
+	try {
+		config_file &config = config_file::instance();
+		static_types = string_to_vector(config.get("scim-static-types"));
+		dynamic_types = string_to_vector(config.get("scim-dynamic-types"));
 
-	std::shared_ptr<object_list> all = std::make_shared<object_list>();
-	string_vector types = config.get_vector("scim-type-load-order");
-	struct closer {
-		ldap_wrapper ldap;
-		ldap_wrapper &get() {
-			return ldap;
-		}
-		~closer() {
-			ldap.ldap_close();
-		}
-		operator ldap_wrapper() {
-			return ldap;
-		}
-	} ldap;
-	if (ldap.get().valid()) {
-		for (const auto &type : types) {
+		std::shared_ptr<object_list> all = std::make_shared<object_list>();
+		string_vector types = config.get_vector("scim-type-load-order");
+		struct closer {
+			ldap_wrapper ldap;
+
+			ldap_wrapper &get() {
+				return ldap;
+			}
+
+			~closer() {
+				ldap.ldap_close();
+			}
+
+			operator ldap_wrapper() {
+				return ldap;
+			}
+		} ldap;
+		if (ldap.get().valid()) {
+			for (const auto &type : types) {
 //			std::string sourceType = config.get(type + "-scim-data-source");
 //			if (sourceType == "ldap") {
 				std::shared_ptr<object_list> l = ldap_get(ldap.get(), type);
@@ -39,12 +43,15 @@ void data_server::load() {
 				else
 					std::cout << type << " returned nullptr" << std::endl;
 //			}
+			}
+		} else {
+			std::cout << "can't connect to ldap" << std::endl;
 		}
-	} else {
-		std::cout << "can't connect to ldap" << std::endl;
+	} catch (std::string msg) {
+		return false;
 	}
-
 	preload();
+	return true;
 }
 
 

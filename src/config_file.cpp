@@ -170,6 +170,7 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
 			std::cerr << variable << " renamed to ldap_base. Please change the configuration" << std::endl;
 		if (!silent) {
 			std::cerr << "config_file::get: variable missing: " << variable << std::endl;
+            throw std::string("configuration invalid");
 		}
 	}
 	return empty;

@@ -140,6 +140,7 @@ bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string
 	if (err != LDAP_SUCCESS) {
 		std::cout << "error creating ldap search: " << ldap_err2string(err) << std::endl;
 		ldap_print_error(err, "ldap_search_ext_s");
+		throw std::string("exiting");
 		return false;
 	}
 

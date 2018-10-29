@@ -84,7 +84,7 @@ int config_parser::parse() {
 
 		/** Obligatory newline */
 		if (*cur != '\n') {
-			syntax_error_expected("end-of-line");
+			syntax_error_expected("end-of-line, there should be a new line after ?>");
 			return -1;
 		}
 

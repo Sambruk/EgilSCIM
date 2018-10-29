@@ -92,6 +92,14 @@ public:
 			old->second += ", " + var;
 		}
 	}
+	void replace_variable(const std::string &attrib, const std::string &var) {
+		auto iter = variables.find(attrib);
+		if (iter != variables.end()) {
+			iter->second = var;
+		} else {
+			variables.emplace(std::make_pair(attrib, var));
+		}
+	}
 
 };
 

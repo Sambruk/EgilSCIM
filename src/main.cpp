@@ -38,24 +38,43 @@
 int main(int argc, char *argv[]) {
 	config_file &config = config_file::instance();
 
-	if (check_params(argc, argv) != 0)
+    int param_start = check_params(argc, argv);
+    std::string test_url;
+	if (param_start < 0)
 		return 1;
+	else if (param_start == 1)
+	    test_url = get_test_server_url(argv);
 
 
-	for (int i = 1; i < argc; ++i) {
+
+
+
+	for (int i = 1+param_start; i < argc; ++i) {
 		/** Load configuration file */
 		std::cout << "processing: " << argv[i] << std::endl;
-		int err = config.load(argv[i]);
+        int err = 0;
+        try {
+            err = config.load(argv[i]);
+        } catch (std::string& msg) {
+		    std::cerr << msg << std::endl;
+		    exit(1);
+		}
 
 		if (err == -1) {
 			print_error();
 			continue;
 		}
+		if (!test_url.empty())
+			config.replace_variable("scim-url", test_url);
 
 		/** Get objects from LDAP catalogue */
 		data_server &server = data_server::instance();
-		server.load();
-
+		try {
+            server.load();
+        } catch (std::string& msg) {
+		    std::cout << msg << std::endl;
+		    exit(1);
+		}
 		if (server.empty()) {
 			print_error();
 			config.clear();
