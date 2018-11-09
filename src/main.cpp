@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 		try {
             server.load();
         } catch (std::string& msg) {
-		    std::cout << msg << std::endl;
+		    std::cerr << msg << std::endl;
 		    exit(1);
 		}
 		if (server.empty()) {
