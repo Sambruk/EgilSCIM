@@ -8,8 +8,8 @@ module.exports = {
     port: 9876,
     secureServer: require('https'),
     httpsOptions: {
-        key: fs.readFileSync("<path>/key.pem"),
-        cert: fs.readFileSync("<path>/cert.pem")
+        key: fs.readFileSync("/etc/certificate/serverkey.pem"),
+        cert: fs.readFileSync("/etc/certificate/servercert.pem")
     },
     jsonFormat: {
         compact: false,
