@@ -54,6 +54,7 @@ class ldap_wrapper {
 	std::string ldap_scope{};
 	std::string ldap_filter{};
 	std::string ldap_attrs{};
+	std::string ldap_UUID{};
 	std::string ldap_attrsonly{};
 
 	std::string type{};

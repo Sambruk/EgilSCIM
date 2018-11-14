@@ -421,8 +421,11 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
 
 	err = simplescim_scim_send(url, body, "POST", &response_data, &response_code);
 
-
-	if (err == -1 || response_code != 201) {
+	if (err == -1) {
+		free(response_data);
+		return {};
+	}
+	if (response_code != 201) {
 		simplescim_error_string_set_prefix("simplescim_scim_send_create");
 		std::string message;
 		if (response_code == 409) {
@@ -477,6 +480,7 @@ scim_sender::send_update(const std::string &url, const std::string &body) {
 	err = simplescim_scim_send(url, body, "PUT", &response_data, &response_code);
 
 	if (err == -1) {
+		free(response_data);
 		return {};
 	}
 

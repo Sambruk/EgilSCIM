@@ -37,7 +37,15 @@ bool ldap_wrapper::ldap_get_variables() {
 	ldap_scope = config.get("ldap-scope");
 	ldap_filter = config.get("ldap-filter", true);
 	ldap_attrs = config.get("ldap-attrs", true);
+	ldap_UUID = config.get("ldap-UUID", true);
 	ldap_attrsonly = config.get("ldap-attrsonly");
+	if (ldap_UUID.empty()) {
+        ldap_UUID = "GUID";
+        std::cout << "ldap variable ldap_UUID is missing. GUID assumed. If your catalogue \n"
+                     "is using a different attibute name for unique id enter this in the configuration. \n"
+                     "for example, openldap uses entityUUID. \n"
+                     "If your unique id is indeed GUID, enter this variable anyway to silence this message." << std::endl;
+    }
 	if (!ldap_attrs.empty())
 		std::cout
 				<< "ldap_attrs are generated from variables used in the scim templates. It is safe to leave this empty"
@@ -184,7 +192,7 @@ std::shared_ptr<base_object> ldap_wrapper::entry_to_user(LDAPMessage *entry) {
 		string_vector list;
 		std::string attr_clone = attr;
 		for (size_t i = 0; i < len; ++i) {
-			if (attr_clone == "GUID") {
+			if (attr_clone == ldap_UUID) {
 				std::string st = uuid_util::instance().un_parse_uuid(vals[i]->bv_val);
 				list.emplace_back(st);
 			} else {

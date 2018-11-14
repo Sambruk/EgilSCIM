@@ -749,7 +749,7 @@ optional_string scim_json_parser::get_value(const std::string &variable) {
 		if (values.empty()) {
 			syntax_error();
 
-			simplescim_error_string_set_message(R"("%s" "%s" does not have attribute "%s" )",
+			simplescim_error_string_set_message(R"("%s" "%s" missing attribute "%s" )",
 			                                    user.getSS12000type().c_str(), user.get_uid(false).c_str(), var);
 			return {};
 		}

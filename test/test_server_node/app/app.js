@@ -6,6 +6,7 @@ const app = express();
 
 // app.use(require('scim-node'));
 app.use(require('helmet')());
+app.use(require('morgan')('dev'));
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");

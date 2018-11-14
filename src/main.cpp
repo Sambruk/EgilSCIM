@@ -104,6 +104,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		print_status(argv[i]);
+        print_error();
 
 		/* Clean up */
 		config.clear();
