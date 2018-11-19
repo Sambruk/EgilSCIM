@@ -123,9 +123,12 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
 	return err;
 }
 
-bool ScimActions::verify_json(const std::string & json) const {
+bool ScimActions::verify_json(const std::string & json, const std::string &type) const {
 	if (json.empty())
 		return false;
+	else if (std::find(verified_types.begin(), verified_types.end(), type) != verified_types.end())
+		return true;
+
 	namespace pt = boost::property_tree;
 	pt::ptree root;
 	std::stringstream os;
@@ -133,6 +136,7 @@ bool ScimActions::verify_json(const std::string & json) const {
 	os << json;
 	try {
 		pt::read_json(os, root);
+		verified_types.emplace_back(type);
 	} catch (const boost::exception &ex) {
 		std::cout << json << std::endl;
 		std::cerr << "Failed to parse json " << boost::diagnostic_information(ex);
@@ -190,7 +194,7 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
 	std::string template_json = actions.conf.get(type + "-scim-json-template");
 	std::string parsed_json = scim_json_parse(template_json, copied_user);
 
-	if (!actions.verify_json(parsed_json))
+	if (!actions.verify_json(parsed_json, type))
 		return -1;
 
 	std::string url = config_file::instance().get("scim-url");
@@ -228,7 +232,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 	std::string template_json = config_file::instance().get(create_var);
 	std::string parsed_json = scim_json_parse(template_json, copied_user);
 
-	if (!actions.verify_json(parsed_json)) {
+	if (!actions.verify_json(parsed_json, type)) {
 		return -1;
 	}
 

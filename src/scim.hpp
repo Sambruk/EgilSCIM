@@ -53,6 +53,7 @@ struct variables {
 class ScimActions {
 	std::shared_ptr<object_list> scim_new_cache;
 	variables vars = variables();
+	mutable string_vector verified_types;
 	const config_file &conf = config_file::instance();
 
 	void simplescim_scim_clear() const;
@@ -65,7 +66,7 @@ public:
 	}
 
 	int perform(const data_server &current, const object_list &cached) const;
-	bool verify_json(const std::string &json) const ;
+	bool verify_json(const std::string &json, const std::string &type) const ;
 
 	class copy_func {
 		const base_object &cached;

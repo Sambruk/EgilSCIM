@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+
 #include "utils.hpp"
 #include "GroupSCIM_config.h"
 #include "simplescim_error_string.hpp"

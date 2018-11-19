@@ -31,6 +31,11 @@
 class config_file {
 	std::string filename;
 	std::map<std::string, std::string> variables{};
+
+	// caches
+	mutable std::map< std::string, std::vector<std::string> > vector_cache;
+	mutable std::map< std::string, std::pair<std::string, std::string> > pair_cache;
+
 	const std::string empty{};
 	bool is_test_run = false;
 

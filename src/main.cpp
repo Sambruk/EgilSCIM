@@ -94,7 +94,11 @@ int main(int argc, char *argv[]) {
 		}
 
 		/** Perform SCIM operations */
-		err = ScimActions().perform(server, *cache);
+		try {
+			err = ScimActions().perform(server, *cache);
+		} catch (const std::string& err_msg) {
+			std::cerr << err_msg << std::endl;
+		}
 
 		if (err == -1) {
 			server.clear();

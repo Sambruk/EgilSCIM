@@ -107,7 +107,7 @@ public:
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-	int send_delete(const std::string &url);
+	long send_delete(const std::string &url);
 };
 
 #endif

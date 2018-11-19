@@ -324,6 +324,9 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
 		curl_slist_free_all(chunk);
 		curl_easy_cleanup(curl);
+		if (errnum == CURLE_COULDNT_CONNECT) {
+			throw std::string();//standard curl error message sent already std::string("Couldn't connect to: ") + url;
+		}
 		return -1;
 	}
 
@@ -507,7 +510,7 @@ scim_sender::send_update(const std::string &url, const std::string &body) {
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int scim_sender::send_delete(const std::string &url) {
+long scim_sender::send_delete(const std::string &url) {
 	long response_code;
 	int err;
 

@@ -61,6 +61,8 @@ public:
 		return static_data.empty() && dynamic_data.empty();
 	}
 
+//	std::shared_ptr<base_object>
+//	get_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value);
 	std::shared_ptr<base_object>
 	find_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value);
 
