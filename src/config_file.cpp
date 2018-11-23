@@ -101,6 +101,7 @@ int config_file::load(const std::string &file_name) {
         if (!val.empty() && val == "TRUE")
             is_test_run = true;
     }
+    process_metadata();
     return err;
 }
 
@@ -210,4 +211,34 @@ std::string config_file::require(const std::string &variable) const {
     return value;
 }
 
+//#include <stdio.h>
+//#include <curl/curl.h>
 
+void config_file::process_metadata() {
+//    std::string md_url("https://fedscim-poc.skolfederation.se/md/skolfederation-fedscim-0_1.json");
+//
+//
+//    CURL *curl;
+//    CURLcode res;
+//
+//    curl_global_init(CURL_GLOBAL_DEFAULT);
+//
+//    curl = curl_easy_init();
+//    if (curl) {
+//        curl_easy_setopt(curl, CURLOPT_URL, md_url.c_str());
+//
+//
+//        /* Perform the request, res will get the return code */
+//        res = curl_easy_perform(curl);
+//        /* Check for errors */
+//        if (res != CURLE_OK)
+//            fprintf(stderr, "curl_easy_perform() failed: %s\n",
+//                    curl_easy_strerror(res));
+//
+//        /* always cleanup */
+//        curl_easy_cleanup(curl);
+//    }
+//
+//    curl_global_cleanup();
+
+}

@@ -239,7 +239,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 	std::string unified = unifyurl(object.get_uid());
 	std::string url = config_file::instance().get("scim-url");
 	std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
-	url += '/' + endpoint; //+ '/' + unified;
+	url += '/' + endpoint + '/' + unified;
 
 	std::optional<std::string> response_json = scim_sender::instance().send_update(url, parsed_json);
 

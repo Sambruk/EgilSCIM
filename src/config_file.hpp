@@ -106,6 +106,7 @@ public:
 		}
 	}
 
+	void process_metadata();
 };
 
 #endif

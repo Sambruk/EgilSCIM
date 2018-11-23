@@ -194,7 +194,7 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         return -1;
     }
 
-    /* ca cert from skolfederation metadata
+    /* ca cert from skolfederation metadata */
     std::string capath = config_file::instance().get("metadata_ca_path");
     errnum = curl_easy_setopt(curl, CURLOPT_CAPATH, capath.c_str());
 
@@ -331,12 +331,9 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
         curl_slist_free_all(chunk);
         curl_easy_cleanup(curl);
-        switch (errnum) {
-            case CURLE_COULDNT_CONNECT:
-            case CURLE_SSL_CERTPROBLEM:
-            case CURLE_SSL_CACERT_BADFILE:
-            case CURLE_SSL_CACERT:
-                throw std::string();//standard curl error message sent already std::string("Couldn't connect to: ") + url;
+        if (errnum == CURLE_COULDNT_CONNECT || errnum == CURLE_SSL_CERTPROBLEM ||
+            errnum == CURLE_SSL_CACERT_BADFILE || errnum == CURLE_SSL_CACERT) {
+            throw std::string();
         }
         return -1;
     }
@@ -434,12 +431,12 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
     int err;
 
     err = simplescim_scim_send(url, body, "POST", &response_data, &response_code);
-
+    std::string res = response_data;
     if (err == -1) {
         free(response_data);
         return {};
     }
-    if (response_code != 201) {
+    if (response_code != 201 && response_code != 200) {
         simplescim_error_string_set_prefix("simplescim_scim_send_create");
         std::string message;
         if (response_code == 409) {
@@ -452,6 +449,7 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
                                                 message.c_str());
             return {};
         } else {
+            std::cerr << res << std::endl;
             message = url;
             simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
                                                 message.c_str());
