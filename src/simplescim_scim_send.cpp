@@ -32,9 +32,9 @@
 #include "config_file.hpp"
 
 struct http_response {
-	size_t len;
-	size_t alloc;
-	char *data;
+    size_t len;
+    size_t alloc;
+    char *data;
 };
 
 std::string simplescim_scim_send_cert;
@@ -44,321 +44,332 @@ std::string simplescim_scim_send_pinnedpubkey;
 static char simplescim_scim_send_errbuf[CURL_ERROR_SIZE];
 
 static void simplescim_scim_send_print_curl_error(const char *function, CURLcode errnum) {
-	size_t len;
+    size_t len;
 
-	/* Set prefix */
+    /* Set prefix */
 
-	simplescim_error_string_set_prefix("%s", function);
+    simplescim_error_string_set_prefix("%s", function);
 
-	/* Set message */
+    /* Set message */
 
-	len = strlen(simplescim_scim_send_errbuf);
+    len = strlen(simplescim_scim_send_errbuf);
 
-	if (len == 0) {
-		simplescim_error_string_set_message("%s", curl_easy_strerror(errnum));
-	} else {
-		if (simplescim_scim_send_errbuf[len - 1] == '\n') {
-			simplescim_scim_send_errbuf[len - 1] = '\0';
-		}
+    if (len == 0) {
+        simplescim_error_string_set_message("%s", curl_easy_strerror(errnum));
+    } else {
+        if (simplescim_scim_send_errbuf[len - 1] == '\n') {
+            simplescim_scim_send_errbuf[len - 1] = '\0';
+        }
 
-		simplescim_error_string_set_message("%s", simplescim_scim_send_errbuf);
-	}
+        simplescim_error_string_set_message("%s", simplescim_scim_send_errbuf);
+    }
 }
 
 static size_t simplescim_scim_send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
-	struct http_response *http_response;
-	size_t len;
-	size_t i;
-	char *tmp;
-	char c;
+    struct http_response *http_response;
+    size_t len;
+    size_t i;
+    char *tmp;
+    char c;
 
-	http_response = static_cast<struct http_response *>(userdata);
-	len = size * nmemb;
+    http_response = static_cast<struct http_response *>(userdata);
+    len = size * nmemb;
 
-	for (i = 0; i < len; ++i) {
-		c = ((char *) ptr)[i];
+    for (i = 0; i < len; ++i) {
+        c = ((char *) ptr)[i];
 
-		if (c == '\r') {
-			continue;
-		}
+        if (c == '\r') {
+            continue;
+        }
 
-		if (http_response->len + 1 == http_response->alloc) {
-			tmp = static_cast<char *>(realloc(http_response->data, http_response->alloc * 2));
+        if (http_response->len + 1 == http_response->alloc) {
+            tmp = static_cast<char *>(realloc(http_response->data, http_response->alloc * 2));
 
-			if (tmp == nullptr) {
-				return i;
-			}
+            if (tmp == nullptr) {
+                return i;
+            }
 
-			http_response->data = tmp;
-			http_response->alloc *= 2;
-		}
+            http_response->data = tmp;
+            http_response->alloc *= 2;
+        }
 
-		http_response->data[http_response->len] = c;
-		++http_response->len;
-	}
+        http_response->data[http_response->len] = c;
+        ++http_response->len;
+    }
 
-	http_response->data[http_response->len] = '\0';
+    http_response->data[http_response->len] = '\0';
 
-	return len;
+    return len;
 }
 
 static struct curl_slist *simplescim_scim_send_create_slist(const std::string &method) {
-	struct curl_slist *chunk, *tmp_chunk;
+    struct curl_slist *chunk, *tmp_chunk;
 
-	if ((method == "POST") || (method == "PUT")) {
-		tmp_chunk = curl_slist_append(nullptr, "Accept: application/scim+json");
+    if ((method == "POST") || (method == "PUT")) {
+        tmp_chunk = curl_slist_append(nullptr, "Accept: application/scim+json");
 
-		if (tmp_chunk == nullptr) {
-			simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
-			return nullptr;
-		}
+        if (tmp_chunk == nullptr) {
+            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
+            return nullptr;
+        }
 
 //		chunk = curl_slist_append(tmp_chunk, "Content-Type: application/scim+json");
-		chunk = curl_slist_append(tmp_chunk, "Content-Type: application/json");
+        chunk = curl_slist_append(tmp_chunk, "Content-Type: application/json");
 
-		if (chunk == nullptr) {
-			simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
-			curl_slist_free_all(tmp_chunk);
-			return nullptr;
-		}
+        if (chunk == nullptr) {
+            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
+            curl_slist_free_all(tmp_chunk);
+            return nullptr;
+        }
 
-		return chunk;
-	} else if (method == "DELETE") {
-		chunk = curl_slist_append(nullptr, "Accept:");
+        return chunk;
+    } else if (method == "DELETE") {
+        chunk = curl_slist_append(nullptr, "Accept:");
 
-		if (chunk == nullptr) {
-			simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
-			return nullptr;
-		}
+        if (chunk == nullptr) {
+            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
+            return nullptr;
+        }
 
-		return chunk;
-	} else {
-		simplescim_error_string_set("simplescim_scim_send_create_slist", "invalid HTTP method");
-		return nullptr;
-	}
+        return chunk;
+    } else {
+        simplescim_error_string_set("simplescim_scim_send_create_slist", "invalid HTTP method");
+        return nullptr;
+    }
 }
 
 static int simplescim_scim_send(const std::string &url, const std::string &resource,
                                 const std::string &method, char **response_data, long *response_code) {
 
-	bool self_assigned_cert = !config_file::instance().get_bool("server-cert-using-CA");
+    CURL *curl;
+    CURLcode errnum;
+    struct curl_slist *chunk;
+    struct http_response http_response{};
+    long http_code;
 
-	CURL *curl;
-	CURLcode errnum;
-	struct curl_slist *chunk;
-	struct http_response http_response{};
-	long http_code;
+    /* Initialise curl session */
 
-	/* Initialise curl session */
+    curl = curl_easy_init();
 
-	curl = curl_easy_init();
+    if (curl == nullptr) {
+        simplescim_error_string_set("curl_easy_init", "curl_easy_init() returned nullptr");
+        return -1;
+    }
 
-	if (curl == nullptr) {
-		simplescim_error_string_set("curl_easy_init", "curl_easy_init() returned nullptr");
-		return -1;
-	}
+    /* Enable more elaborate error messages */
 
-	/* Enable more elaborate error messages */
+    errnum = curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, simplescim_scim_send_errbuf);
 
-	errnum = curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, simplescim_scim_send_errbuf);
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_ERRORBUFFER)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-	if (errnum != CURLE_OK) {
-		simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_ERRORBUFFER)", errnum);
-		curl_easy_cleanup(curl);
-		return -1;
-	}
+    /* host verification */
+    errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
 
-	/* Disable peer verification */
-	if (self_assigned_cert) {
-		errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSL_VERIFYHOST)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-		if (errnum != CURLE_OK) {
-			simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSL_VERIFYPEER)", errnum);
-			curl_easy_cleanup(curl);
-			return -1;
-		}
-	}
+    /* Set certificate */
+    errnum = curl_easy_setopt(curl, CURLOPT_SSLCERT, simplescim_scim_send_cert.c_str());
 
-	/* Disable host verification */
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLCERT)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-	errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    /* Set private key */
 
-	if (errnum != CURLE_OK) {
-		simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSL_VERIFYHOST)", errnum);
-		curl_easy_cleanup(curl);
-		return -1;
-	}
+    errnum = curl_easy_setopt(curl, CURLOPT_SSLKEY, simplescim_scim_send_key.c_str());
 
-	/* Set certificate */
-	if (self_assigned_cert) {
-		errnum = curl_easy_setopt(curl, CURLOPT_SSLCERT, simplescim_scim_send_cert.c_str());
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLKEY)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-		if (errnum != CURLE_OK) {
-			simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLCERT)", errnum);
-			curl_easy_cleanup(curl);
-			return -1;
-		}
+    /* ca cert from skolfederation metadata
+    std::string capath = config_file::instance().get("metadata_ca_path");
+    errnum = curl_easy_setopt(curl, CURLOPT_CAPATH, capath.c_str());
 
-		/* Set private key */
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAPATH)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-		errnum = curl_easy_setopt(curl, CURLOPT_SSLKEY, simplescim_scim_send_key.c_str());
+    std::string cafile = config_file::instance().get("metadata_ca_store");
+    errnum = curl_easy_setopt(curl, CURLOPT_CAINFO, std::string(capath + cafile).c_str());
 
-		if (errnum != CURLE_OK) {
-			simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLKEY)", errnum);
-			curl_easy_cleanup(curl);
-			return -1;
-		}
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAINFO)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-		/* Set pinned public key */
 
-		errnum = curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, simplescim_scim_send_pinnedpubkey.c_str());
+    /* Set pinned public key */
 
-		if (errnum != CURLE_OK) {
-			simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_PINNEDPUBLICKEY)", errnum);
-			curl_easy_cleanup(curl);
-			return -1;
-		}
-	}
+    errnum = curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, simplescim_scim_send_pinnedpubkey.c_str());
 
-	/* Set HTTP method */
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_PINNEDPUBLICKEY)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-	errnum = curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
+    bool verbose_curl = config_file::instance().get_bool("verbose_curl_output");
+    errnum = curl_easy_setopt(curl, CURLOPT_VERBOSE, verbose_curl);
 
-	if (errnum != CURLE_OK) {
-		simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CUSTOMREQUEST)", errnum);
-		curl_easy_cleanup(curl);
-		return -1;
-	}
+    /* Set HTTP method */
 
-	/* Set URL */
+    errnum = curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
 
-	errnum = curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CUSTOMREQUEST)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-	if (errnum != CURLE_OK) {
-		simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_URL)", errnum);
-		curl_easy_cleanup(curl);
-		return -1;
-	}
+    /* Set URL */
 
-	/* Set SCIM resource */
+    errnum = curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-	if (!resource.empty()) {
-		errnum = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, resource.c_str());
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_URL)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-		if (errnum != CURLE_OK) {
-			simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_POSTFIELDS)", errnum);
-			curl_easy_cleanup(curl);
-			return -1;
-		}
-	}
+    /* Set SCIM resource */
 
-	/* Set HTTP headers for SCIM */
+    if (!resource.empty()) {
+        errnum = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, resource.c_str());
 
-	chunk = simplescim_scim_send_create_slist(method);
+        if (errnum != CURLE_OK) {
+            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_POSTFIELDS)", errnum);
+            curl_easy_cleanup(curl);
+            return -1;
+        }
+    }
 
-	if (chunk == nullptr) {
-		curl_easy_cleanup(curl);
-		return -1;
-	}
+    /* Set HTTP headers for SCIM */
 
-	errnum = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+    chunk = simplescim_scim_send_create_slist(method);
 
-	if (errnum != CURLE_OK) {
-		simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_HTTPHEADER)", errnum);
-		curl_slist_free_all(chunk);
-		curl_easy_cleanup(curl);
-		return -1;
-	}
+    if (chunk == nullptr) {
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-	/* Set write callback */
+    errnum = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 
-	if (response_data != nullptr) {
-		errnum = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, simplescim_scim_send_write_func);
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_HTTPHEADER)", errnum);
+        curl_slist_free_all(chunk);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
 
-		if (errnum != CURLE_OK) {
-			simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEFUNCTION)", errnum);
-			curl_slist_free_all(chunk);
-			curl_easy_cleanup(curl);
-			return -1;
-		}
-	}
+    /* Set write callback */
 
-	/* Set data pointer */
+    if (response_data != nullptr) {
+        errnum = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, simplescim_scim_send_write_func);
 
-	if (response_data != nullptr) {
-		http_response.len = 0;
-		http_response.alloc = 1024;
-		http_response.data = static_cast<char *>(malloc(http_response.alloc));
+        if (errnum != CURLE_OK) {
+            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEFUNCTION)", errnum);
+            curl_slist_free_all(chunk);
+            curl_easy_cleanup(curl);
+            return -1;
+        }
+    }
 
-		if (http_response.data == nullptr) {
-			simplescim_error_string_set_errno("simplescim_scim_send:"
-			                                  "malloc");
-			curl_slist_free_all(chunk);
-			curl_easy_cleanup(curl);
-			return -1;
-		}
+    /* Set data pointer */
 
-		http_response.data[0] = '\0';
+    if (response_data != nullptr) {
+        http_response.len = 0;
+        http_response.alloc = 1024;
+        http_response.data = static_cast<char *>(malloc(http_response.alloc));
 
-		errnum = curl_easy_setopt(curl, CURLOPT_WRITEDATA, &http_response);
+        if (http_response.data == nullptr) {
+            simplescim_error_string_set_errno("simplescim_scim_send:"
+                                              "malloc");
+            curl_slist_free_all(chunk);
+            curl_easy_cleanup(curl);
+            return -1;
+        }
 
-		if (errnum != CURLE_OK) {
-			simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEDATA)", errnum);
-			free(http_response.data);
-			curl_slist_free_all(chunk);
-			curl_easy_cleanup(curl);
-			return -1;
-		}
-	}
+        http_response.data[0] = '\0';
 
-	/* Perform request */
+        errnum = curl_easy_setopt(curl, CURLOPT_WRITEDATA, &http_response);
 
-	errnum = curl_easy_perform(curl);
+        if (errnum != CURLE_OK) {
+            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEDATA)", errnum);
+            free(http_response.data);
+            curl_slist_free_all(chunk);
+            curl_easy_cleanup(curl);
+            return -1;
+        }
+    }
 
-	if (errnum != CURLE_OK) {
-		simplescim_scim_send_print_curl_error("curl_easy_perform", errnum);
+    /* Perform request */
 
-		if (response_data != nullptr) {
-			free(http_response.data);
-		}
+    errnum = curl_easy_perform(curl);
 
-		curl_slist_free_all(chunk);
-		curl_easy_cleanup(curl);
-		if (errnum == CURLE_COULDNT_CONNECT) {
-			throw std::string();//standard curl error message sent already std::string("Couldn't connect to: ") + url;
-		}
-		return -1;
-	}
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_perform", errnum);
 
-	/* Get response code */
+        if (response_data != nullptr) {
+            free(http_response.data);
+        }
 
-	errnum = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        curl_slist_free_all(chunk);
+        curl_easy_cleanup(curl);
+        switch (errnum) {
+            case CURLE_COULDNT_CONNECT:
+            case CURLE_SSL_CERTPROBLEM:
+            case CURLE_SSL_CACERT_BADFILE:
+            case CURLE_SSL_CACERT:
+                throw std::string();//standard curl error message sent already std::string("Couldn't connect to: ") + url;
+        }
+        return -1;
+    }
 
-	if (errnum != CURLE_OK) {
-		simplescim_scim_send_print_curl_error("curl_easy_getinfo", errnum);
+    /* Get response code */
 
-		if (response_data != nullptr) {
-			free(http_response.data);
-		}
+    errnum = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
-		curl_slist_free_all(chunk);
-		curl_easy_cleanup(curl);
-		return -1;
-	}
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_getinfo", errnum);
 
-	/* Clean up */
+        if (response_data != nullptr) {
+            free(http_response.data);
+        }
 
-	if (response_data != nullptr) {
-		*response_data = http_response.data;
+        curl_slist_free_all(chunk);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
+
+    /* Clean up */
+
+    if (response_data != nullptr) {
+        *response_data = http_response.data;
 //		std::cout << *response_data << std::endl;
-	}
+    }
 
-	*response_code = http_code;
+    *response_code = http_code;
 
-	curl_slist_free_all(chunk);
-	curl_easy_cleanup(curl);
+    curl_slist_free_all(chunk);
+    curl_easy_cleanup(curl);
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -375,20 +386,20 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
  * error message.
  */
 int scim_sender::send_init(std::string cert, std::string key, std::string pinnedpubkey) {
-	CURLcode errnum;
+    CURLcode errnum;
 
-	errnum = curl_global_init(CURL_GLOBAL_DEFAULT);
+    errnum = curl_global_init(CURL_GLOBAL_DEFAULT);
 
-	if (errnum != 0) {
-		simplescim_scim_send_print_curl_error("curl_global_init", errnum);
-		return -1;
-	}
+    if (errnum != 0) {
+        simplescim_scim_send_print_curl_error("curl_global_init", errnum);
+        return -1;
+    }
 
-	simplescim_scim_send_cert = std::move(cert);
-	simplescim_scim_send_key = std::move(key);
-	simplescim_scim_send_pinnedpubkey = std::move(pinnedpubkey);
+    simplescim_scim_send_cert = std::move(cert);
+    simplescim_scim_send_key = std::move(key);
+    simplescim_scim_send_pinnedpubkey = std::move(pinnedpubkey);
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -396,7 +407,7 @@ int scim_sender::send_init(std::string cert, std::string key, std::string pinned
  * dynamically allocated memory.
  */
 void scim_sender::send_clear() {
-	curl_global_cleanup();
+    curl_global_cleanup();
 }
 
 /**
@@ -418,41 +429,41 @@ void scim_sender::send_clear() {
  * message.
  */
 std::optional<std::string> scim_sender::send_create(const std::string &url, const std::string &body) {
-	char *response_data;
-	long response_code;
-	int err;
+    char *response_data;
+    long response_code;
+    int err;
 
-	err = simplescim_scim_send(url, body, "POST", &response_data, &response_code);
+    err = simplescim_scim_send(url, body, "POST", &response_data, &response_code);
 
-	if (err == -1) {
-		free(response_data);
-		return {};
-	}
-	if (response_code != 201) {
-		simplescim_error_string_set_prefix("simplescim_scim_send_create");
-		std::string message;
-		if (response_code == 409) {
-			message = " object already exists";
-			simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-			                                    message.c_str());
-		} else if (response_code == 413) {
-			message = " data to " + url + " to large.";
-			simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-			                                    message.c_str());
-			return {};
-		} else {
-			message = url;
-			simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-			                                    message.c_str());
-			return {};
+    if (err == -1) {
+        free(response_data);
+        return {};
+    }
+    if (response_code != 201) {
+        simplescim_error_string_set_prefix("simplescim_scim_send_create");
+        std::string message;
+        if (response_code == 409) {
+            message = " object already exists";
+            simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+                                                message.c_str());
+        } else if (response_code == 413) {
+            message = " data to " + url + " to large.";
+            simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+                                                message.c_str());
+            return {};
+        } else {
+            message = url;
+            simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+                                                message.c_str());
+            return {};
 
-		}
+        }
 
-	}
-	std::string result(response_data);
-	free(response_data);
+    }
+    std::string result(response_data);
+    free(response_data);
 
-	return result;
+    return result;
 }
 
 /**
@@ -476,25 +487,25 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
 //int scim_sender::send_update(const char *url, const char *resource, const char **response) {
 std::optional<std::string>
 scim_sender::send_update(const std::string &url, const std::string &body) {
-	char *response_data;
-	long response_code;
-	int err;
+    char *response_data;
+    long response_code;
+    int err;
 
-	err = simplescim_scim_send(url, body, "PUT", &response_data, &response_code);
+    err = simplescim_scim_send(url, body, "PUT", &response_data, &response_code);
 
-	if (err == -1) {
-		free(response_data);
-		return {};
-	}
+    if (err == -1) {
+        free(response_data);
+        return {};
+    }
 
-	if (response_code != 200) {
-		simplescim_error_string_set_prefix("simplescim_scim_send_update");
-		simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 200L);
-		free(response_data);
-		return {};
-	}
+    if (response_code != 200) {
+        simplescim_error_string_set_prefix("simplescim_scim_send_update");
+        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 200L);
+        free(response_data);
+        return {};
+    }
 
-	return {response_data};
+    return {response_data};
 }
 
 /**
@@ -511,20 +522,21 @@ scim_sender::send_update(const std::string &url, const std::string &body) {
  * error message.
  */
 long scim_sender::send_delete(const std::string &url) {
-	long response_code;
-	int err;
+    long response_code;
+    int err;
 
-	err = simplescim_scim_send(url, "", "DELETE", nullptr, &response_code);
+    err = simplescim_scim_send(url, "", "DELETE", nullptr, &response_code);
 
-	if (err == -1) {
-		return -1;
-	}
+    if (err == -1) {
+        return -1;
+    }
 
-	if (response_code != 204) {
-		simplescim_error_string_set_prefix("simplescim_scim_send_delete");
-		simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 204L);
-		return response_code;
-	}
+    if (response_code != 204) {
+        simplescim_error_string_set_prefix("simplescim_scim_send_delete");
+        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 204L);
+        return response_code;
+    }
 
-	return 0;
+    return 0;
 }
+
