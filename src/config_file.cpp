@@ -101,7 +101,7 @@ int config_file::load(const std::string &file_name) {
         if (!val.empty() && val == "TRUE")
             is_test_run = true;
     }
-    process_metadata();
+
     return err;
 }
 
@@ -211,25 +211,24 @@ std::string config_file::require(const std::string &variable) const {
     return value;
 }
 
-//#include <stdio.h>
-//#include <curl/curl.h>
-
-void config_file::process_metadata() {
+//void config_file::process_metadata() {
 //    std::string md_url("https://fedscim-poc.skolfederation.se/md/skolfederation-fedscim-0_1.json");
-//
-//
-//    CURL *curl;
-//    CURLcode res;
 //
 //    curl_global_init(CURL_GLOBAL_DEFAULT);
 //
-//    curl = curl_easy_init();
+//    CURL *curl = curl_easy_init();
 //    if (curl) {
 //        curl_easy_setopt(curl, CURLOPT_URL, md_url.c_str());
 //
+//        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, send_write_func);
+//
+//        http_response response;
+//
+//        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+//
 //
 //        /* Perform the request, res will get the return code */
-//        res = curl_easy_perform(curl);
+//        CURLcode res = curl_easy_perform(curl);
 //        /* Check for errors */
 //        if (res != CURLE_OK)
 //            fprintf(stderr, "curl_easy_perform() failed: %s\n",
@@ -240,5 +239,37 @@ void config_file::process_metadata() {
 //    }
 //
 //    curl_global_cleanup();
-
-}
+//
+//}
+//static size_t send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
+//    struct http_response *http_response;
+//
+//    http_response = static_cast<struct http_response *>(userdata);
+//    size_t len = size * nmemb;
+//
+//    for (size_t i = 0; i < len; ++i) {
+//        char c = ((char *) ptr)[i];
+//
+//        if (c == '\r') {
+//            continue;
+//        }
+//
+//        if (http_response->len + 1 == http_response->alloc) {
+//            char *tmp = static_cast<char *>(realloc(http_response->data, http_response->alloc * 2));
+//
+//            if (tmp == nullptr) {
+//                return i;
+//            }
+//
+//            http_response->data = tmp;
+//            http_response->alloc *= 2;
+//        }
+//
+//        http_response->data[http_response->len] = c;
+//        ++http_response->len;
+//    }
+//
+//    http_response->data[http_response->len] = '\0';
+//
+//    return len;
+//}
