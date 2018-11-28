@@ -20,6 +20,8 @@
  * by Ola Mattsson - IT informa for Sambruk
  */
 
+/** https://spring.io/understanding/REST */
+
 #include "simplescim_scim_send.hpp"
 
 #include <stdlib.h>
@@ -138,6 +140,14 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
     }
 }
 
+void send_log(const std::string &s)
+{
+    static bool verbose = config_file::instance().get_bool("verbose_logging");
+    if (verbose) {
+        std::cout << s << std::endl;
+    }
+}
+
 static int simplescim_scim_send(const std::string &url, const std::string &resource,
                                 const std::string &method, char **response_data, long *response_code) {
 
@@ -167,9 +177,10 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     }
 
     /* host verification */
-    errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
+    errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
 
-    if (errnum != CURLE_OK) {
+    // CURLE_BAD_FUNCTION_ARGUMENT is returned when setting CURLOPT_SSL_VERIFYHOST 1, odd IMHO
+    if (errnum != CURLE_OK && errnum != CURLE_BAD_FUNCTION_ARGUMENT) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSL_VERIFYHOST)", errnum);
         curl_easy_cleanup(curl);
         return -1;
@@ -177,7 +188,7 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     /* Set certificate */
     errnum = curl_easy_setopt(curl, CURLOPT_SSLCERT, simplescim_scim_send_cert.c_str());
-
+    //send_log(simplescim_scim_send_cert);
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLCERT)", errnum);
         curl_easy_cleanup(curl);
@@ -187,6 +198,7 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     /* Set private key */
 
     errnum = curl_easy_setopt(curl, CURLOPT_SSLKEY, simplescim_scim_send_key.c_str());
+//    send_log(simplescim_scim_send_key);
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLKEY)", errnum);
@@ -195,7 +207,8 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     }
 
     /* ca cert from skolfederation metadata */
-    std::string capath = config_file::instance().get("metadata_ca_path");
+    static std::string capath = config_file::instance().get("metadata_ca_path");
+//    send_log(capath);
     errnum = curl_easy_setopt(curl, CURLOPT_CAPATH, capath.c_str());
 
     if (errnum != CURLE_OK) {
@@ -204,8 +217,9 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         return -1;
     }
 
-    std::string cafile = config_file::instance().get("metadata_ca_store");
-    errnum = curl_easy_setopt(curl, CURLOPT_CAINFO, std::string(capath + cafile).c_str());
+    static std::string cafile = config_file::instance().get("metadata_ca_store");
+//    send_log(cafile);
+	errnum = curl_easy_setopt(curl, CURLOPT_CAINFO, std::string(capath + cafile).c_str());
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAINFO)", errnum);
@@ -215,7 +229,7 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
 
     /* Set pinned public key */
-
+//    send_log(simplescim_scim_send_pinnedpubkey);
     errnum = curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, simplescim_scim_send_pinnedpubkey.c_str());
 
     if (errnum != CURLE_OK) {
@@ -224,8 +238,15 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         return -1;
     }
 
-    bool verbose_curl = config_file::instance().get_bool("verbose_curl_output");
+    static bool verbose_curl = config_file::instance().get_bool("verbose_logging");
     errnum = curl_easy_setopt(curl, CURLOPT_VERBOSE, verbose_curl);
+
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_VERBOSE)", errnum);
+        curl_easy_cleanup(curl);
+        return -1;
+    }
+
 
     /* Set HTTP method */
 
@@ -332,7 +353,8 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         curl_slist_free_all(chunk);
         curl_easy_cleanup(curl);
         if (errnum == CURLE_COULDNT_CONNECT || errnum == CURLE_SSL_CERTPROBLEM ||
-            errnum == CURLE_SSL_CACERT_BADFILE || errnum == CURLE_SSL_CACERT) {
+            errnum == CURLE_SSL_CACERT_BADFILE || errnum == CURLE_SSL_CACERT ||
+            errnum == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
             throw std::string();
         }
         return -1;
