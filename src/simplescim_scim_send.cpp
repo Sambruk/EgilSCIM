@@ -317,7 +317,7 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         http_response.len = 0;
         http_response.alloc = 1024;
         http_response.data = static_cast<char *>(malloc(http_response.alloc));
-
+        *response_data = http_response.data;
         if (http_response.data == nullptr) {
             simplescim_error_string_set_errno("simplescim_scim_send:"
                                               "malloc");
@@ -346,9 +346,9 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_perform", errnum);
 
-        if (response_data != nullptr) {
-            free(http_response.data);
-        }
+//        if (response_data != nullptr) {
+//            free(http_response.data);
+//        }
 
         curl_slist_free_all(chunk);
         curl_easy_cleanup(curl);
@@ -378,10 +378,10 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     /* Clean up */
 
-    if (response_data != nullptr) {
-        *response_data = http_response.data;
+//    if (response_data != nullptr) {
+//        *response_data = http_response.data;
 //		std::cout << *response_data << std::endl;
-    }
+//    }
 
     *response_code = http_code;
 
@@ -453,11 +453,15 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
     int err;
 
     err = simplescim_scim_send(url, body, "POST", &response_data, &response_code);
-    std::string res = response_data;
+
+    std::string res;
     if (err == -1) {
         free(response_data);
         return {};
+    } else if (response_code >= 500) {
+        res = response_data;
     }
+
     if (response_code != 201 && response_code != 200) {
         simplescim_error_string_set_prefix("simplescim_scim_send_create");
         std::string message;
@@ -467,6 +471,11 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
                                                 message.c_str());
         } else if (response_code == 413) {
             message = " data to " + url + " to large.";
+            simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+                                                message.c_str());
+            return {};
+        } else if (response_code == 403) {
+            message = " unathorized ";
             simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
                                                 message.c_str());
             return {};
@@ -523,8 +532,17 @@ scim_sender::send_update(const std::string &url, const std::string &body) {
         simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 200L);
         free(response_data);
         return {};
+    } else if (response_code == 413) {
+        std::string message = " data to " + url + " to large.";
+        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+                                            message.c_str());
+        return {};
+    } else if (response_code == 403) {
+        std::string message = " unathorized ";
+        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+                                            message.c_str());
+        return {};
     }
-
     return {response_data};
 }
 
@@ -555,6 +573,16 @@ long scim_sender::send_delete(const std::string &url) {
         simplescim_error_string_set_prefix("simplescim_scim_send_delete");
         simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 204L);
         return response_code;
+    } else if (response_code == 413) {
+        std::string message = " data to " + url + " to large.";
+        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+                                            message.c_str());
+        return {};
+    } else if (response_code == 403) {
+        std::string message = " unathorized ";
+        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
+                                            message.c_str());
+        return {};
     }
 
     return 0;
