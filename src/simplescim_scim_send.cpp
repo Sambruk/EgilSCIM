@@ -458,7 +458,7 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
     if (err == -1) {
         free(response_data);
         return {};
-    } else if (response_code >= 500) {
+    } else if (response_code < 500) {
         res = response_data;
     }
 
