@@ -23,11 +23,11 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 app.use('/users', require('./generic_logging_route'));
-app.use('/schoolunit', require('./generic_logging_route'));
-app.use('/studentgroup', require('./generic_logging_route'));
-app.use('/schoolunitgroup', require('./generic_logging_route'));
-app.use('/employment', require('./generic_logging_route'));
-app.use('/activity', require('./generic_logging_route'));
+app.use('/schoolunits', require('./generic_logging_route'));
+app.use('/studentgroups', require('./generic_logging_route'));
+app.use('/schoolunitgroups', require('./generic_logging_route'));
+app.use('/employments', require('./generic_logging_route'));
+app.use('/activities', require('./generic_logging_route'));
 
 if (appConfig.https) {
 // Listen over https
