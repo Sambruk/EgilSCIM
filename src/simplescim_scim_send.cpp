@@ -140,8 +140,7 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
     }
 }
 
-void send_log(const std::string &s)
-{
+void send_log(const std::string &s) {
     static bool verbose = config_file::instance().get_bool("verbose_logging");
     if (verbose) {
         std::cout << s << std::endl;
@@ -176,8 +175,17 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         return -1;
     }
 
+    bool auth = !config_file::instance().get_bool("scim-auth-WEAK");
     /* host verification */
-    errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    if (auth) {
+        errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    } else {
+        std::cerr << "WARNING, running with out authentication, this "
+                     "will either fail or the server might be who you think "
+                     "use only for testing locally" << std::endl;
+        errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    }
 
     // CURLE_BAD_FUNCTION_ARGUMENT is returned when setting CURLOPT_SSL_VERIFYHOST 1, odd IMHO
     if (errnum != CURLE_OK && errnum != CURLE_BAD_FUNCTION_ARGUMENT) {
@@ -188,7 +196,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     /* Set certificate */
     errnum = curl_easy_setopt(curl, CURLOPT_SSLCERT, simplescim_scim_send_cert.c_str());
-    //send_log(simplescim_scim_send_cert);
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLCERT)", errnum);
         curl_easy_cleanup(curl);
@@ -206,30 +213,28 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         return -1;
     }
 
-    /* ca cert from skolfederation metadata */
-    static std::string capath = config_file::instance().get("metadata_ca_path");
-//    send_log(capath);
-    errnum = curl_easy_setopt(curl, CURLOPT_CAPATH, capath.c_str());
+    if (auth) {
+        /* ca cert from skolfederation metadata */
+        static std::string capath = config_file::instance().get("metadata_ca_path");
+        errnum = curl_easy_setopt(curl, CURLOPT_CAPATH, capath.c_str());
 
-    if (errnum != CURLE_OK) {
-        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAPATH)", errnum);
-        curl_easy_cleanup(curl);
-        return -1;
+        if (errnum != CURLE_OK) {
+            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAPATH)", errnum);
+            curl_easy_cleanup(curl);
+            return -1;
+        }
+
+        static std::string cafile = config_file::instance().get("metadata_ca_store");
+        errnum = curl_easy_setopt(curl, CURLOPT_CAINFO, std::string(capath + cafile).c_str());
+
+        if (errnum != CURLE_OK) {
+            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAINFO)", errnum);
+            curl_easy_cleanup(curl);
+            return -1;
+        }
     }
-
-    static std::string cafile = config_file::instance().get("metadata_ca_store");
-//    send_log(cafile);
-	errnum = curl_easy_setopt(curl, CURLOPT_CAINFO, std::string(capath + cafile).c_str());
-
-    if (errnum != CURLE_OK) {
-        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAINFO)", errnum);
-        curl_easy_cleanup(curl);
-        return -1;
-    }
-
 
     /* Set pinned public key */
-//    send_log(simplescim_scim_send_pinnedpubkey);
     errnum = curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, simplescim_scim_send_pinnedpubkey.c_str());
 
     if (errnum != CURLE_OK) {
