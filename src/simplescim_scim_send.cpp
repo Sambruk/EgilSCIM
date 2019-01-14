@@ -115,7 +115,8 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
             return nullptr;
         }
 
-        chunk = curl_slist_append(tmp_chunk, "Content-Type: application/json, application/scim+json");
+//        chunk = curl_slist_append(tmp_chunk, "Content-Type: application/scim+json");
+        chunk = curl_slist_append(tmp_chunk, "Content-Type: application/json");
 
         if (chunk == nullptr) {
             simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
