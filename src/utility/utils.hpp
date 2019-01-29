@@ -44,6 +44,7 @@ public:
 		return gen;
 	}
 	std::string generate();
+	std::string generate(const std::string &a, const std::string &b);
 
 
 	std::string un_parse_uuid(char * val);

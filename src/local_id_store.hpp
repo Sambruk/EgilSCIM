@@ -40,11 +40,6 @@ class local_id_store {
 	sqlite3 *db{};
 	std::string db_file;
 	bool db_is_ready = false;
-public:
-	local_id_store() {
-		db_file = config_file::instance().get("local_id_db");
-		open_db(db_file);
-	}
 
 	/**
 	 * open the database, create it if necessary
@@ -53,17 +48,24 @@ public:
 	 */
 	bool open_db(const std::string &name);
 
-	bool is_open() {
-		return db_is_ready;
+	static int dummy_callback(void *NotUsed, int argc, char **argv, char **azColName);
+
+	static int get_id_callback(void *id, int argc, char **argv, char **azColName);
+
+public:
+	local_id_store() {
+		db_file = config_file::instance().get("local_id_db");
+		open_db(db_file);
 	}
+
 
 	~local_id_store() {
 		sqlite3_close(db);
 	}
 
-	static int dummy_callback(void *NotUsed, int argc, char **argv, char **azColName);
-
-	static int get_id_callback(void *id, int argc, char **argv, char **azColName);
+	bool is_open() {
+		return db_is_ready;
+	}
 
 	std::optional<std::string> get_relational_id(const string_pair &index_fields);
 

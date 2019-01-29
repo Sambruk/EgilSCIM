@@ -85,8 +85,11 @@ std::optional<std::string> local_id_store::get_relational_id(const string_pair &
 }
 
 std::optional<std::string> local_id_store::create_relational_id(const string_pair &index_fields) {
-	std::string newUUID = uuid_util::instance().generate();
+//	std::string newUUID = uuid_util::instance().generate(index_fields.first, index_fields.second);
 
+    std::string newUUID = uuid_util::instance().generate();
+
+	std::cout << index_fields.first << " " << index_fields.second << " = " << newUUID << std::endl;
 	std::stringstream buf;
 	buf << "insert into relations "
 	    << "(first_id, second_id, relational_id)"
