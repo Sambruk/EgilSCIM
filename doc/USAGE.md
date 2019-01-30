@@ -1,4 +1,4 @@
-# Using SimpleSCIM
+# Using EgilSCIM
 
 The intention is currently that for every remote service needing
 user management, a configuration file is constructed. The
@@ -8,8 +8,8 @@ how to relate the LDAP output to the SCIM requests.
 
 ## Configuration file
 
-The formal grammar of a SimpleSCIM configuration file can be found in
-the file `SimpleSCIM/res/config-file-grammar`. A configuration file
+The formal grammar of an EgilSCIM configuration file can be found in
+the file `EgilSCIM/res/config-file-grammar`. A configuration file
 consists of a set of variable assignments. On each line, there can be
 an optional variable assignment followed by an optional comment. A
 variable assignment starts with a variable name followed by the `'='`
@@ -49,9 +49,9 @@ value, it is a part of the value and is not interpreted as a comment.
 
 ### Required variables
 
-SimpleSCIM has a set of required variable names that must be assigned
+EgilSCIM has a set of required variable names that must be assigned
 meaningful values. The set of required variable names may change in
-future versions of SimpleSCIM, but in the current version, the
+future versions of EgilSCIM, but in the current version, the
 required variable names are:
 
 * `ldap-uri` is the uri to the LDAP server that contains the _schema_
@@ -81,25 +81,19 @@ required variable names are:
 * `<type>-scim-json-templa` specifies the JSON object to send when creating and
     updating a new object.
 
-### Template
-
-The file `SimpleSCIM/res/template.conf` contains a template for a
-SimpleSCIM configuration file that can be used as a basis for
-creating other SimpleSCIM configuration files.
-
 ## Execution
 
-SimpleSCIM is executed by typing `SimpleSCIM file...` where `file...`
-is a list of zero or more SimpleSCIM configuration files. An example
+EgilSCIM is executed by typing `EgilSCIM file...` where `file...`
+is a list of zero or more EgilSCIM configuration files. An example
 of using this in a system is to add the command as a task to `cron`.
 
 ### Example
 
 ```
-SimpleSCIM /etc/SimpleSCIM/conf/service{1,2}.conf
+EgilSCIM /etc/EgilSCIM/conf/service{1,2}.conf
 ```
 
-`/etc/SimpleSCIM/conf/service{1,2}.conf` expands to the path of both
+`/etc/EgilSCIM/conf/service{1,2}.conf` expands to the path of both
 `service1.conf` and `service2.conf`. First, the configuration file
 for *service1* is executed to completion and then the configuration
 file for *service2* is executed to completion.

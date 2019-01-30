@@ -1,9 +1,9 @@
-# Test server for GroupSCIM
+# Test server for EgilSCIM
 
 Docs rudely ripped from adjacent `SimpleSCIM test server`
 
 `test_server_node` is a simple server using openssl with the purpose
-of testing the current set up of `GroupSCIM`. All `test_server_node` does
+of testing the current set up of `EgilSCIM`. All `test_server_node` does
 is send a HTTP response with the expected response code of a
 successful SCIM transaction. When a user is created, a UUID is
 generated and is returned as the only field in the returned JSON
@@ -16,7 +16,7 @@ to the app folder.
 
 ### Set up
 
-Set up `GroupSCIM` as described in docs int the docs folder
+Set up `EgilSCIM` as described in docs int the docs folder
 
 ### Construct configuration file
 
@@ -79,7 +79,7 @@ scim-resource-identifier = id
 
 where `<port>` is the port entered when starting the server.
 
-### Test GroupSCIM
+### Test EgilSCIM
 
 The 'out' folder contains all the scim messages sent to the test server. Each type as it's own
 file, e.g. StudentGroup.log, SchoolUnit.log.
