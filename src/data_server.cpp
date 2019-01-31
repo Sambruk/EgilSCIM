@@ -21,6 +21,7 @@
  */
 
 #include "data_server.hpp"
+#include "config_file.hpp"
 #include "simplescim_ldap.hpp"
 #include "json_data_file.hpp"
 
@@ -47,9 +48,6 @@ bool data_server::load() {
                 ldap.ldap_close();
             }
 
-            operator ldap_wrapper() {
-                return ldap;
-            }
         } ldap;
         if (ldap.get().valid()) {
             for (const auto &type : types) {

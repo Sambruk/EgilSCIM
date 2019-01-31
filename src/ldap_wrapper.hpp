@@ -23,77 +23,37 @@
 #ifndef EGILSCIMCLIENT_LDAP_WRAPPER_HPP
 #define EGILSCIMCLIENT_LDAP_WRAPPER_HPP
 
-#include <ldap.h>
-#include "config_file.hpp"
-#include "json_data_file.hpp"
-#include "utility/simplescim_error_string.hpp"
-#include "simplescim_ldap_attrs_parser.hpp"
+#include "model/object_list.hpp"
 
 class ldap_wrapper {
-	const config_file &config = config_file::instance();
-
-	LDAPMessage *simplescim_ldap_res = nullptr;
-
-	/**
-	 * Configuration file variables
-	 */
-
-	std::string ldap_base{};
-	std::string ldap_scope{};
-	std::string ldap_filter{};
-	std::string ldap_attrs{};
-	std::string ldap_UUID{};
-	std::string ldap_attrsonly{};
-
-	std::string type{};
-	std::pair<std::string, std::string> override_filter{};
-	pair_map multi_queries{};
-
+  struct Impl;
+  std::unique_ptr<Impl> impl;
+  
 public:
 
-	explicit ldap_wrapper();
+  explicit ldap_wrapper();
+  ldap_wrapper(const ldap_wrapper&) = delete;
+  ldap_wrapper& operator=(const ldap_wrapper&) = delete;
 
-	~ldap_wrapper() {
-		if (simplescim_ldap_res != nullptr) {
-			/* Disregard the return value. */
-			ldap_msgfree(simplescim_ldap_res);
-			simplescim_ldap_res = nullptr;
-		}
-	}
+  ~ldap_wrapper();
 
-	void ldap_close();
+  void ldap_close();
 
-	bool valid();
+  bool valid();
 
-	/**
-	 * Gets and verifies all LDAP variables from the configuration file.
-	 */
-	bool ldap_get_variables();
+  /**
+   * Performs the LDAP search operation.
+   */
+  bool search(const std::string &type, const std::pair<std::string, std::string> &filters = {"", ""});
 
-	bool ldap_get_type_variables();
-
-
-	/**
-	 * Performs the LDAP search operation.
-	 */
-	bool search(const std::string &type, const std::pair<std::string, std::string> &filters = {"", ""});
-
-	/**
-	 * Converts an entry in the LDAP search results into a user.
-	 * On success, a pointer to a new user object is returned.
-	 * On error, nullptr is returned and simplescim_error_string
-	 * is set to an appropriate error message.
-	 */
-	std::shared_ptr<base_object> entry_to_user(LDAPMessage *entry);
-
-	/**
-	 * Construct the user list object from the LDAP response.
-	 * On success, a pointer to the constructed object is
-	 * returned. On error, nullptr is returned and
-	 * simplescim_error_string is set to an appropriate
-	 * error message.
-	 */
-	std::shared_ptr<object_list> ldap_to_user_list();
+  /**
+   * Construct the user list object from the LDAP response.
+   * On success, a pointer to the constructed object is
+   * returned. On error, nullptr is returned and
+   * simplescim_error_string is set to an appropriate
+   * error message.
+   */
+  std::shared_ptr<object_list> ldap_to_user_list();
 };
 
 
