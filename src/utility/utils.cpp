@@ -1,23 +1,41 @@
-//
-// Created by Ola Mattsson on 2018-09-09.
-//
+/**
+ * Created by Ola Mattsson.
+ *
+ * This file is part of EgilSCIM.
+ *
+ * EgilSCIM is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * EgilSCIM is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with EgilSCIM.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Further development with groups and relations support
+ * by Ola Mattsson - IT informa for Sambruk
+ */
+
 #include <vector>
 #include <iostream>
 #include <algorithm>
 
 #include "utils.hpp"
-#include "GroupSCIM_config.h"
+#include "EgilSCIM_config.h"
 #include "simplescim_error_string.hpp"
 
 void print_usage(const std::string &app_name) {
-    std::cout << app_name
-              << " Version "
-              << GroupSCIM_VERSION_MAJOR << '.'
-              << GroupSCIM_VERSION_MINOR << std::endl;
-    std::cout << "Usage: "
-              << app_name
-              << " supplier.conf supplier.conf" << std::endl;
-
+  std::cout << app_name
+	    << " Version "
+	    << EgilSCIM_VERSION_MAJOR << '.'
+	    << EgilSCIM_VERSION_MINOR << std::endl;
+  std::cout << "Usage: "
+	    << app_name
+	    << " supplier.conf supplier.conf" << std::endl;
 }
 
 int check_params(int argc, char **argv) {

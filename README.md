@@ -1,4 +1,4 @@
-# GroupSCIM
+# EGIL SCIM client
 
 This is a further development of the SimpleSCIM poc project implementing groups,
 mainly for sending information of students and teachers and how they are
@@ -10,12 +10,12 @@ Those types are not required though.
 
 Configuration examples will be made availiable
 
-The directory `src` contains the source code for GroupSCIM, the
-directory `test` contains test code for GroupSCIM, the directory
-`doc` contains detailed documentation for using GroupSCIM and the
+The directory `src` contains the source code for EgilSCIM, the
+directory `test` contains test code for EgilSCIM, the directory
+`doc` contains detailed documentation for using EgilSCIM and the
 directory `res` contains other resources.
 
-GroupSCIM is free software, distributed under the terms of the GNU
+EgilSCIM is free software, distributed under the terms of the GNU
 General Public License as published by the Free Software Foundation,
 version 3 of the License.  For more information, see the file
 `COPYING`.
