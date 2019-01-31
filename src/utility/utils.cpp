@@ -181,7 +181,7 @@ std::string uuid_util::generate() {
 }
 
 std::string uuid_util::generate(const std::string &a, const std::string &b) {
-    boost::uuids::name_generator_latest name_generator(boost::uuids::ns::oid());
+    boost::uuids::name_generator_sha1 name_generator(boost::uuids::ns::oid());
 
     boost::uuids::uuid uuid = name_generator(a + b);
     std::string id = boost::uuids::to_string(uuid);
