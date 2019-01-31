@@ -24,6 +24,48 @@
 #include "ldap_wrapper.hpp"
 #include "simplescim_ldap.hpp"
 
+namespace {
+/**
+ * Prints an error message concerning LDAP to
+ * simplescim_error_string.
+ */
+void ldap_print_error(int err, const char *func) {
+  simplescim_error_string_set_prefix("%s", func);
+  simplescim_error_string_set_message("%s", ldap_err2string(err));
+}
+
+  
+/**
+ * LDAP state variables
+ */
+class connection {
+  connection() = default;
+
+public:
+  std::string ldap_uri{};
+  std::string ldap_who{};
+  std::string ldap_password{};
+  LDAP *simplescim_ldap_ld = nullptr;
+
+  int get_variables();
+
+  static connection &instance() {
+    static connection con;
+    return con;
+  }
+
+  /**
+   * Initialises LDAP session.
+   */
+  bool ldap_init();
+
+  void ldap_close();
+
+  bool initialised = false;
+};
+
+} // namespace
+  
 ldap_wrapper::ldap_wrapper() {
 	if (!connection::instance().initialised) {
 		connection::instance().ldap_init();
@@ -47,6 +89,14 @@ ldap_wrapper::ldap_wrapper() {
 	if (*ldap_attrs.rbegin() == ',')
 		ldap_attrs.erase(ldap_attrs.length() - 1, 1);
 
+}
+
+void ldap_wrapper::ldap_close() {
+  connection::instance().ldap_close();
+}
+
+bool ldap_wrapper::valid() {
+  return connection::instance().initialised;
 }
 
 bool ldap_wrapper::ldap_get_variables() {
@@ -265,7 +315,7 @@ std::shared_ptr<object_list> ldap_wrapper::ldap_to_user_list() {
 	return users;
 }
 
-bool ldap_wrapper::connection::ldap_init() {
+bool connection::ldap_init() {
 	int ldap_version = LDAP_VERSION3;
 	struct berval cred{};
 	int err;
@@ -314,7 +364,7 @@ bool ldap_wrapper::connection::ldap_init() {
 	return true;
 }
 
-int ldap_wrapper::connection::get_variables() {
+int connection::get_variables() {
 	config_file &con = config_file::instance();
 	ldap_uri = con.get("ldap-uri");
 	ldap_who = con.get("ldap-who");
@@ -322,7 +372,7 @@ int ldap_wrapper::connection::get_variables() {
 	return 0;
 }
 
-void ldap_wrapper::connection::ldap_close() {
+void connection::ldap_close() {
 
 	if (simplescim_ldap_ld != nullptr) {
 		/* Disregard the return value. */

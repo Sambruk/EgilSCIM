@@ -35,36 +35,6 @@ class ldap_wrapper {
 	LDAPMessage *simplescim_ldap_res = nullptr;
 
 	/**
-	 * LDAP state variables
-	 */
-	class connection {
-		connection() = default;
-
-	public:
-		std::string ldap_uri{};
-		std::string ldap_who{};
-		std::string ldap_password{};
-		LDAP *simplescim_ldap_ld = nullptr;
-
-		int get_variables();
-
-		static connection &instance() {
-			static connection con;
-			return con;
-		}
-
-		/**
-		 * Initialises LDAP session.
- 		*/
-		bool ldap_init();
-
-		void ldap_close();
-
-		bool initialised = false;
-
-	};
-
-	/**
 	 * Configuration file variables
 	 */
 
@@ -79,15 +49,6 @@ class ldap_wrapper {
 	std::pair<std::string, std::string> override_filter{};
 	pair_map multi_queries{};
 
-	/**
-	 * Prints an error message concerning LDAP to
-	 * simplescim_error_string.
-	 */
-	static void ldap_print_error(int err, const char *func) {
-		simplescim_error_string_set_prefix("%s", func);
-		simplescim_error_string_set_message("%s", ldap_err2string(err));
-	}
-
 public:
 
 	explicit ldap_wrapper();
@@ -100,18 +61,9 @@ public:
 		}
 	}
 
-	/**
-	 * Terminates an LDAP session and frees any dynamically
-	 * allocated memory associated with it.
-	 */
-	void ldap_close() {
-		connection::instance().ldap_close();
+	void ldap_close();
 
-	}
-
-	bool valid() {
-		return connection::instance().initialised;
-	}
+	bool valid();
 
 	/**
 	 * Gets and verifies all LDAP variables from the configuration file.
@@ -133,7 +85,6 @@ public:
 	 * is set to an appropriate error message.
 	 */
 	std::shared_ptr<base_object> entry_to_user(LDAPMessage *entry);
-
 
 	/**
 	 * Construct the user list object from the LDAP response.
