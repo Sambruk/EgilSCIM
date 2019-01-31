@@ -32,7 +32,6 @@
 #include "cache_file.hpp"
 #include "scim_json_parse.hpp"
 #include "simplescim_scim_send.hpp"
-#include "local_id_store.hpp"
 
 
 variables::variables() {

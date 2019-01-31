@@ -30,7 +30,6 @@
 #include "simplescim_ldap_attrs_parser.hpp"
 #include "json_data_file.hpp"
 #include "utility/utils.hpp"
-#include "local_id_store.hpp"
 #include "data_server.hpp"
 #include "ldap_wrapper.hpp"
 
@@ -38,7 +37,7 @@
 void load_related(const std::string &type, const std::shared_ptr<object_list> &objects);
 
 std::string
-store_relation(local_id_store &persister, base_object &generated_object,
+store_relation(base_object &generated_object,
                const std::pair<std::string, std::string> &part_type,
                const std::pair<std::string, std::string> &master_id);
 
@@ -57,6 +56,18 @@ std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, co
 }
 
 /**
+ * Create a new UUID for a relation, based on two UUIDs.
+ *
+ * It's important that this function is deterministic and always
+ * generates the same new UUID for a given pair of UUIDs.
+ *
+ * This needs to be maintained through new versions of EGIL.
+ */
+std::string create_relational_id(const string_pair &index_fields) {
+  return uuid_util::instance().generate(toUpper(index_fields.first), toUpper(index_fields.second));
+}
+
+/**
  * Generate new Objects of this type
  *
  * @param type the type to generate
@@ -64,9 +75,6 @@ std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, co
  */
 std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type) {
     config_file &conf = config_file::instance();
-    local_id_store persister;
-    if (!persister.is_open())
-        return {};
 
     std::cout << "Generating " << type << std::flush;
 
@@ -123,7 +131,7 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 
         auto p1 = string_to_pair(id_cred.at(0));
         auto p2 = string_to_pair(id_cred.at(1));
-        std::string uuid = store_relation(persister, generated_object, p1, p2);
+        std::string uuid = store_relation(generated_object, p1, p2);
         generated->add_object(uuid, std::make_shared<base_object>(generated_object));
 
     }
@@ -141,9 +149,6 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
 std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &type) {
     config_file &conf = config_file::instance();
     data_server &server = data_server::instance();
-    local_id_store persister;
-    if (!persister.is_open())
-        return nullptr;
     std::set<std::string> missing_ids;
     std::cout << "Generating " << type << std::flush;
     // the relational key, e.g. User.pidSchoolUnit
@@ -211,7 +216,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
                     }
                 }
                 // create an id for the relation
-                std::string id = store_relation(persister, generated_object, part_type, master_id);
+                std::string id = store_relation(generated_object, part_type, master_id);
                 generated->add_object(id, std::make_shared<base_object>(generated_object));
             } else {
                 missing_ids.insert(relational_item);
@@ -233,14 +238,13 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
     return generated;
 }
 
-std::string store_relation(local_id_store &persister, base_object &generated_object,
+std::string store_relation(base_object &generated_object,
                            const std::pair<std::string, std::string> &part_type,
                            const std::pair<std::string, std::string> &master_id) {
     config_file &conf = config_file::instance();
     std::string type = generated_object.getSS12000type();
     std::string uuid;
-    if (!persister.is_open())
-        return {};
+
     if (!generated_object.get_values(pair_to_string(part_type)).empty()) {
 
         try {
@@ -248,15 +252,11 @@ std::string store_relation(local_id_store &persister, base_object &generated_obj
                     generated_object.get_values(pair_to_string(part_type)).at(0),
                     generated_object.get_values(pair_to_string(master_id)).at(0));
 
-            auto uuid_str = persister.get_relational_id(relational_id_pair);
-            if (!uuid_str) {
-                uuid_str = persister.create_relational_id(relational_id_pair);
-            }
-            if (uuid_str) {
-                uuid = *uuid_str;
+            auto uuid = create_relational_id(relational_id_pair);
+            if (!uuid.empty()) {
                 generated_object.add_attribute(conf.get(type + "-unique-identifier"), {uuid});
             } else {
-                std::cerr << "failed to generate relation, can't create and save it's ID" << std::endl;
+                std::cerr << "failed to generate relation, can't create its ID" << std::endl;
             }
         } catch (std::out_of_range &oor) {
             std::cerr << "Failed to create relational object: " << type << " some relation is missing it's GUID"
