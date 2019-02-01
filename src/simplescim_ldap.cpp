@@ -27,7 +27,6 @@
 #include "model/base_object.hpp"
 #include "model/object_list.hpp"
 #include "config_file.hpp"
-#include "simplescim_ldap_attrs_parser.hpp"
 #include "json_data_file.hpp"
 #include "utility/utils.hpp"
 #include "data_server.hpp"
