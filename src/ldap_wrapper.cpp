@@ -74,7 +74,8 @@ public:
 struct ldap_wrapper::Impl {
   const config_file &config = config_file::instance();
 
-  LDAPMessage *simplescim_ldap_res = nullptr;
+  LDAPMessage* simplescim_ldap_res = nullptr;
+  LDAPMessage* current_entry = nullptr;
 
   /**
    * Configuration file variables
@@ -251,12 +252,12 @@ struct ldap_wrapper::Impl {
   }
 
   /**
-   * Converts an entry in the LDAP search results into a user.
+   * Converts an entry in the LDAP search results into a base_object.
    * On success, a pointer to a new user object is returned.
    * On error, nullptr is returned and simplescim_error_string
    * is set to an appropriate error message.
    */
-  std::shared_ptr<base_object> entry_to_user(LDAPMessage *entry) {
+  std::shared_ptr<base_object> entry_to_base_object(LDAPMessage *entry) {
     BerElement *ber;
 
     attrib_map attributes;
@@ -314,36 +315,43 @@ struct ldap_wrapper::Impl {
     return user;
   }
 
+  std::shared_ptr<base_object> first_object() {
+    connection &con = connection::instance();
+    current_entry = ldap_first_entry(con.simplescim_ldap_ld, simplescim_ldap_res);
+
+    if (current_entry == nullptr) {
+      return nullptr;
+    }
+
+    return entry_to_base_object(current_entry);
+  }
+  
+  std::shared_ptr<base_object> next_object() {
+    connection &con = connection::instance();
+    current_entry = ldap_next_entry(con.simplescim_ldap_ld, current_entry);
+
+    if (current_entry == nullptr) {
+      return nullptr;
+    }
+
+    return entry_to_base_object(current_entry);
+  }
+  
   std::shared_ptr<object_list> ldap_to_user_list() {
     std::shared_ptr<object_list> users;
     std::string uid;
-    LDAPMessage *entry;
 
-    /** Initialise user list */
     users = std::make_shared<object_list>();
-    connection &con = connection::instance();
-    for (entry = ldap_first_entry(con.simplescim_ldap_ld, simplescim_ldap_res);
-	 entry != nullptr; entry = ldap_next_entry(con.simplescim_ldap_ld, entry)) {
+    std::shared_ptr<base_object> obj = first_object();
+    while (obj != nullptr) {
+      uid = obj->get_uid();
 
-      /* Create the user. */
-
-      std::shared_ptr<base_object> user = entry_to_user(entry);
-
-      if (user == nullptr) {
-	return users;
+      if (!uid.empty()) {
+	users->add_object(uid, obj);
+	load_related(obj->getSS12000type(), users);
       }
 
-      /** Get the user's unique identifier. */
-
-      uid = user->get_uid();
-
-      if (uid.empty()) {
-	continue;
-      }
-
-      /** Insert user into user list. */
-      users->add_object(uid, user);
-      load_related(user->getSS12000type(), users);
+      obj = next_object();
     }
     return users;
   }  
@@ -367,6 +375,15 @@ bool ldap_wrapper::valid() {
 bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string, std::string> &filters) {
   return impl->search(intype, filters);
 }
+
+std::shared_ptr<base_object> ldap_wrapper::first_object() {
+  return impl->first_object();
+}
+
+std::shared_ptr<base_object> ldap_wrapper::next_object() {
+  return impl->next_object();
+}
+
 
 std::shared_ptr<object_list> ldap_wrapper::ldap_to_user_list() {
   return impl->ldap_to_user_list();

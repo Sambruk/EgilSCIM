@@ -47,6 +47,20 @@ public:
   bool search(const std::string &type, const std::pair<std::string, std::string> &filters = {"", ""});
 
   /**
+   * Begins iteration over LDAP results from a search.
+   * Returns the first result as a base_object, or nullptr if
+   * there was an error or zero results.
+   */
+  std::shared_ptr<base_object> first_object();
+
+  /**
+   * Continues an interation over LDAP results from a search.
+   * Returns the next result as a base_object, or nullptr if
+   * there was an error or zero results.
+   */
+  std::shared_ptr<base_object> next_object();
+
+  /**
    * Construct the user list object from the LDAP response.
    * On success, a pointer to the constructed object is
    * returned. On error, nullptr is returned and
