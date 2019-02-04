@@ -59,15 +59,6 @@ public:
    * there was an error or zero results.
    */
   std::shared_ptr<base_object> next_object();
-
-  /**
-   * Construct the user list object from the LDAP response.
-   * On success, a pointer to the constructed object is
-   * returned. On error, nullptr is returned and
-   * simplescim_error_string is set to an appropriate
-   * error message.
-   */
-  std::shared_ptr<object_list> ldap_to_user_list();
 };
 
 

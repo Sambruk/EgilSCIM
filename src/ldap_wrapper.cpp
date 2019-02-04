@@ -336,25 +336,6 @@ struct ldap_wrapper::Impl {
 
     return entry_to_base_object(current_entry);
   }
-  
-  std::shared_ptr<object_list> ldap_to_user_list() {
-    std::shared_ptr<object_list> users;
-    std::string uid;
-
-    users = std::make_shared<object_list>();
-    std::shared_ptr<base_object> obj = first_object();
-    while (obj != nullptr) {
-      uid = obj->get_uid();
-
-      if (!uid.empty()) {
-	users->add_object(uid, obj);
-	load_related(obj->getSS12000type(), users);
-      }
-
-      obj = next_object();
-    }
-    return users;
-  }  
 };
 
 ldap_wrapper::ldap_wrapper()
@@ -382,11 +363,6 @@ std::shared_ptr<base_object> ldap_wrapper::first_object() {
 
 std::shared_ptr<base_object> ldap_wrapper::next_object() {
   return impl->next_object();
-}
-
-
-std::shared_ptr<object_list> ldap_wrapper::ldap_to_user_list() {
-  return impl->ldap_to_user_list();
 }
 
 bool connection::ldap_init() {

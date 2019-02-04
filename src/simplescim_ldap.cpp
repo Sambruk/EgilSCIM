@@ -40,6 +40,33 @@ store_relation(base_object &generated_object,
                const std::pair<std::string, std::string> &part_type,
                const std::pair<std::string, std::string> &master_id);
 
+/**
+ * Construct the object list from the LDAP response.
+ * On success, a pointer to the constructed list is
+ * returned. On error, nullptr is returned and
+ * simplescim_error_string is set to an appropriate
+ * error message.
+ */
+std::shared_ptr<object_list> ldap_to_user_list(ldap_wrapper& ldap) {
+  std::shared_ptr<object_list> users;
+  std::string uid;
+
+  users = std::make_shared<object_list>();
+  std::shared_ptr<base_object> obj = ldap.first_object();
+  while (obj != nullptr) {
+    uid = obj->get_uid();
+
+    if (!uid.empty()) {
+      users->add_object(uid, obj);
+      load_related(obj->getSS12000type(), users);
+    }
+
+    obj = ldap.next_object();
+  }
+  return users;
+}  
+
+
 std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, const pair_map &queries) {
     data_server &server = data_server::instance();
 
@@ -48,7 +75,7 @@ std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, co
         auto q = queries.find(type);
         ldap_wrapper ldap;
         if (ldap.search(type, q->second))
-            list = ldap.ldap_to_user_list();
+            list = ldap_to_user_list(ldap);
         server.add(type, list);
     }
     return list;
@@ -318,7 +345,7 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
                         auto filter = relation.get_ldap_filter(value);
 
                         if (ldap.search(relation.type, filter)) {
-                            auto response = ldap.ldap_to_user_list();
+                            auto response = ldap_to_user_list(ldap);
                             if (response->size() == 1)
                                 remote = response->begin()->second;
                             else if (response->size() == 1)
@@ -387,7 +414,7 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap, const std::string &typ
         objects = ldap_get_generated(type);
     } else {
         if (ldap.search(type)) {
-            objects = ldap.ldap_to_user_list();
+            objects = ldap_to_user_list(ldap);
         }
     }
 
