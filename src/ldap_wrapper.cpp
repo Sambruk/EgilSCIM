@@ -25,7 +25,6 @@
 #include <ldap.h>
 #include "json_data_file.hpp"
 #include "config_file.hpp"
-#include "simplescim_ldap.hpp"
 #include "utility/simplescim_error_string.hpp"
 #include "simplescim_ldap_attrs_parser.hpp"
 
