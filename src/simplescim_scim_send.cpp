@@ -104,19 +104,27 @@ static size_t simplescim_scim_send_write_func(void *ptr, size_t size, size_t nme
     return len;
 }
 
+static std::string http_header(const std::string& header, const std::string& value) {
+    return header + ": " + value;
+}
+
 static struct curl_slist *simplescim_scim_send_create_slist(const std::string &method) {
     struct curl_slist *chunk, *tmp_chunk;
 
+    std::string media_type = config_file::instance().get("scim-media-type", true);
+    if (media_type.empty()) {
+        media_type = "application/scim+json";
+    }
+    
     if ((method == "POST") || (method == "PUT")) {
-        tmp_chunk = curl_slist_append(nullptr, "Accept: application/scim+json");
+        tmp_chunk = curl_slist_append(nullptr, http_header("Accept", media_type).c_str());
 
         if (tmp_chunk == nullptr) {
             simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
             return nullptr;
         }
 
-//        chunk = curl_slist_append(tmp_chunk, "Content-Type: application/scim+json");
-        chunk = curl_slist_append(tmp_chunk, "Content-Type: application/json");
+        chunk = curl_slist_append(tmp_chunk, http_header("Content-Type", media_type).c_str());
 
         if (chunk == nullptr) {
             simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
