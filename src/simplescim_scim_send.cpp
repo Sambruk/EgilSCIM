@@ -391,10 +391,9 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     /* Clean up */
 
-//    if (response_data != nullptr) {
-//        *response_data = http_response.data;
-//		std::cout << *response_data << std::endl;
-//    }
+    if (response_data != nullptr) {
+        *response_data = http_response.data;
+    }
 
     *response_code = http_code;
 
