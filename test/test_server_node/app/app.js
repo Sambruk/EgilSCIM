@@ -28,6 +28,7 @@ app.use('/studentgroups', require('./generic_logging_route'));
 app.use('/schoolunitgroups', require('./generic_logging_route'));
 app.use('/employments', require('./generic_logging_route'));
 app.use('/activities', require('./generic_logging_route'));
+app.use('/organisations', require('./generic_logging_route'));
 
 if (appConfig.https) {
 // Listen over https
