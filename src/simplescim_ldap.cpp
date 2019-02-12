@@ -252,7 +252,7 @@ std::string store_relation(base_object &generated_object,
                     generated_object.get_values(pair_to_string(part_type)).at(0),
                     generated_object.get_values(pair_to_string(master_id)).at(0));
 
-            auto uuid = create_relational_id(relational_id_pair);
+            uuid = create_relational_id(relational_id_pair);
             if (!uuid.empty()) {
                 generated_object.add_attribute(conf.get(type + "-unique-identifier"), {uuid});
             } else {
