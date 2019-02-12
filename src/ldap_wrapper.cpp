@@ -260,8 +260,8 @@ std::shared_ptr<object_list> ldap_wrapper::ldap_to_user_list() {
 
 		/** Insert user into user list. */
 		users->add_object(uid, user);
-		load_related(user->getSS12000type(), users);
 	}
+	load_related(type, users);
 	return users;
 }
 
