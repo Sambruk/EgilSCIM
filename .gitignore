@@ -16,4 +16,4 @@
 *.toc
 .idea/*
 cmake-build-debug/*
-build
+
