@@ -20,8 +20,6 @@
  * by Ola Mattsson - IT informa for Sambruk
  */
 
-/** https://spring.io/understanding/REST */
-
 #include "simplescim_scim_send.hpp"
 
 #include <stdlib.h>
