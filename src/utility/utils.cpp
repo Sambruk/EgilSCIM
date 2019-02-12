@@ -199,7 +199,17 @@ std::string uuid_util::generate() {
 }
 
 std::string uuid_util::generate(const std::string &a, const std::string &b) {
+#if BOOST_VERSION < 106700
+    // Older versions of Boost don't define name_generator_sha1 or
+    // boost::uuids::ns::oid().
+    // name_generator uses SHA1 but it's deprecated in newer Boost-versions.
+    boost::uuids::uuid oid = {{
+        0x6b, 0xa7, 0xb8, 0x12, 0x9d, 0xad, 0x11, 0xd1 ,
+        0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8 }};
+    boost::uuids::name_generator name_generator(oid);
+#else
     boost::uuids::name_generator_sha1 name_generator(boost::uuids::ns::oid());
+#endif
 
     boost::uuids::uuid uuid = name_generator(a + b);
     std::string id = boost::uuids::to_string(uuid);

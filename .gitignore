@@ -4,6 +4,9 @@
 # Temporary vi files
 *.swp
 
+# Temporary emacs files
+*~
+
 # Latex intermediate files
 *.aux
 *.bbl
@@ -13,4 +16,4 @@
 *.toc
 .idea/*
 cmake-build-debug/*
-build
+
