@@ -21,6 +21,7 @@
  */
 
 #include "data_server.hpp"
+#include "config_file.hpp"
 #include "simplescim_ldap.hpp"
 #include "json_data_file.hpp"
 
@@ -47,9 +48,6 @@ bool data_server::load() {
                 ldap.ldap_close();
             }
 
-            operator ldap_wrapper() {
-                return ldap;
-            }
         } ldap;
         if (ldap.get().valid()) {
             for (const auto &type : types) {
@@ -143,26 +141,6 @@ void data_server::add(const std::string &type, std::shared_ptr<object_list> list
 void data_server::cache_relation(const std::string &key, std::weak_ptr<base_object> object) {
     alt_key_cache.emplace(std::make_pair(key, object));
 }
-
-//std::shared_ptr<base_object>
-//data_server::get_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value) {
-//    auto object = find_object_by_attribute(type, attrib, value);
-//    if (!object) {
-//
-//        auto filter = relation.get_ldap_filter(value);
-//
-//        if (ldap.search(relation.type, filter)) {
-//            auto response = ldap.ldap_to_user_list();
-//            if (response->size() == 1)
-//                object = response->begin()->second;
-//            else if (response->size() == 1)
-//                std::cout << " expected single result for: " << relation.type << " " << value
-//                          << std::endl;
-//        }
-//
-//    }
-//    return thing;
-//}
 
 #define TEST_CACHE 0
 
