@@ -47,7 +47,7 @@ store_relation(base_object &generated_object,
  * simplescim_error_string is set to an appropriate
  * error message.
  */
-std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap) {
+std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap, const std::string& type) {
   std::shared_ptr<object_list> objects;
   std::string uid;
 
@@ -58,11 +58,11 @@ std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap) {
 
     if (!uid.empty()) {
       objects->add_object(uid, obj);
-      load_related(obj->getSS12000type(), objects);
     }
 
     obj = ldap.next_object();
   }
+  load_related(type, objects);
   return objects;
 }  
 
@@ -75,7 +75,7 @@ std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, co
         auto q = queries.find(type);
         ldap_wrapper ldap;
         if (ldap.search(type, q->second))
-            list = ldap_to_object_list(ldap);
+            list = ldap_to_object_list(ldap, type);
         server.add(type, list);
     }
     return list;
@@ -345,7 +345,7 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
                         auto filter = relation.get_ldap_filter(value);
 
                         if (ldap.search(relation.type, filter)) {
-                            auto response = ldap_to_object_list(ldap);
+                            auto response = ldap_to_object_list(ldap, relation.type);
                             if (response->size() == 1)
                                 remote = response->begin()->second;
                             else if (response->size() == 1)
@@ -414,7 +414,7 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap, const std::string &typ
         objects = ldap_get_generated(type);
     } else {
         if (ldap.search(type)) {
-            objects = ldap_to_object_list(ldap);
+            objects = ldap_to_object_list(ldap, type);
         }
     }
 
