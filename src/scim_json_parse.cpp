@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <optional>
 #include <algorithm>
+#include <iterator>
 
 #include "utility/simplescim_error_string.hpp"
 //#include "model/value_list.hpp"
@@ -81,6 +82,7 @@ private:
 
 class scim_json_parser {
 public:
+    std::string input_string;
 	str_iter j_iter;
 
 	const base_object &user;
@@ -91,7 +93,7 @@ public:
 	std::shared_ptr<scim_json_iter> iteration_stack;
 
 	scim_json_parser(const std::string &j, const base_object &u) :
-			j_iter(j.begin()), user(u), line(1), col(1), iteration_stack(nullptr) {}
+           input_string(j), j_iter(input_string.begin()), user(u), line(1), col(1), iteration_stack(nullptr) {}
 
 	/**
 	 * Deletes a simplescim_scim_json_parser object.
@@ -125,6 +127,14 @@ public:
 	 * space characters.
 	 */
 	void skip_ws();
+
+    /**
+     * Checks if the next part of the input starts with 'str',
+     * and if so skips it.
+     *
+     * Returns true if there was a match/skip.
+     */
+    bool maybe_skip(const std::string& str);
 
 	/**
 	 * If 'c' is a character in an ID, 1 is returned.
@@ -243,6 +253,14 @@ public:
 	int iter_end();
 
 	/**
+ 	 * Searches to the end of the current for block.
+ 	 * Assumes we have passed the ${for ...} section of the
+ 	 * outermost loop.
+ 	 */
+	int skip_iter();
+
+
+	/**
 	 * Parses a replacement rule.
 	 * <replace> ::= '${' <ws>* ( ( 'switch' <cond> | <id> ) <ws>* '}' )
 	 *                          | ( 'for' <iter-start> )
@@ -272,7 +290,6 @@ public:
 	 * format "expected x, found y".
 	 */
 	void syntax_error_expected(const char *expected);
-
 };
 
 void scim_json_parser::syntax_error() {
@@ -292,7 +309,7 @@ void scim_json_parser::syntax_error_expected(const char *expected) {
 int scim_json_parser::parse() {
 	int err;
 
-	while (*j_iter != '\0') {
+	while (j_iter != input_string.end()) {
 		/* Check if the current characters are '${', in which
 		   case a replacement rule is applied. Otherwise, the
 		   current character is copied to the output. */
@@ -447,17 +464,6 @@ int scim_json_parser::iter_end() {
 		return -1;
 	}
 
-	/* FIXME: This case captures iterating over an
-	   existing LDAP attribute with no values.
-	   Currently, the iteration body will be printed
-	   once with an empty string replacing the
-	   iteration variable. Ideally, the iteration body
-	   should not be printed at all. */
-	if (!iter->more()) {
-		iteration_stack = iter->get_next();
-		return 0;
-	}
-
 	/* Increase the iteration value by one step */
 	++iter->iter_idx;
 
@@ -473,6 +479,23 @@ int scim_json_parser::iter_end() {
 	col = iter->reset.col;
 
 	return 0;
+}
+
+int scim_json_parser::skip_iter() {
+    while (j_iter != input_string.end()) {
+        if (maybe_skip("${for")) {
+            skip_iter();
+        }
+        else if (maybe_skip("${end}")) {
+            return 0;
+        }
+        else {
+            progress();
+        }
+    }
+    syntax_error();
+    simplescim_error_string_set_message("iteration block missing ${end}");
+    return -1;
 }
 
 int scim_json_parser::iter_start() {
@@ -549,6 +572,10 @@ int scim_json_parser::iter_start() {
 		map.emplace(std::make_pair(iter_variables.at(i), values));
 	}
 	auto iter = std::make_shared<scim_json_iter>(std::move(map));
+
+   if (!iter->more()) {
+       return skip_iter();
+   }
 
 	iter->iter_idx = 0;
 	iter->reset.resetJson = j_iter;
@@ -812,6 +839,21 @@ void scim_json_parser::skip_ws() {
 	while (isspace(*j_iter)) {
 		progress();
 	}
+}
+
+bool scim_json_parser::maybe_skip(const std::string& str) {
+    if (std::distance(j_iter, input_string.cend()) < static_cast<int>(str.size())) {
+        return false;
+    }
+    std::string prefix(j_iter, j_iter+str.size());
+    if (prefix == str) {
+        for (size_t i = 0; i < str.size(); ++i) {
+            progress();
+        }
+        return true;
+    }
+    
+    return false;
 }
 
 int scim_json_parser::copy_char(char c) {
