@@ -25,10 +25,11 @@
 
 #include <string>
 #include <optional>
+#include <curl/curl.h>
 
 class scim_sender {
 public:
-    static scim_sender instance() {
+    static scim_sender& instance() {
         static scim_sender sender;
         return sender;
     }
@@ -108,6 +109,9 @@ public:
      * error message.
      */
     long send_delete(const std::string &url);
+
+private:
+    CURL *curl;
 };
 
 #endif
