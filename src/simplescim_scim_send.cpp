@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <curl/curl.h>
 #include <string>
 #include <iostream>
 
@@ -153,23 +152,14 @@ void send_log(const std::string &s) {
     }
 }
 
-static int simplescim_scim_send(const std::string &url, const std::string &resource,
+static int simplescim_scim_send(CURL* curl,
+                                const std::string &url, const std::string &resource,
                                 const std::string &method, char **response_data, long *response_code) {
 
-    CURL *curl;
     CURLcode errnum;
     struct curl_slist *chunk;
     struct http_response http_response{};
     long http_code;
-
-    /* Initialise curl session */
-
-    curl = curl_easy_init();
-
-    if (curl == nullptr) {
-        simplescim_error_string_set("curl_easy_init", "curl_easy_init() returned nullptr");
-        return -1;
-    }
 
     /* Enable more elaborate error messages */
 
@@ -177,7 +167,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_ERRORBUFFER)", errnum);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -196,7 +185,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     // CURLE_BAD_FUNCTION_ARGUMENT is returned when setting CURLOPT_SSL_VERIFYHOST 1, odd IMHO
     if (errnum != CURLE_OK && errnum != CURLE_BAD_FUNCTION_ARGUMENT) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSL_VERIFYHOST)", errnum);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -204,7 +192,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     errnum = curl_easy_setopt(curl, CURLOPT_SSLCERT, simplescim_scim_send_cert.c_str());
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLCERT)", errnum);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -215,7 +202,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLKEY)", errnum);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -226,7 +212,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
         if (errnum != CURLE_OK) {
             simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAPATH)", errnum);
-            curl_easy_cleanup(curl);
             return -1;
         }
 
@@ -235,7 +220,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
         if (errnum != CURLE_OK) {
             simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAINFO)", errnum);
-            curl_easy_cleanup(curl);
             return -1;
         }
     }
@@ -245,7 +229,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_PINNEDPUBLICKEY)", errnum);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -254,7 +237,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_VERBOSE)", errnum);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -265,7 +247,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CUSTOMREQUEST)", errnum);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -275,7 +256,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_URL)", errnum);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -286,7 +266,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 
         if (errnum != CURLE_OK) {
             simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_POSTFIELDS)", errnum);
-            curl_easy_cleanup(curl);
             return -1;
         }
     }
@@ -296,7 +275,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     chunk = simplescim_scim_send_create_slist(method);
 
     if (chunk == nullptr) {
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -305,7 +283,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_HTTPHEADER)", errnum);
         curl_slist_free_all(chunk);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -317,7 +294,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         if (errnum != CURLE_OK) {
             simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEFUNCTION)", errnum);
             curl_slist_free_all(chunk);
-            curl_easy_cleanup(curl);
             return -1;
         }
     }
@@ -333,7 +309,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
             simplescim_error_string_set_errno("simplescim_scim_send:"
                                               "malloc");
             curl_slist_free_all(chunk);
-            curl_easy_cleanup(curl);
             return -1;
         }
 
@@ -345,7 +320,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
             simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEDATA)", errnum);
             free(http_response.data);
             curl_slist_free_all(chunk);
-            curl_easy_cleanup(curl);
             return -1;
         }
     }
@@ -362,7 +336,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
 //        }
 
         curl_slist_free_all(chunk);
-        curl_easy_cleanup(curl);
         if (errnum == CURLE_COULDNT_CONNECT || errnum == CURLE_SSL_CERTPROBLEM ||
             errnum == CURLE_SSL_CACERT_BADFILE || errnum == CURLE_SSL_CACERT ||
             errnum == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
@@ -383,7 +356,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
         }
 
         curl_slist_free_all(chunk);
-        curl_easy_cleanup(curl);
         return -1;
     }
 
@@ -396,7 +368,6 @@ static int simplescim_scim_send(const std::string &url, const std::string &resou
     *response_code = http_code;
 
     curl_slist_free_all(chunk);
-    curl_easy_cleanup(curl);
 
     return 0;
 }
@@ -424,6 +395,15 @@ int scim_sender::send_init(std::string cert, std::string key, std::string pinned
         return -1;
     }
 
+    /* Initialise curl session */
+
+    curl = curl_easy_init();
+
+    if (curl == nullptr) {
+        simplescim_error_string_set("curl_easy_init", "curl_easy_init() returned nullptr");
+        return -1;
+    }    
+
     simplescim_scim_send_cert = std::move(cert);
     simplescim_scim_send_key = std::move(key);
     simplescim_scim_send_pinnedpubkey = std::move(pinnedpubkey);
@@ -437,6 +417,7 @@ int scim_sender::send_init(std::string cert, std::string key, std::string pinned
  */
 void scim_sender::send_clear() {
     curl_global_cleanup();
+    curl_easy_cleanup(curl);
 }
 
 /**
@@ -462,7 +443,7 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
     long response_code;
     int err;
 
-    err = simplescim_scim_send(url, body, "POST", &response_data, &response_code);
+    err = simplescim_scim_send(curl, url, body, "POST", &response_data, &response_code);
 
     std::string res;
     if (err == -1) {
@@ -530,7 +511,7 @@ scim_sender::send_update(const std::string &url, const std::string &body) {
     long response_code;
     int err;
 
-    err = simplescim_scim_send(url, body, "PUT", &response_data, &response_code);
+    err = simplescim_scim_send(curl, url, body, "PUT", &response_data, &response_code);
 
     if (err == -1) {
         free(response_data);
@@ -573,7 +554,7 @@ long scim_sender::send_delete(const std::string &url) {
     long response_code;
     int err;
 
-    err = simplescim_scim_send(url, "", "DELETE", nullptr, &response_code);
+    err = simplescim_scim_send(curl, url, "", "DELETE", nullptr, &response_code);
 
     if (err == -1) {
         return -1;
