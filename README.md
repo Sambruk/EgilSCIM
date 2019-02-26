@@ -7,7 +7,8 @@ LDAP and sends updates to a SCIM server.
 To find the latest released version, go to 
 [Releases](https://github.com/Sambruk/EgilSCIM/releases).
 
-Documentation can be found in the [doc directory](doc/), especially:
+Documentation can be found in the 
+[doc directory](https://github.com/Sambruk/EgilSCIM/tree/master/doc), especially:
 
  * [Installing](doc/INSTALL.md)
  * [Using](doc/USAGE.md)
