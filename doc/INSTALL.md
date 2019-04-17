@@ -6,6 +6,9 @@ EgilSCIM currently depends on the following libraries:
 * `libcurl` to send the SCIM request.
 * `boost` (general purpose C++ libraries)
 
+See operating system specific documentation below for information
+on how to install these dependencies.
+
 To compile EgilSCIM, execute the following command from the
 EgilSCIM root directory:
 
@@ -54,7 +57,7 @@ rm -rf build/*
 
 Run EgilSCIM with:
 
-    EgilSCIMClient file...
+```EgilSCIMClient supplier1.conf [supplier2.conf...]```
 
 ## Ubuntu 18.04
     sudo apt-get update && sudo apt-get upgrade
@@ -115,7 +118,7 @@ make
 ```
 
 (you can also set BOOST_ROOT as a permanent environment variable and
-replace the cmake command above with simply ```cmake ..``)
+replace the cmake command above with simply ```cmake ..```)
 
 ## Windows
     Instructions not yet available. The source code does not currently compile on Windows.
