@@ -26,6 +26,7 @@
 #include <string>
 #include "config_file.hpp"
 #include "data_server.hpp"
+#include "scim_server_info.hpp"
 #include <memory>
 
 class base_object;
@@ -55,13 +56,15 @@ class ScimActions {
 	variables vars = variables();
 	mutable string_vector verified_types;
 	const config_file &conf = config_file::instance();
+    const SCIMServerInfo& scim_server_info;
 
 	void simplescim_scim_clear() const;
 
 	int simplescim_scim_init() const;
 
 public:
-	ScimActions() {
+	ScimActions(const SCIMServerInfo& si)
+           : scim_server_info(si) {
 		scim_new_cache = std::make_unique<object_list>();
 	}
 
