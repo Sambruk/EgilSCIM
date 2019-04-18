@@ -22,6 +22,13 @@
 
 class config_file;
 
+/*
+ * The SCIMServerInfo class keeps track of the parameters
+ * we need in order to connect to a SCIM server.
+ *
+ * This class is responsible for getting these parameters,
+ * either from the config file or from the metadata file.
+ */
 class SCIMServerInfo {
 public:
     SCIMServerInfo(const config_file& config);
