@@ -22,7 +22,13 @@
 
 #include "ldap_wrapper.hpp"
 #include <set>
+#ifdef _WIN32
+#include <Windows.h>
+#include <Winldap.h>
+#include <Winber.h>
+#else
 #include <ldap.h>
+#endif
 #include "json_data_file.hpp"
 #include "config_file.hpp"
 #include "utility/simplescim_error_string.hpp"
@@ -33,9 +39,19 @@ namespace {
  * Prints an error message concerning LDAP to
  * simplescim_error_string.
  */
-void ldap_print_error(int err, const char *func) {
-  simplescim_error_string_set_prefix("%s", func);
-  simplescim_error_string_set_message("%s", ldap_err2string(err));
+void ldap_print_error(LDAP *ld, int err, const char *func) {
+	char* pserver_error = nullptr;
+	std::string server_error;
+
+	auto res = ldap_get_option(ld, LDAP_OPT_SERVER_ERROR, (void*)&pserver_error);
+	if (res == LDAP_SUCCESS && pserver_error != nullptr) // Should be LDAP_OPT_SUCCESS on Linux?
+	{
+		server_error = pserver_error;
+		ldap_memfree(pserver_error);
+	}
+	
+	simplescim_error_string_set_prefix("%s", func);
+	simplescim_error_string_set_message("%s", (std::string(ldap_err2string(err)) + ". " + server_error).c_str());
 }
 
   
@@ -178,9 +194,13 @@ struct ldap_wrapper::Impl {
       scope_val = LDAP_SCOPE_ONELEVEL;
     } else if (ldap_scope == "SUBTREE") {
       scope_val = LDAP_SCOPE_SUBTREE;
-    } else if (ldap_scope == "CHILDREN") {
+    } 
+#ifndef _WIN32
+	else if (ldap_scope == "CHILDREN") {
       scope_val = LDAP_SCOPE_CHILDREN;
-    } else {
+    } 
+#endif
+	else {
       simplescim_error_string_set_prefix("simplescim_ldap_search");
       simplescim_error_string_set_message("variable \"ldap-scope\" has invalid value \"%s\"\n"
 					  "variable \"ldap-scope\" must have one of the following values:\n"
@@ -189,7 +209,6 @@ struct ldap_wrapper::Impl {
     }
 
 
-    multi_queries.find(type);
     /** Set filter */
     std::pair<std::string, std::string> filter_val(ldap_base, "");
     if (!override_filter.second.empty()) {
@@ -225,11 +244,39 @@ struct ldap_wrapper::Impl {
     }
 
     /** Search */
-    err = ldap_search_ext_s(connection::instance().simplescim_ldap_ld, filter_val.first.c_str(), scope_val,
-			    filter_val.second.c_str(),
-			    attrs_val,
+//	auto base = _strdup(filter_val.first.c_str());
+//	auto filter = _strdup(filter_val.second.c_str());
+	const auto buffer_size = 1024;
+	WCHAR base_buffer[buffer_size];
+	WCHAR filter_buffer[buffer_size];
+	int n = MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, filter_val.first.c_str(), (int)strlen(filter_val.first.c_str()), base_buffer, buffer_size);
+	base_buffer[n] = 0;
+	n = MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, filter_val.second.c_str(), (int)strlen(filter_val.second.c_str()), filter_buffer, buffer_size);
+	filter_buffer[n] = 0;
+
+	// Convert attr_vals to WCHAR**
+	int num_attrs = 0;
+	while (attrs_val != nullptr && attrs_val[num_attrs] != nullptr) {
+		++num_attrs;
+	}
+
+	WCHAR* wattrs_val[1024];
+
+	for (int i = 0; i < num_attrs; ++i) {
+		wattrs_val[i] = new WCHAR[buffer_size];
+		int n = MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, attrs_val[i], (int)strlen(attrs_val[i]), wattrs_val[i], buffer_size);
+		wattrs_val[i][n] = 0;
+	}
+	wattrs_val[num_attrs] = nullptr;
+
+    err = ldap_search_ext_sW(connection::instance().simplescim_ldap_ld, base_buffer, scope_val,
+			    filter_buffer,
+			    wattrs_val,
 			    attrsonly_val,
-			    nullptr, nullptr, nullptr, -1, &simplescim_ldap_res);
+			    nullptr, nullptr, nullptr, LDAP_NO_LIMIT, &simplescim_ldap_res);
+
+//	free(base);
+	//free(filter);
 
     /** Free attrs_val if it is not nullptr. */
     if (attrs_val != nullptr) {
@@ -241,8 +288,8 @@ struct ldap_wrapper::Impl {
 
     /** Check if the search operation returned an error. */
     if (err != LDAP_SUCCESS) {
-      std::cout << "error creating ldap search: " << ldap_err2string(err) << std::endl;
-      ldap_print_error(err, "ldap_search_ext_s");
+      std::cerr << "error creating ldap search: " << ldap_err2string(err) << std::endl;
+      ldap_print_error(connection::instance().simplescim_ldap_ld, err, "ldap_search_ext_s");
       throw std::string("exiting");
       //		return false;
     }
@@ -257,61 +304,63 @@ struct ldap_wrapper::Impl {
    * is set to an appropriate error message.
    */
   std::shared_ptr<base_object> entry_to_base_object(LDAPMessage *entry) {
-    BerElement *ber;
+	  BerElement *ber;
 
-    attrib_map attributes;
+	  attrib_map attributes;
 
-    /** Create the user object. */
-    for (char *attr = ldap_first_attribute(connection::instance().simplescim_ldap_ld, entry, &ber);
-	 attr != nullptr; attr = ldap_next_attribute(connection::instance().simplescim_ldap_ld, entry, ber)) {
+	  /** Create the user object. */
+	  for (char *attr = ldap_first_attribute(connection::instance().simplescim_ldap_ld, entry, &ber);
+		  attr != nullptr; attr = ldap_next_attribute(connection::instance().simplescim_ldap_ld, entry, ber)) {
 
-      /** Get and clone 'vals'. */
-      berval **vals = ldap_get_values_len(connection::instance().simplescim_ldap_ld, entry, attr);
+		  /** Get and clone 'vals'. */
+		  berval **vals = ldap_get_values_len(connection::instance().simplescim_ldap_ld, entry, attr);
 
-      if (vals == nullptr) {
-	int ld_errno;
-	int err = ldap_get_option(connection::instance().simplescim_ldap_ld, LDAP_OPT_RESULT_CODE, &ld_errno);
+		  if (vals == nullptr) {
+			  int ld_errno;
+			  int err = ldap_get_option(connection::instance().simplescim_ldap_ld, LDAP_OPT_ERROR_NUMBER, &ld_errno); // TODO Now Windows specific instead :-/
 
-	if (err != LDAP_OPT_SUCCESS) {
-	  ldap_print_error(err, "ldap_get_option");
-	} else {
-	  ldap_print_error(ld_errno, "ldap_get_values_len");
-	}
+			  if (err != LDAP_SUCCESS) { // TODO Now Windows specific instead :-/
+				  ldap_print_error(connection::instance().simplescim_ldap_ld, err, "ldap_get_option");
+			  }
+			  else {
+				  ldap_print_error(connection::instance().simplescim_ldap_ld, ld_errno, "ldap_get_values_len");
+			  }
 
-	ldap_memfree(attr);
-	ber_free(ber, 0);
-	return nullptr;
-      }
+			  ldap_memfree(attr);
+			  ber_free(ber, 0);
+			  return nullptr;
+		  }
 
-      size_t len = 0;
+		  size_t len = 0;
 
-      for (size_t i = 0; vals[i] != nullptr; ++i) {
-	++len;
-      }
+		  for (size_t i = 0; vals[i] != nullptr; ++i) {
+			  ++len;
+		  }
 
-      /** Clone and insert all values */
-      string_vector list;
-      std::string attr_clone = attr;
-      for (size_t i = 0; i < len; ++i) {
-	if (attr_clone == ldap_UUID) {
-	  std::string st = uuid_util::instance().un_parse_uuid(vals[i]->bv_val);
-	  list.emplace_back(st);
-	} else {
-	  list.emplace_back(std::string(vals[i]->bv_val));
-	}
-      }
-      attributes.emplace(attr_clone, list);
+		  /** Clone and insert all values */
+		  string_vector list;
+		  std::string attr_clone = attr;
+		  for (size_t i = 0; i < len; ++i) {
+			  if (attr_clone == ldap_UUID) {
+				  std::string st = uuid_util::instance().un_parse_uuid(vals[i]->bv_val);
+				  list.emplace_back(st);
+			  }
+			  else {
+				  list.emplace_back(std::string(vals[i]->bv_val));
+			  }
+		  }
+		  attributes.emplace(attr_clone, list);
 
-      /** Free LDAP data */
-      ldap_value_free_len(vals);
-      ldap_memfree(attr);
-    }
-    attributes.emplace(std::make_pair("ss12000type", string_vector({type})));
-    std::shared_ptr<base_object> user = std::make_shared<base_object>(std::move(attributes));
+		  /** Free LDAP data */
+		  ldap_value_free_len(vals);
+		  ldap_memfree(attr);
+	  }
+	  attributes.emplace(std::make_pair("ss12000type", string_vector({ type })));
+	  std::shared_ptr<base_object> user = std::make_shared<base_object>(std::move(attributes));
 
-    ber_free(ber, 0);
+	  ber_free(ber, 0);
 
-    return user;
+	  return user;
   }
 
   std::shared_ptr<base_object> first_object() {
@@ -364,6 +413,39 @@ std::shared_ptr<base_object> ldap_wrapper::next_object() {
   return impl->next_object();
 }
 
+#ifdef _WIN32
+namespace {
+
+	int ldap_initialize(LDAP** ldp, const char* uri) {
+
+		bool ssl = startsWith(uri, "ldaps://");
+
+		std::string host = uri;
+
+		auto pos = host.find("://");
+		if (pos != std::string::npos) {
+			host = host.substr(pos + 3);
+		}
+
+		char* host_copy = _strdup(host.c_str());
+		if (ssl) {
+			*ldp = ldap_sslinit(host_copy, LDAP_SSL_PORT, 1);
+		}
+		else {
+			*ldp = ldap_init(host_copy, LDAP_PORT);
+		}
+		free(host_copy);
+
+		if (*ldp == NULL) {
+			return LdapGetLastError();
+		}
+		else {
+			return LDAP_SUCCESS;
+		}
+	}
+}
+#endif
+
 bool connection::ldap_init() {
   int ldap_version = LDAP_VERSION3;
   struct berval cred{};
@@ -382,7 +464,7 @@ bool connection::ldap_init() {
   err = ldap_initialize(&simplescim_ldap_ld, ldap_uri.c_str());
 
   if (err != LDAP_SUCCESS) {
-    ldap_print_error(err, "ldap_initialize");
+    ldap_print_error(simplescim_ldap_ld, err, "ldap_initialize");
     return false;
   }
 
@@ -390,8 +472,8 @@ bool connection::ldap_init() {
 
   err = ldap_set_option(simplescim_ldap_ld, LDAP_OPT_PROTOCOL_VERSION, &ldap_version);
 
-  if (err != LDAP_OPT_SUCCESS) {
-    ldap_print_error(err, "ldap_set_option");
+  if (err != LDAP_SUCCESS) { // TODO Now Windows specific :-/
+    ldap_print_error(simplescim_ldap_ld, err, "ldap_set_option");
     ldap_close();
     return false;
   }
@@ -399,13 +481,18 @@ bool connection::ldap_init() {
   /* Perform bind */
 
   cred.bv_val = (char *) ldap_password.c_str();
-  cred.bv_len = ldap_password.length();
+  cred.bv_len = (unsigned) ldap_password.length(); // TODO bv_len is size_t on Linux but ULONG on Windows...unsigned should be enough for password length though...
 
-  err = ldap_sasl_bind_s(simplescim_ldap_ld, ldap_who.c_str(), LDAP_SASL_SIMPLE, &cred, nullptr, nullptr,
-			 nullptr);
+//  err = ldap_sasl_bind_s(simplescim_ldap_ld, ldap_who.c_str(), LDAP_SASL_SIMPLE, &cred, nullptr, nullptr,
+//			 nullptr);
+  char* who = _strdup(ldap_who.c_str());
+  char* password = _strdup(ldap_password.c_str());
+  err = ldap_simple_bind_s(simplescim_ldap_ld, who, password);
+  free(who);
+  free(password);
 
   if (err != LDAP_SUCCESS) {
-    ldap_print_error(err, "ldap_sasl_bind_s");
+    ldap_print_error(simplescim_ldap_ld, err, "ldap_sasl_bind_s");
     ldap_close();
     return false;
   }
@@ -425,7 +512,7 @@ void connection::ldap_close() {
 
   if (simplescim_ldap_ld != nullptr) {
     /* Disregard the return value. */
-    ldap_unbind_ext(simplescim_ldap_ld, nullptr, nullptr);
+    ldap_unbind_s(simplescim_ldap_ld);
     simplescim_ldap_ld = nullptr;
   }
 }

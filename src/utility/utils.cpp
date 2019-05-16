@@ -192,6 +192,10 @@ std::string &toUpper(std::string &s) {
     return s;
 }
 
+bool startsWith(const std::string& s, const std::string& prefix) {
+	return s.substr(0, prefix.size()) == prefix;
+}
+
 std::string uuid_util::generate() {
     boost::uuids::uuid uuid = generator();
     std::string id = boost::uuids::to_string(uuid);

@@ -27,6 +27,10 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef _WIN32
+#pragma warning( disable : 4996 ) 
+#endif
+
 static int prefix_present = 0;
 static char prefix_buffer[1024];
 

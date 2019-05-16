@@ -20,7 +20,19 @@
  * by Ola Mattsson - IT informa for Sambruk
  */
 
+#ifdef _WIN32
+#include <io.h>
+#define close _close
+#define read _read
+#define access _access
+#define open _open
+#define F_OK 0
+
+#pragma warning( disable : 4996 ) 
+
+#else
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 
 #include "cache_file.hpp"
@@ -29,7 +41,8 @@
 #include "config_file.hpp"
 
 cache_file::~cache_file() {
-	close(cache_file_fd);
+	// asserts on Windows...
+	//close(cache_file_fd);
 }
 
 /**
@@ -39,9 +52,7 @@ cache_file::~cache_file() {
  * error message.
  */
 int cache_file::read_n(uint8_t *buf, size_t n) {
-	ssize_t nread;
-
-	nread = read(cache_file_fd, buf, n);
+	auto nread = read(cache_file_fd, buf, static_cast<unsigned int>(n)); // TODO Shouldn't cast n to unsigned int
 
 	if (nread == -1) {
 		simplescim_error_string_set_errno("read_n:read:%s", cache_file_filename.c_str());
@@ -293,7 +304,14 @@ std::shared_ptr<object_list> cache_file::get_objects_from_file(const char *filen
 	}
 
 	/* Open cache file */
-	cache_file_fd = open(filename, O_RDONLY);
+	const auto open_flags = 
+#ifdef _WIN32
+		_O_RDONLY | _O_BINARY;
+#else
+		O_RDONLY;
+#endif
+
+	cache_file_fd = open(filename, open_flags);
 
 	if (cache_file_fd == -1) {
 		simplescim_error_string_set_errno("get_users:open:%s", filename);
@@ -327,9 +345,7 @@ std::shared_ptr<object_list> cache_file::get_objects_from_file(const char *filen
  * error message.
  */
 int cache_file::write_n(const uint8_t *buf, size_t n) {
-	ssize_t nwritten;
-
-	nwritten = write(cache_file::instance().cache_file_fd, buf, n);
+	auto nwritten = write(cache_file::instance().cache_file_fd, buf, static_cast<unsigned int>(n)); // TODO Shouldn't cast n to unsigned int here...
 
 	if (nwritten == -1) {
 		simplescim_error_string_set_errno("simplescim_cache_file_write_n:write:%s",
@@ -401,7 +417,6 @@ int cache_file::write_value(const std::string &av) {
  * error message.
  */
 int cache_file::write_value_list(const string_vector &al) {
-	uint64_t i;
 	int err;
 
 	/* Write n_values */
@@ -412,8 +427,8 @@ int cache_file::write_value_list(const string_vector &al) {
 	}
 
 	/* Write values */
-	for (i = 0; i < al.size(); ++i) {
-		err = write_value(al.at(i));
+	for (const auto& str : al) {
+		err = write_value(str);
 
 		if (err == -1) {
 			return -1;
@@ -525,9 +540,22 @@ int cache_file::save(std::shared_ptr<object_list> objects) {
 		return -1;
 	}
 
-		/* Open cache file for writing (mode 0664) */
-	cache_file_fd = open(cache_file_filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-	                     S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+	/* Open cache file for writing (mode 0664) */
+
+	const auto open_flags =
+#ifdef _WIN32
+		_O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY;
+#else
+		O_WRONLY | O_CREAT | O_TRUNC;
+#endif
+
+	const auto pmode =
+#ifdef _WIN32
+		_S_IREAD | _S_IWRITE;
+#else
+		S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
+#endif
+	cache_file_fd = open(cache_file_filename.c_str(), open_flags, pmode);
 
 	if (cache_file_fd == -1) {
 		simplescim_error_string_set_errno("simplescim_cache_file_save:open:%s", cache_file_filename.c_str());

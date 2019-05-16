@@ -44,6 +44,8 @@ std::string &toUpper(std::string &s);
 
 std::string toUpper(const std::string &s);
 
+bool startsWith(const std::string& s, const std::string& prefix);
+
 void print_error();
 
 void print_status(const char *config_file_name);

@@ -17,7 +17,12 @@ if (APPLE)
 endif ()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
+
+if (WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
+endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
@@ -35,7 +40,11 @@ else ()
     include_directories(${Boost_INCLUDE_DIRS})
 endif ()
 
-set(LDFLAGS -lldap -llber -lcurl)
+if (WIN32)
+    set(LDFLAGS wldap32.lib ${CURL_LIBRARY_RELEASE})
+else()
+    set(LDFLAGS -lldap -llber -lcurl)
+endif()
 
 link_libraries(${LDFLAGS})
 
