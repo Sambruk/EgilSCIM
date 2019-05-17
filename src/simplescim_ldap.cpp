@@ -348,9 +348,11 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
                             auto response = ldap_to_object_list(ldap, relation.type);
                             if (response->size() == 1)
                                 remote = response->begin()->second;
-                            else if (response->size() == 1)
-                                std::cout << " expected single result for: " << relation.type << " " << value
-                                          << std::endl;
+                            else if (response->size() > 1) {
+                                std::cerr << "Ambiguous (multiple) results for relation from " << type
+                                          << " to " << relation.type << " when " << type << "." << relation.local_attribute
+                                          << " = " << value << std::endl;
+                            }
                         }
                     }
                     if (remote) {
