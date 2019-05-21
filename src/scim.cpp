@@ -193,17 +193,27 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = string_to_vector(types_string);
     std::map<std::string, statistics> stats;
-    for (const auto &type : types) {
+    for (const auto& type : types) {
         std::shared_ptr<object_list> allOfType = current.get_by_type(type);
         if (!allOfType) {
             allOfType = std::make_shared<object_list>();
         }
         process_changes(*allOfType, cached, stats[type]);
-        process_deletes(*allOfType, cached, type, stats[type]);
     }
 
+    auto types_reversed(types);
+    std::reverse(types_reversed.begin(), types_reversed.end());
+
+    for (const auto& type : types_reversed) {
+        std::shared_ptr<object_list> allOfType = current.get_by_type(type);
+        if (!allOfType) {
+            allOfType = std::make_shared<object_list>();
+        }
+        process_deletes(*allOfType, cached, type, stats[type]);        
+    }
+    
     for (const auto& type : types) {
-        print_statistics(type, stats[type]);        
+        print_statistics(type, stats[type]);
     }
 
     /* Save new cache file */
