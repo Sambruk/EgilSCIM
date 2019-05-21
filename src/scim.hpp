@@ -67,10 +67,14 @@ class ScimActions {
         size_t n_delete = 0, n_delete_fail = 0;
     };    
     
-    int process_changes(const object_list& current,
-                        const object_list &cache,
-                        const std::string &type,
+    void process_changes(const object_list& current,
+                        const object_list& cache,
                         statistics& stats) const;
+
+    void process_deletes(const object_list& current,
+                         const object_list& cache,
+                         const std::string& type,
+                         statistics& stats) const;
 
     static void print_statistics(const std::string& type,
                                  const statistics& stats);

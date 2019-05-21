@@ -82,17 +82,14 @@ void ScimActions::simplescim_scim_clear() const {
 }
 
 /**
- * Compares 'current' to 'cache' and performs 'copy_user_func'
- * on users in both 'current' and cache if they are equal,
- * 'create_user_func' on users in 'current' but not in
- * 'cache', performs 'update_user_func' on users in both
- * 'current' and 'cache' if the user has been updated and
- * performs 'delete_user_func' on users in 'cache' but not
- * in 'current'.
+ * Compares 'current' to 'cache' and performs 'copy_func'
+ * on objects in both 'current' and cache if they are equal,
+ * 'create_func' on objects in 'current' but not in
+ * 'cache', performs 'update_func' on object in both
+ * 'current' and 'cache' if the object has been updated.
  */
-int ScimActions::process_changes(const object_list& current,
+void ScimActions::process_changes(const object_list& current,
                                  const object_list &cache,
-                                 const std::string &type,
                                  statistics& stats) const {
     int err;
 
@@ -113,10 +110,10 @@ int ScimActions::process_changes(const object_list& current,
                 std::cerr << simplescim_error_string_get() << std::endl;
             }
         } else {
-            /* User exists in 'cache' */
+            /* Object exists in 'cache' */
             if (*object == *cached_object) {
 
-                // User is the same, copy it
+                // Object is the same, copy it
                 ++stats.n_copy;
                 auto copy_functor = ScimActions::copy_func(*cached_object);
                 if (copy_functor(*this) == -1) {
@@ -124,11 +121,6 @@ int ScimActions::process_changes(const object_list& current,
                     std::cerr << simplescim_error_string_get() << std::endl;
                 }
             } else {
-                /** User is different, update it */
-//				std::cout << "Sending changes for:" << std::endl;
-//				std::cout << *object << std::endl;
-//				std::cout << *cached_object << std::endl;
-//				std::cout << "------------------------------" << std::endl;
                 ++stats.n_update;
                 ScimActions::update_func update_f(*object, *cached_object);
 
@@ -139,20 +131,29 @@ int ScimActions::process_changes(const object_list& current,
             }
         }
     }
+}
 
-    /** For every user in 'cache' of the given type */
+/*
+ * Performs 'delete_func' on objects in 'cache' but not
+ * in 'current'.
+ */
+void ScimActions::process_deletes(const object_list& current,
+                                  const object_list& cache,
+                                  const std::string& type,
+                                  statistics& stats) const {
+
+    /** For every object in 'cache' of the given type */
     for (const auto &item : cache) {
         std::shared_ptr<base_object> object = item.second;
         if (object->getSS12000type() == type) {
             const std::string &uid = item.first;
-            // Get thing from 'this'
             auto tmp = current.get_object(uid);
 
             if (tmp == nullptr) {
-                // User doesn't exist in 'current', delete it
+                // Object doesn't exist in 'current', delete it
                 ++stats.n_delete;
                 auto delete_f = ScimActions::delete_func(*object);
-                err = delete_f(*this);
+                int err = delete_f(*this);
 
                 if (err == -1) {
                     ++stats.n_delete_fail;
@@ -161,8 +162,6 @@ int ScimActions::process_changes(const object_list& current,
             }
         }
     }
-
-    return 0;
 }
 
 void ScimActions::print_statistics(const std::string& type,
@@ -194,17 +193,17 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = string_to_vector(types_string);
     std::map<std::string, statistics> stats;
-    for (auto &&type : types) {
+    for (const auto &type : types) {
         std::shared_ptr<object_list> allOfType = current.get_by_type(type);
         if (!allOfType) {
             allOfType = std::make_shared<object_list>();
         }
-        err = process_changes(*allOfType, cached, type, stats[type]);
-        print_statistics(type, stats[type]);
-        if (err != 0) {
-            std::cerr << "failed to send " << type << std::endl;
-            return -1;
-        }
+        process_changes(*allOfType, cached, stats[type]);
+        process_deletes(*allOfType, cached, type, stats[type]);
+    }
+
+    for (const auto& type : types) {
+        print_statistics(type, stats[type]);        
     }
 
     /* Save new cache file */
