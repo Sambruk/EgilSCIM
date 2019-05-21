@@ -192,6 +192,10 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
     return empty;
 }
 
+bool config_file::has(const std::string& variable) const {
+    return variables.find(variable) != variables.end();
+}
+
 /**
  * Gets the value associated with 'variable' and stores it
  * in 'valuep' unless 'valuep' is nullptr.
