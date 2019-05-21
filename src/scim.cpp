@@ -82,6 +82,100 @@ void ScimActions::simplescim_scim_clear() const {
 }
 
 /**
+ * Compares 'current' to 'cache' and performs 'copy_user_func'
+ * on users in both 'current' and cache if they are equal,
+ * 'create_user_func' on users in 'current' but not in
+ * 'cache', performs 'update_user_func' on users in both
+ * 'current' and 'cache' if the user has been updated and
+ * performs 'delete_user_func' on users in 'cache' but not
+ * in 'current'.
+ */
+int ScimActions::process_changes(const object_list& current, const object_list &cache, const std::string &type) const {
+	int err;
+	struct statistics {
+		size_t n_copy = 0, n_copy_fail = 0;
+		size_t n_create = 0, n_create_fail = 0;
+		size_t n_update = 0, n_update_fail = 0;
+		size_t n_delete = 0, n_delete_fail = 0;
+	} stats{};
+
+	for (const auto &iter : current) {
+
+		const std::string &uid = iter.first;
+
+		auto object = iter.second;
+		auto cached_object = cache.get_object(uid);
+
+		if (cached_object == nullptr) {
+			++stats.n_create;
+			auto create_functor = ScimActions::create_func(*object);
+			err = create_functor(*this);
+
+			if (err == -1) {
+				++stats.n_create_fail;
+				std::cerr << simplescim_error_string_get() << std::endl;
+			}
+		} else {
+			/* User exists in 'cache' */
+			if (*object == *cached_object) {
+
+				// User is the same, copy it
+				++stats.n_copy;
+				auto copy_functor = ScimActions::copy_func(*cached_object);
+				if (copy_functor(*this) == -1) {
+					++stats.n_copy_fail;
+					std::cerr << simplescim_error_string_get() << std::endl;
+				}
+			} else {
+				/** User is different, update it */
+//				std::cout << "Sending changes for:" << std::endl;
+//				std::cout << *object << std::endl;
+//				std::cout << *cached_object << std::endl;
+//				std::cout << "------------------------------" << std::endl;
+				++stats.n_update;
+				ScimActions::update_func update_f(*object, *cached_object);
+
+				if (update_f(*this) == -1) {
+					++stats.n_update_fail;
+					std::cerr << simplescim_error_string_get() << std::endl;
+				}
+			}
+		}
+	}
+
+	/** For every user in 'cache' of the given type */
+	for (const auto &item : cache) {
+		std::shared_ptr<base_object> object = item.second;
+		if (object->getSS12000type() == type) {
+			const std::string &uid = item.first;
+			// Get thing from 'this'
+			auto tmp = current.get_object(uid);
+
+			if (tmp == nullptr) {
+				// User doesn't exist in 'current', delete it
+				++stats.n_delete;
+				auto delete_f = ScimActions::delete_func(*object);
+				err = delete_f(*this);
+
+				if (err == -1) {
+					++stats.n_delete_fail;
+					fprintf(stderr, "%s\n", simplescim_error_string_get());
+				}
+			}
+		}
+	}
+
+	printf("Status:   Success   Failure     Total  of type: %s\n", type.c_str());
+	printf("Copy:   %9lu %9lu %9lu\n", stats.n_copy - stats.n_copy_fail, stats.n_copy_fail, stats.n_copy);
+	printf("Create: %9lu %9lu %9lu\n", stats.n_create - stats.n_create_fail, stats.n_create_fail, stats.n_create);
+	printf("Update: %9lu %9lu %9lu\n", stats.n_update - stats.n_update_fail, stats.n_update_fail, stats.n_update);
+	printf("Delete: %9lu %9lu %9lu\n", stats.n_delete - stats.n_delete_fail, stats.n_delete_fail, stats.n_delete);
+
+	return 0;
+}
+
+
+/**
  * Makes SCIM requests by comparing the two user lists and
  * reading JSON templates from the configuration file.
  * Updates (or creates) the cache file.
@@ -106,7 +200,7 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
 //			std::cerr << "cant send " << type << ", missing" << std::endl;
 			allOfType = std::make_shared<object_list>();
 		}
-		err = allOfType->process_changes(cached, *this, type);
+		err = process_changes(*allOfType, cached, type);
 		if (err != 0) {
 			std::cerr << "failed to send " << type << std::endl;
 			return -1;

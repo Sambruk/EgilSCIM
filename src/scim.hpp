@@ -60,6 +60,10 @@ class ScimActions {
 
 	int simplescim_scim_init() const;
 
+    int process_changes(const object_list& current,
+                        const object_list &cache,
+                        const std::string &type) const;
+    
 public:
 	ScimActions() {
 		scim_new_cache = std::make_unique<object_list>();
