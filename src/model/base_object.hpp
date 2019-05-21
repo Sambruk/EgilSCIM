@@ -183,16 +183,6 @@ public:
 		return attributes.size();
 	}
 
-	bool has(const string_pair &what) {
-		if (what.first.empty())
-			return false;
-		auto a = attributes.find(what.first);
-		if (a != end() && (!a->second.empty())) {
-			return *(a->second.begin()) == what.second;
-		}
-		return false;
-	}
-
 	/*
 	 * testing if all in other is in this
 	 * since one side may have a scim-id, other way doesn't work
