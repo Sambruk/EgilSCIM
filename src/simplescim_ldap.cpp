@@ -197,10 +197,6 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
     ldap_wrapper ldap;
 
     for (const auto &a_master: *master_list) {
-        if (!a_master.second->has_attribute_with_value(conf.get(type + "-type-attribute"),
-                                                       conf.get(type + "-type-value")))
-            continue;
-
         string_vector relational_items = a_master.second->get_values(relational_key.second);
         if (relational_items.empty()) {
 
