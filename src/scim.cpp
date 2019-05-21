@@ -90,14 +90,11 @@ void ScimActions::simplescim_scim_clear() const {
  * performs 'delete_user_func' on users in 'cache' but not
  * in 'current'.
  */
-int ScimActions::process_changes(const object_list& current, const object_list &cache, const std::string &type) const {
+int ScimActions::process_changes(const object_list& current,
+                                 const object_list &cache,
+                                 const std::string &type,
+                                 statistics& stats) const {
     int err;
-    struct statistics {
-        size_t n_copy = 0, n_copy_fail = 0;
-        size_t n_create = 0, n_create_fail = 0;
-        size_t n_update = 0, n_update_fail = 0;
-        size_t n_delete = 0, n_delete_fail = 0;
-    } stats{};
 
     for (const auto &iter : current) {
 
@@ -165,15 +162,17 @@ int ScimActions::process_changes(const object_list& current, const object_list &
         }
     }
 
+    return 0;
+}
+
+void ScimActions::print_statistics(const std::string& type,
+                                   const statistics& stats) {
     printf("Status:   Success   Failure     Total  of type: %s\n", type.c_str());
     printf("Copy:   %9lu %9lu %9lu\n", stats.n_copy - stats.n_copy_fail, stats.n_copy_fail, stats.n_copy);
     printf("Create: %9lu %9lu %9lu\n", stats.n_create - stats.n_create_fail, stats.n_create_fail, stats.n_create);
     printf("Update: %9lu %9lu %9lu\n", stats.n_update - stats.n_update_fail, stats.n_update_fail, stats.n_update);
     printf("Delete: %9lu %9lu %9lu\n", stats.n_delete - stats.n_delete_fail, stats.n_delete_fail, stats.n_delete);
-
-    return 0;
 }
-
 
 /**
  * Makes SCIM requests by comparing the two user lists and
@@ -194,13 +193,14 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
     }
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = string_to_vector(types_string);
+    std::map<std::string, statistics> stats;
     for (auto &&type : types) {
         std::shared_ptr<object_list> allOfType = current.get_by_type(type);
         if (!allOfType) {
-//			std::cerr << "cant send " << type << ", missing" << std::endl;
             allOfType = std::make_shared<object_list>();
         }
-        err = process_changes(*allOfType, cached, type);
+        err = process_changes(*allOfType, cached, type, stats[type]);
+        print_statistics(type, stats[type]);
         if (err != 0) {
             std::cerr << "failed to send " << type << std::endl;
             return -1;

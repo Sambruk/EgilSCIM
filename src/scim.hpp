@@ -60,9 +60,20 @@ class ScimActions {
 
     int simplescim_scim_init() const;
 
+    struct statistics {
+        size_t n_copy = 0, n_copy_fail = 0;
+        size_t n_create = 0, n_create_fail = 0;
+        size_t n_update = 0, n_update_fail = 0;
+        size_t n_delete = 0, n_delete_fail = 0;
+    };    
+    
     int process_changes(const object_list& current,
                         const object_list &cache,
-                        const std::string &type) const;
+                        const std::string &type,
+                        statistics& stats) const;
+
+    static void print_statistics(const std::string& type,
+                                 const statistics& stats);
     
 public:
     ScimActions() {
