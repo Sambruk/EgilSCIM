@@ -20,7 +20,6 @@
  * by Ola Mattsson - IT informa for Sambruk
  */
 
-//#include <stdio.h>
 #include <iostream>
 
 #include "utility/simplescim_error_string.hpp"
@@ -29,7 +28,6 @@
 #include "simplescim_ldap.hpp"
 #include "cache_file.hpp"
 #include "scim.hpp"
-#include "scim_data.hpp"
 #include "json_data_file.hpp"
 #include "utility/utils.hpp"
 #include "data_server.hpp"
