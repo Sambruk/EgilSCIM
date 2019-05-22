@@ -90,7 +90,7 @@ std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, co
  * This needs to be maintained through new versions of EGIL.
  */
 std::string create_relational_id(const string_pair &index_fields) {
-  return uuid_util::instance().generate(toUpper(index_fields.first), toUpper(index_fields.second));
+  return uuid_util::instance().generate(index_fields.first, index_fields.second);
 }
 
 /**
