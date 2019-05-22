@@ -187,15 +187,9 @@ std::string toUpper(const std::string &s) {
     return out;
 }
 
-std::string &toUpper(std::string &s) {
-    std::transform(s.begin(), s.end(), s.begin(), ::toupper);
-    return s;
-}
-
 std::string uuid_util::generate() {
     boost::uuids::uuid uuid = generator();
-    std::string id = boost::uuids::to_string(uuid);
-    return toUpper(id);
+    return boost::uuids::to_string(uuid);
 }
 
 std::string uuid_util::generate(const std::string &a, const std::string &b) {
@@ -212,13 +206,11 @@ std::string uuid_util::generate(const std::string &a, const std::string &b) {
 #endif
 
     boost::uuids::uuid uuid = name_generator(a + b);
-    std::string id = boost::uuids::to_string(uuid);
-    return toUpper(id);
+    return boost::uuids::to_string(uuid);
 }
 
 std::string uuid_util::un_parse_uuid(char *val) {
     boost::uuids::uuid uuid{};
     ::memcpy(&uuid, val, 16);
-    auto st = boost::lexical_cast<std::string>(uuid);
-    return toUpper(st);
+    return boost::lexical_cast<std::string>(uuid);
 }
