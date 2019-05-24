@@ -33,6 +33,7 @@
 
 #include "utility/simplescim_error_string.hpp"
 #include "config_file_parser.hpp"
+#include "json_template_parser.hpp"
 
 #include "utility/utils.hpp"
 
@@ -60,10 +61,41 @@ int config_file::load_template(const std::string &ss12000type, const std::string
     config_parser parser(std::begin(content), std::end(content));
     err = parser.parse();
     if (!err) {
-        parser.reset();
-        parser.find_variables(ss12000type);
-    } else
+        auto json_template = get(ss12000type + "-scim-json-template");
+        auto var_set = JSONTemplateParser::find_variables(ss12000type,
+                                                          json_template.begin(),
+                                                          json_template.end());
+        
+        auto extra = get_vector(ss12000type + "-hidden-attributes", true);
+        if (!extra.empty())
+            var_set.insert(extra.begin(), extra.end());
+
+        std::string variables;
+        for (const auto &var : var_set) {
+            if (var.empty()) {
+                continue;
+            }
+            
+            auto typePos = var.find('.');
+            if (typePos != std::string::npos) {
+                std::string foreignKey(var.substr(typePos + 1));
+                std::string typeForKey(var.substr(0, typePos));
+                add_variable(typeForKey + "-scim-variables", foreignKey);
+            }
+            variables += var + ", ";
+        }
+        const std::string attribute = ss12000type + "-scim-variables";
+        if (!variables.empty()) {
+            variables.erase(variables.end() - 2, variables.end());
+            add_variable(attribute, variables);
+            add_variable("all-scim-variables", variables);
+        } else {
+            insert(attribute, "");
+        }
+    }
+    else {
         std::cerr << "Failed to parse " << ss12000type << "-scim-conf" << std::endl;
+    }
     return err;
 }
 

@@ -56,8 +56,6 @@ public:
 		col = 0;
 	}
 
-	int find_variables(const std::string &attribute);
-
 private:
 	/**
 	 * Returns 1 if 'c' is a valid character in a varid.
