@@ -31,7 +31,7 @@ typedef std::string::const_iterator iter;
  *
  * Used to find variables in the JSON templates.
  */
-std::set<std::string> find_variables(const std::string& type, iter start, iter end);
+std::set<std::string> find_variables(iter start, iter end);
 
 }
 

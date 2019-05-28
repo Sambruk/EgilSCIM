@@ -30,7 +30,7 @@ void skip_ws(iter& cur, iter end) {
     }
 }
 
-std::set<std::string> find_variables(const std::string &type, iter start, iter end) {
+std::set<std::string> find_variables(iter start, iter end) {
 
     auto cur = start;
     
