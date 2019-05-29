@@ -40,8 +40,6 @@ std::pair<std::string, std::string> string_to_pair(const std::string &s);
 
 std::string pair_to_string(const std::pair<std::string, std::string> &pair);
 
-std::string &toUpper(std::string &s);
-
 std::string toUpper(const std::string &s);
 
 void print_error();

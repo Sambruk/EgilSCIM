@@ -28,8 +28,6 @@
 
 #include "base_object.hpp"
 
-class ScimActions;
-
 using object_map_t = std::map<std::string, std::shared_ptr<base_object>>;
 
 class object_list {
@@ -46,8 +44,6 @@ public:
 	object_list(object_list &&other) noexcept {
 		objects = std::move(other.objects);
 	}
-
-	int process_changes(const object_list &cache, const ScimActions &actions, const std::string &type) const;
 
 	void clear() {
 		objects.clear();
@@ -77,22 +73,6 @@ public:
 		}
 		return nullptr;
 	}
-
-//	void add_object(const std::string &uid, std::shared_ptr<base_object> &&object) {
-//		auto record = objects.find(uid);
-//		if (record != objects.end()) {
-//			objects.erase(uid);
-//		}
-//		objects.emplace(std::make_pair(uid, std::move(object)));
-//	}
-//
-//	void add_object(const std::string &uid, const std::shared_ptr<base_object> &object) {
-//		auto record = objects.find(uid);
-//		if (record != objects.end()) {
-//			objects.erase(uid);
-//		}
-//		objects.emplace(std::make_pair(uid, object));
-//	}
 
 	void add_object(const std::string &uid, std::shared_ptr<base_object> object) {
 		auto record = objects.find(uid);
@@ -131,11 +111,11 @@ public:
 		return objects.empty();
 	}
 
-	object_map_t::const_iterator begin() {
+	object_map_t::const_iterator begin() const {
 		return objects.begin();
 	}
 
-	object_map_t::const_iterator end() {
+	object_map_t::const_iterator end() const {
 		return objects.end();
 	}
 

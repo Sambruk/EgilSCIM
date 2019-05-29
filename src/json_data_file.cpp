@@ -24,17 +24,20 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception_ptr.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <iostream>
 
 #include "json_data_file.hpp"
 #include "config_file.hpp"
 
-//json_data_file::json_data_file(const std::string &fname) : filename(fname) {
-//}
+std::pair<std::string, std::string> relations::get_ldap_filter(const std::string &value) {
+    using boost::replace_all_copy;
+    auto expanded_base = replace_all_copy(remote_ldap_base, "${value}", value);
+    auto expanded_filter = replace_all_copy(remote_ldap_filter, "${value}", value);
+    return std::make_pair(expanded_base, expanded_filter);
+}
 
-//json_data_file::json_data_file() {
-//}
 
 void json_data_file::get_users(std::shared_ptr<object_list> list) {
 	namespace pt = boost::property_tree;

@@ -10,6 +10,7 @@ configure_file(
 )
 
 include_directories("${PROJECT_BINARY_DIR}")
+include_directories("${PROJECT_SOURCE_DIR}/src")
 
 if (APPLE)
     #all ldap deprecated on apple platforms
@@ -40,11 +41,17 @@ set(LDFLAGS -lldap -llber -lcurl)
 link_libraries(${LDFLAGS})
 
 set(srcroot src)
-set(SOURCES ${srcroot}/scim_json_parse.cpp ${srcroot}/utility/simplescim_error_string.cpp ${srcroot}/simplescim_scim_send.cpp ${srcroot}/cache_file.cpp ${srcroot}/model/base_object.cpp ${srcroot}/simplescim_ldap_attrs_parser.cpp ${srcroot}/model/object_list.cpp ${srcroot}/config_file.cpp ${srcroot}/config_file_parser.cpp ${srcroot}/scim.cpp ${srcroot}/utility/utils.cpp ${srcroot}/utility/utils.hpp ${srcroot}/utility/utils.cpp ${srcroot}/ldap_wrapper.cpp ${srcroot}/ldap_wrapper.hpp ${srcroot}/data_server.cpp ${srcroot}/data_server.hpp ${srcroot}/scim_data.cpp ${srcroot}/scim_data.hpp ${srcroot}/json_data_file.cpp ${srcroot}/json_data_file.hpp ${srcroot}/scim_server_info.cpp ${srcroot}/scim_server_info.hpp)
+set(SOURCES ${srcroot}/scim_json_parse.cpp ${srcroot}/utility/simplescim_error_string.cpp ${srcroot}/simplescim_scim_send.cpp ${srcroot}/cache_file.cpp ${srcroot}/model/base_object.cpp ${srcroot}/simplescim_ldap_attrs_parser.cpp ${srcroot}/config_file.cpp ${srcroot}/config_file_parser.cpp ${srcroot}/scim.cpp ${srcroot}/utility/utils.cpp ${srcroot}/utility/utils.hpp ${srcroot}/utility/utils.cpp ${srcroot}/ldap_wrapper.cpp ${srcroot}/ldap_wrapper.hpp ${srcroot}/data_server.cpp ${srcroot}/data_server.hpp ${srcroot}/json_data_file.cpp ${srcroot}/json_data_file.hpp ${srcroot}/json_template_parser.cpp ${srcroot}/json_template_parser.hpp ${srcroot}/simplescim_ldap.cpp ${srcroot}/scim_server_info.cpp ${srcroot}/scim_server_info.hpp)
 
-add_executable(EgilSCIMClient ${SOURCES} ${srcroot}/simplescim_ldap.cpp ${srcroot}/main.cpp)
-#add_executable(EgilSCIMClientPrint ${SOURCES} ${srcroot}/simplescim_ldap.cpp ${srcroot}/utility/simplescim_cache_file_print.cpp)
+set(TEST_SOURCES ${srcroot}/tests/main.cpp ${srcroot}/tests/json_template_parser_tests.cpp)
+
+add_library (Egil ${SOURCES})
+
+add_executable(EgilSCIMClient ${srcroot}/main.cpp)
+add_executable(tests ${TEST_SOURCES})
+
+target_link_libraries(EgilSCIMClient LINK_PUBLIC Egil)
+target_link_libraries(tests LINK_PUBLIC Egil)
 
 install (TARGETS EgilSCIMClient DESTINATION bin)
-#install (TARGETS EgilSCIMClientPrint DESTINATION bin)
 

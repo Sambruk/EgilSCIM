@@ -1,6 +1,4 @@
 /**
- * Created by Ola Mattsson.
- *
  * This file is part of EgilSCIM.
  *
  * EgilSCIM is free software: you can redistribute it and/or modify
@@ -16,31 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with EgilSCIM.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Further development with groups and relations support
- * by Ola Mattsson - IT informa for Sambruk
  */
 
-#ifndef SIMPLESCIM_SCIM_DATA_HPP
-#define SIMPLESCIM_SCIM_DATA_HPP
+#ifndef EGILSCIM_JSON_TEMPLATE_PARSER_HPP
+#define EGILSCIM_JSON_TEMPLATE_PARSER_HPP
 
+#include <string>
+#include <set>
 
-#include <memory>
-#include "model/object_list.hpp"
-#include "config_file.hpp"
+namespace JSONTemplateParser {
 
-class scim_data {
-	const std::shared_ptr<object_list> list;
+typedef std::string::const_iterator iter;
 
-	std::vector<std::string> findTypes();
+/*
+ * Searches through a string to find any variables (${foo}).
+ *
+ * Used to find variables in the JSON templates.
+ */
+std::set<std::string> find_variables(iter start, iter end);
 
-public:
-	explicit scim_data(std::shared_ptr<object_list> theData) : list(theData) {}
+}
 
-	void findRelations();
-//	std::shared_ptr<object_list> generateRelations(const std::string &scim_type);
-
-	std::vector<std::string> variblesAsVector(const std::string &s);
-};
-
-
-#endif //SIMPLESCIM_SCIM_DATA_HPP
+#endif // EGILSCIM_JSON_TEMPLATE_PARSER_HPP

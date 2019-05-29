@@ -90,7 +90,7 @@ std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, co
  * This needs to be maintained through new versions of EGIL.
  */
 std::string create_relational_id(const string_pair &index_fields) {
-  return uuid_util::instance().generate(toUpper(index_fields.first), toUpper(index_fields.second));
+  return uuid_util::instance().generate(index_fields.first, index_fields.second);
 }
 
 /**
@@ -102,13 +102,27 @@ std::string create_relational_id(const string_pair &index_fields) {
 std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type) {
     config_file &conf = config_file::instance();
 
-    std::cout << "Generating " << type << std::flush;
-
     auto generated = std::make_shared<object_list>();
 
     // get by type only, the type must be loaded already so no query needed
+
+    std::string master_type;
+    if (conf.has(type + "-generate-key")) {
+        string_pair generate_key = conf.get_pair(type + "-generate-key");
+        master_type = generate_key.first;
+
+        std::cout << type + "-generate-key is obsolete, please specify " + type + "-generate-type instead" << std::endl;
+    }
+    if (conf.has(type + "-generate-type")) {
+        master_type = conf.get(type + "-generate-type");
+    }
+
+    if (master_type == "") {
+        std::cerr << "Missing parameter " + type + "-generate-type" << std::endl;
+        return nullptr;
+    }
+    
     std::string remote_relation = conf.get(type + "-remote-relation-id");
-    string_pair master_type = conf.get_pair(type + "-generate-key");
     string_pair related_type = conf.get_pair(type + "-generate-remote-part");
     string_vector scim_vars = conf.get_vector(type + "-scim-variables");
     string_pair local_relation = conf.get_pair(type + "-generate-local-part");
@@ -120,7 +134,7 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
                   << std::endl;
         return nullptr;
     }
-    auto student_groups = get_object_list_by_type(master_type.first, pair_map());
+    auto student_groups = get_object_list_by_type(master_type, pair_map());
     auto employments = get_object_list_by_type(related_type.first, pair_map());
 
     for (const auto &student_group : *student_groups) {
@@ -143,7 +157,7 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
                 continue;
 
             auto var_pair = string_to_pair(scim_var);
-            if (var_pair.first == master_type.first) {
+            if (var_pair.first == master_type) {
                 // those are from the object it self, found by var_pair.second
                 string_vector values = student_group.second->get_values(var_pair.second);
                 if (!values.empty())
@@ -161,8 +175,6 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
         generated->add_object(uuid, std::make_shared<base_object>(generated_object));
 
     }
-    std::cout << " - done!" << std::endl;
-
     return generated;
 }
 
@@ -176,7 +188,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
     config_file &conf = config_file::instance();
     data_server &server = data_server::instance();
     std::set<std::string> missing_ids;
-    std::cout << "Generating " << type << std::flush;
+
     // the relational key, e.g. User.pidSchoolUnit
     string_pair relational_key = conf.get_pair(type + "-generate-key");
     string_pair part_type = conf.get_pair(type + "-generate-remote-part");
@@ -197,14 +209,10 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
     ldap_wrapper ldap;
 
     for (const auto &a_master: *master_list) {
-        if (!a_master.second->has_attribute_with_value(conf.get(type + "-type-attribute"),
-                                                       conf.get(type + "-type-value")))
-            continue;
-
         string_vector relational_items = a_master.second->get_values(relational_key.second);
         if (relational_items.empty()) {
 
-            std::cout << " Creating Employment: " << type
+            std::cerr << " Creating Employment: " << type
                       << "-generate-key with value not found with "
                       << pair_to_string(relational_key) << std::endl;
         }
@@ -250,8 +258,6 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
         }
 
     }
-
-    std::cout << " - done!" << std::endl;
 
     if (!missing_ids.empty()) {
         std::cerr << "Missing SchoolUnits found:" << std::endl;
@@ -348,9 +354,11 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
                             auto response = ldap_to_object_list(ldap, relation.type);
                             if (response->size() == 1)
                                 remote = response->begin()->second;
-                            else if (response->size() == 1)
-                                std::cout << " expected single result for: " << relation.type << " " << value
-                                          << std::endl;
+                            else if (response->size() > 1) {
+                                std::cerr << "Ambiguous (multiple) results for relation from " << type
+                                          << " to " << relation.type << " when " << type << "." << relation.local_attribute
+                                          << " = " << value << std::endl;
+                            }
                         }
                     }
                     if (remote) {

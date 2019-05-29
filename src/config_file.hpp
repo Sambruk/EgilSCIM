@@ -83,6 +83,8 @@ public:
 		return ::toUpper(get(attrib, true)) == "TRUE";
 	}
 
+    bool has(const std::string& variable) const;
+
 	std::string require(const std::string &variable) const;
 
 	std::map<std::string, std::string>::const_iterator begin() const { return std::begin(variables); }
