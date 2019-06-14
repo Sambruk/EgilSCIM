@@ -25,14 +25,14 @@ Tempfile::Tempfile() {
     if (fd < 0) {
         throw std::runtime_error("Failed to create temporary file");
     }
-    // Make sure it gets deleted when closed
-    unlink(template_path);
 
     path = template_path;
 }
 
 Tempfile::~Tempfile() {
     if (fd >= 0) {
+        // Make sure it gets deleted when closed
+        unlink(path.c_str());
         close(fd);
     }
 }
