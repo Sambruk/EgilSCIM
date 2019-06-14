@@ -3,6 +3,9 @@
 This directory is for tools that may simplify usage of the
 EGIL client.
 
+All tools can be run with the -h flag to show a brief description
+of how to run the tool.
+
 ## fetch_metadata
 The script fetch_metadata.py will both download and verify the authentication
 metadata against a key. The decoded metadata can then be used by the EGIL
@@ -20,3 +23,35 @@ sudo pip3 install jwcrypto
 
 (If you don't wish to install jwcrypto globally, or don't have root access,
 you can use ```virtualenv``` or ```pip3 --user```)
+
+To download and verify metadata:
+
+```
+./fetch_metadata.py --keys /path/to/jwks --output metadata.txt
+```
+
+The script will download from Skolfederation with a default URL, which can be
+overridden with the `--url` argument.
+
+## list_metadata
+A script for listing entities and server/client names from the metadata.
+
+Before running the script you need to make sure that Python 3 is installed.
+
+To list all entities:
+
+```
+./list_metadata.py metadata.txt
+```
+
+To list all server names:
+
+```
+./list_metadata.py --servers metadata.txt
+```
+
+To list all server names for a specific entity:
+
+```
+./list_metadata.py --servers --entity example.com metadata.txt
+```
