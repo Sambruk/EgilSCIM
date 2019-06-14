@@ -47,7 +47,7 @@ end-of-line character, since it is a multi line value spanning 3
 lines. Since the `"# Not a comment"` part is within the multi line
 value, it is a part of the value and is not interpreted as a comment.
 
-### Required variables
+### Variables
 
 EgilSCIM has a set of required variable names that must be assigned
 meaningful values. The set of required variable names may change in
@@ -72,14 +72,34 @@ required variable names are:
   remember previous executions of the configuration file.
 * `cert` is the path to the client's certificate file (PEM).
 * `key` is the path to the client's private key file (PEM).
-* `pinnedpubkey` is the server's hashed public key, e.g.
-  `sha256//XYj98rkYBIYzCAc0NBYfooMUN38eq6xpQZOZP0b/jK8=`.
-* `scim-url` specifies the protocol and host that will
-  receive the SCIM request, e.g. `http://example.com/`.
 * `scim-resource-identifier` specifies which variable in the returned
   JSON object that contains the SCIM resource identifier.
 * `<type>-scim-json-templa` specifies the JSON object to send when creating and
     updating a new object.
+    
+
+#### SCIM connection and authentication
+If you wish to run against Skolfederation's metadata file, the following
+set of variables need to be configured:
+
+* `metadata-path` is the full path to the metadata file
+* `metadata-entity` is service provider's entity id in the metadata
+* `metadata-server` is the name of the server to connect to
+
+The `metadata-server` can be skipped if the service provider only has one server,
+but it is recommended to supply it anyway since the service provider may add
+another server in the future.
+
+You can also manually specify the information which would otherwise be
+fetched from metadata. This can be useful for test purposes or if the
+service provider for some reason isn't included in the metadata. In this case
+the following variables need to be configured:
+
+* `scim-url` specifies the base URL for the SCIM end-point, e.g. `https://scim.serviceprovider.se/scim/v2`.
+* `pinnedpubkey` is the server's hashed public key, e.g.
+  `sha256//XYj98rkYBIYzCAc0NBYfooMUN38eq6xpQZOZP0b/jK8=`.
+* `metadata_ca_path` is the path to the directory containing the certificate store.
+* `metadata_ca_store` is the name of a CA store in PEM file format.
 
 ## Execution
 
