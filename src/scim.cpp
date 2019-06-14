@@ -38,13 +38,6 @@ variables::variables() {
     const config_file &config = config_file::instance();
     variable_entries.emplace(std::make_pair("cert", config.require("cert")));
     variable_entries.emplace(std::make_pair("key", config.require("key")));
-    variable_entries.emplace(std::make_pair("pinnedpubkey", config.require("pinnedpubkey")));
-//	variable_entries.emplace(std::make_pair("scim-url", config.require("scim-url")));
-//	variable_entries.emplace(std::make_pair("scim-resource-identifier", config.require("scim-resource-identifier")));
-//	variable_entries.emplace(std::make_pair("scim-create", config.require("scim-create")));
-//	variable_entries.emplace(std::make_pair("scim-update", config.require("scim-update")));
-//	variable_entries.emplace(
-//			std::make_pair("user-scim-resource-identifier", config.require("user-scim-resource-identifier")));
 }
 
 
@@ -64,7 +57,10 @@ int ScimActions::simplescim_scim_init() const {
     }
 
     /* Initialise simplescim_scim_send */
-    err = scim_sender::instance().send_init(vars.get("cert"), vars.get("key"), vars.get("pinnedpubkey"));
+    err = scim_sender::instance().send_init(vars.get("cert"),
+                                           vars.get("key"),
+                                           scim_server_info.get_pinned_public_keys(),
+                                           scim_server_info.get_ca_bundle_path());
 
     if (err == -1) {
         return -1;
@@ -268,7 +264,7 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
                                             actions.vars.get("user-scim-resource-identifier").c_str());
         return -1;
     }
-    std::string url = config_file::instance().get("scim-url");
+    std::string url = actions.scim_server_info.get_url();
     std::string urlified = unifyurl(object.get_uid());
     std::string endpoint = config_file::instance().get(object.getSS12000type() + "-scim-url-endpoint");
     url += '/' + endpoint + '/' + urlified;
@@ -299,7 +295,7 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
     if (!actions.verify_json(parsed_json, type))
         return -1;
 
-    std::string url = config_file::instance().get("scim-url");
+    std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
     url += '/' + endpoint;
 //	std::cout << url << " " << copied_user.get_uid() << std::endl;
@@ -339,7 +335,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
     }
 
     std::string unified = unifyurl(object.get_uid());
-    std::string url = config_file::instance().get("scim-url");
+    std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
     url += '/' + endpoint + '/' + unified;
 

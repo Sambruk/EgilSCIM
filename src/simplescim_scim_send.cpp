@@ -39,6 +39,7 @@ struct http_response {
 std::string simplescim_scim_send_cert;
 std::string simplescim_scim_send_key;
 std::string simplescim_scim_send_pinnedpubkey;
+std::string simplescim_scim_send_ca_bundle_path;
 
 static char simplescim_scim_send_errbuf[CURL_ERROR_SIZE];
 
@@ -207,16 +208,7 @@ static int simplescim_scim_send(CURL* curl,
 
     if (auth) {
         /* ca cert from skolfederation metadata */
-        static std::string capath = config_file::instance().get("metadata_ca_path");
-        errnum = curl_easy_setopt(curl, CURLOPT_CAPATH, capath.c_str());
-
-        if (errnum != CURLE_OK) {
-            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAPATH)", errnum);
-            return -1;
-        }
-
-        static std::string cafile = config_file::instance().get("metadata_ca_store");
-        errnum = curl_easy_setopt(curl, CURLOPT_CAINFO, std::string(capath + cafile).c_str());
+        errnum = curl_easy_setopt(curl, CURLOPT_CAINFO, simplescim_scim_send_ca_bundle_path.c_str());
 
         if (errnum != CURLE_OK) {
             simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CAINFO)", errnum);
@@ -385,7 +377,10 @@ static int simplescim_scim_send(CURL* curl,
  * and simplescim_error_string is set to an appropriate
  * error message.
  */
-int scim_sender::send_init(std::string cert, std::string key, std::string pinnedpubkey) {
+int scim_sender::send_init(std::string cert,
+                           std::string key,
+                           std::string pinnedpubkey,
+                           std::string ca_bundle_path) {
     CURLcode errnum;
 
     errnum = curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -404,9 +399,10 @@ int scim_sender::send_init(std::string cert, std::string key, std::string pinned
         return -1;
     }    
 
-    simplescim_scim_send_cert = std::move(cert);
-    simplescim_scim_send_key = std::move(key);
-    simplescim_scim_send_pinnedpubkey = std::move(pinnedpubkey);
+    simplescim_scim_send_cert = cert;
+    simplescim_scim_send_key = key;
+    simplescim_scim_send_pinnedpubkey = pinnedpubkey;
+    simplescim_scim_send_ca_bundle_path = ca_bundle_path;
 
     return 0;
 }

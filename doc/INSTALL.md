@@ -34,6 +34,10 @@ from the EgilSCIM root directory:
 Installing EgilSCIM to the system will most likely require root
 access.
 
+Further steps may be needed if you wish to use the utilities in
+the ```tools``` directory. For instructions, see the README file
+in that directory.
+
 # Uninstalling EgilSCIM
 
 To uninstall EgilSCIM from the system, execute the following
@@ -54,10 +58,13 @@ the EgilSCIM directory:
 rm -rf build/*
 ```
 
+# Running
 
 Run EgilSCIM with:
 
 ```EgilSCIMClient supplier1.conf [supplier2.conf...]```
+
+# System specific instructions
 
 ## Ubuntu 18.04
     sudo apt-get update && sudo apt-get upgrade

@@ -47,7 +47,10 @@ public:
      * and simplescim_error_string is set to an appropriate
      * error message.
      */
-    int send_init(std::string cert, std::string key, std::string pinnedpubkey);
+    int send_init(std::string cert,
+                  std::string key,
+                  std::string pinnedpubkey,
+                  std::string ca_bundle_path);
 
     /**
      * Clears simplescim_scim_send and frees any associated

@@ -31,87 +31,94 @@
 #include "json_data_file.hpp"
 #include "utility/utils.hpp"
 #include "data_server.hpp"
+#include "scim_server_info.hpp"
 
 
 int main(int argc, char *argv[]) {
-	config_file &config = config_file::instance();
+    try {
+        config_file &config = config_file::instance();
 
-    int param_start = check_params(argc, argv);
-    std::string test_url;
-	if (param_start < 0)
-		return 1;
-	else if (param_start == 1)
-	    test_url = get_test_server_url(argv);
+        int param_start = check_params(argc, argv);
+        std::string test_url;
+        if (param_start < 0)
+            return 1;
+        else if (param_start == 1)
+            test_url = get_test_server_url(argv);
 
+        for (int i = 1+param_start; i < argc; ++i) {
+            /** Load configuration file */
+            std::cout << "processing: " << argv[i] << std::endl;
+            int err = 0;
+            try {
+                err = config.load(argv[i]);
+            } catch (std::string& msg) {
+                std::cerr << msg << std::endl;
+                return EXIT_FAILURE;
+            }
 
+            if (err == -1) {
+                print_error();
+                continue;
+            }
+            if (!test_url.empty())
+                config.replace_variable("scim-url", test_url);
 
-
-
-	for (int i = 1+param_start; i < argc; ++i) {
-		/** Load configuration file */
-		std::cout << "processing: " << argv[i] << std::endl;
-        int err = 0;
-        try {
-            err = config.load(argv[i]);
-        } catch (std::string& msg) {
-		    std::cerr << msg << std::endl;
-		    exit(1);
-		}
-
-		if (err == -1) {
-			print_error();
-			continue;
-		}
-		if (!test_url.empty())
-			config.replace_variable("scim-url", test_url);
-
-		/** Get objects from LDAP catalogue */
-		data_server &server = data_server::instance();
-		try {
-            server.load();
-        } catch (std::string& msg) {
-		    std::cerr << msg << std::endl;
-		    exit(1);
-		}
-		if (server.empty()) {
-			print_error();
-			config.clear();
-			server.clear();
-			continue;
-		}
+            /** Get objects from LDAP catalogue */
+            data_server &server = data_server::instance();
+            try {
+                server.load();
+            } catch (std::string& msg) {
+                std::cerr << msg << std::endl;
+                return EXIT_FAILURE;
+            }
+            if (server.empty()) {
+                print_error();
+                config.clear();
+                server.clear();
+                continue;
+            }
 
 
-		/** Get objects from cache file */
-		std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
+            /** Get objects from cache file */
+            std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
 
-		if (cache == nullptr) {
-			print_error();
-			server.clear();
-			config.clear();
-			continue;
-		}
+            if (cache == nullptr) {
+                print_error();
+                server.clear();
+                config.clear();
+                continue;
+            }
 
-		/** Perform SCIM operations */
-		try {
-			err = ScimActions().perform(server, *cache);
-		} catch (const std::string& err_msg) {
-			std::cerr << err_msg << std::endl;
-		}
+            /** Perform SCIM operations */
+            try {
+                err = ScimActions(SCIMServerInfo(config)).perform(server, *cache);
+            } catch (const std::string& err_msg) {
+                std::cerr << err_msg << std::endl;
+            }
 
-		if (err == -1) {
-			server.clear();
-			print_error();
-			config.clear();
-			continue;
-		}
+            if (err == -1) {
+                server.clear();
+                print_error();
+                config.clear();
+                continue;
+            }
 
-		print_status(argv[i]);
-        print_error();
+            print_status(argv[i]);
+            print_error();
 
-		/* Clean up */
-		config.clear();
-		server.clear();
-	}
+            /* Clean up */
+            config.clear();
+            server.clear();
+        }
+    }
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    catch (...) {
+        std::cerr << "Unexpected exception caught!" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-	return 0;
+    return EXIT_SUCCESS;
 }
