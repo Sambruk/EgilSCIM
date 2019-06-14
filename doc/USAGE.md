@@ -72,9 +72,7 @@ required variable names are:
   remember previous executions of the configuration file.
 * `cert` is the path to the client's certificate file (PEM).
 * `key` is the path to the client's private key file (PEM).
-* `scim-resource-identifier` specifies which variable in the returned
-  JSON object that contains the SCIM resource identifier.
-* `<type>-scim-json-templa` specifies the JSON object to send when creating and
+* `<type>-scim-json-template` specifies the JSON object to send when creating and
     updating a new object.
     
 

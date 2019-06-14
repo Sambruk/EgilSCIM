@@ -119,9 +119,3 @@ variable name is only used in one iteration statement in that case.
 The following names: **switch**, **case**, **default**, **for**,
 **in** and **end** are reserved keywords meaning that there can be no
 user attributes with those names.
-
-There is also a special attribute whose name is specified in
-`user-scim-resource-identifier` in the configuration file that can be
-used to access the user's resource identifier in SCIM. This attribute
-can only be used in `scim-update` , since the user must already be
-created to have a resource identifier in SCIM.

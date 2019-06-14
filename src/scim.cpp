@@ -260,8 +260,7 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
     if (object.get_uid().empty()) {
         simplescim_error_string_set_prefix("ScimActions::delete_func:"
                                            "get-attribute");
-        simplescim_error_string_set_message("cached user does not have attribute \"%s\"",
-                                            actions.vars.get("user-scim-resource-identifier").c_str());
+        simplescim_error_string_set_message("cached object does not have unique identifier attribute");
         return -1;
     }
     std::string url = actions.scim_server_info.get_url();
