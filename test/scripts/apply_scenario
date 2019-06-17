@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+host=localhost
+port=388
+user=cn=admin,dc=kommunen,dc=se
+passwd=verysecret
+ls $1/*.ldif | xargs -L 1 ldapmodify -e relax -h $host -p $port -D $user -w $passwd -f

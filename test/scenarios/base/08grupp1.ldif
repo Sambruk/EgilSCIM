@@ -1,0 +1,10 @@
+dn: cn=grupp1,dc=kommunen,dc=se
+changetype: add
+objectClass: groupOfNames
+objectClass: top
+cn: grupp1
+member: uid=baje,dc=kommunen,dc=se
+member: uid=lini,dc=kommunen,dc=se
+member: uid=pejo,dc=kommunen,dc=se
+owner: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
+entryUUID: 39074b36-e0ed-4443-a501-5148992014b9

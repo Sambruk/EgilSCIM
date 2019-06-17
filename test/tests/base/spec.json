@@ -1,0 +1,14 @@
+{
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [],
+	  "requests": null
+	},
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "init.txt"
+	}
+	{ "scenario": [],
+	  "requests": null
+	}
+    ]
+}

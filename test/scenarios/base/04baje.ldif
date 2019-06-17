@@ -1,0 +1,16 @@
+dn: uid=baje,dc=kommunen,dc=se
+changetype: add
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Babs Jensen
+sn: Jensen
+displayName: Babs Jensen
+employeeType: teacher
+givenName: Barbara
+mail: baje@skolan.kommunen.se
+ou: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
+ou: ou=skolenhet2,ou=skolgruppen,dc=kommunen,dc=se
+uid: baje
+entryUUID: 75c666db-e60e-4687-bdd3-1af191fa6799
