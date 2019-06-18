@@ -225,6 +225,11 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
     return empty;
 }
 
+std::string config_file::get_path(const std::string& variable, bool silent) const {
+    auto str = get(variable, silent);
+    return filesystem::canonical(str, filename.parent_path());
+}
+
 bool config_file::has(const std::string& variable) const {
     return variables.find(variable) != variables.end();
 }
@@ -246,6 +251,16 @@ std::string config_file::require(const std::string &variable) const {
     }
 
     return value;
+}
+
+std::string config_file::require_path(const std::string &variable) const {
+    auto str = require(variable);
+
+    if (str.empty()) {
+        return "";
+    }
+
+    return filesystem::canonical(str, filename.parent_path());
 }
 
 //static size_t send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {

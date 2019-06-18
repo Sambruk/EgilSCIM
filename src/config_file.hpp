@@ -32,6 +32,7 @@
 class config_file {
     // Absolute, canonical path to the config file
     std::experimental::filesystem::path filename;
+
     std::map<std::string, std::string> variables{};
 
     // caches
@@ -85,9 +86,13 @@ public:
         return ::toUpper(get(attrib, true)) == "TRUE";
     }
 
+    std::string get_path(const std::string& variable, bool silent = false) const;
+
     bool has(const std::string& variable) const;
 
     std::string require(const std::string &variable) const;
+    
+    std::string require_path(const std::string &variable) const;
 
     std::map<std::string, std::string>::const_iterator begin() const { return std::begin(variables); }
 
