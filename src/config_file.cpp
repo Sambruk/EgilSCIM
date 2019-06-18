@@ -50,9 +50,11 @@ int config_file::load_templates() {
     return err;
 }
 
+using namespace std::experimental;
+
 int config_file::load_template(const std::string &ss12000type, const std::string &file) {
     int err = 0;
-    std::string content = read(file);
+    std::string content = read(filesystem::canonical(file, filename.parent_path()));
 
     if (content.empty()) {
         std::cerr << ss12000type << "-scim-conf requested but the file is missing" << std::endl;
@@ -98,11 +100,9 @@ int config_file::load_template(const std::string &ss12000type, const std::string
     return err;
 }
 
-int config_file::load_variables(const std::string &file_name) {
+int config_file::load_variables() {
     int err;
 
-    /* Set global string to configuration file's name. */
-    filename = file_name;
     std::string input;
 
     input = read(filename);
@@ -120,7 +120,8 @@ int config_file::load_variables(const std::string &file_name) {
 }
 
 int config_file::load(const std::string &file_name) {
-    int err = load_variables(file_name);
+    filename = filesystem::canonical(file_name);
+    int err = load_variables();
 
     if (!err) {
         load_templates();
@@ -136,8 +137,9 @@ int config_file::load(const std::string &file_name) {
     return err;
 }
 
-std::string config_file::read(std::string f) {
+std::string config_file::read(const std::experimental::filesystem::path& f) {
     std::string content;
+
     std::ifstream file(f);
     if (file) {
         std::stringstream buffer;
@@ -223,6 +225,11 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
     return empty;
 }
 
+std::string config_file::get_path(const std::string& variable, bool silent) const {
+    auto str = get(variable, silent);
+    return filesystem::absolute(str, filename.parent_path());
+}
+
 bool config_file::has(const std::string& variable) const {
     return variables.find(variable) != variables.end();
 }
@@ -246,36 +253,16 @@ std::string config_file::require(const std::string &variable) const {
     return value;
 }
 
-//void config_file::process_metadata() {
-//    std::string md_url("https://fedscim-poc.skolfederation.se/md/skolfederation-fedscim-0_1.json");
-//
-//    curl_global_init(CURL_GLOBAL_DEFAULT);
-//
-//    CURL *curl = curl_easy_init();
-//    if (curl) {
-//        curl_easy_setopt(curl, CURLOPT_URL, md_url.c_str());
-//
-//        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, send_write_func);
-//
-//        http_response response;
-//
-//        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-//
-//
-//        /* Perform the request, res will get the return code */
-//        CURLcode res = curl_easy_perform(curl);
-//        /* Check for errors */
-//        if (res != CURLE_OK)
-//            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-//                    curl_easy_strerror(res));
-//
-//        /* always cleanup */
-//        curl_easy_cleanup(curl);
-//    }
-//
-//    curl_global_cleanup();
-//
-//}
+std::string config_file::require_path(const std::string &variable) const {
+    auto str = require(variable);
+
+    if (str.empty()) {
+        return "";
+    }
+
+    return filesystem::absolute(str, filename.parent_path());
+}
+
 //static size_t send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
 //    struct http_response *http_response;
 //

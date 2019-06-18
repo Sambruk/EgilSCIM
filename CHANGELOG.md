@@ -11,4 +11,4 @@
 #### New features
   - Deletes are done in reverse scim-type-send-order order (#4)
   - Tooling for fetching/formatting/verifying metadata (#18)
-
+  - Relative paths in config files (#13)

@@ -269,7 +269,7 @@ std::shared_ptr<object_list> cache_file::read_objects() {
 std::shared_ptr<object_list> cache_file::get_contents() {
 
 	/* Get the cache file's name from configuration file */
-	cache_file_filename = config_file::instance().get("cache-file");
+	cache_file_filename = config_file::instance().get_path("cache-file");
 
 	if (cache_file_filename.empty()) {
 		simplescim_error_string_set("get_users", "required variable \"cache-file\" is missing");
@@ -518,7 +518,7 @@ int cache_file::save(std::shared_ptr<object_list> objects) {
 	int err;
 
 	/* Get cache file's name */
-	cache_file_filename = config_file::instance().get("cache-file");
+	cache_file_filename = config_file::instance().get_path("cache-file");
 
 	if (cache_file_filename.empty()) {
 		simplescim_error_string_set("simplescim_cache_file_save", "required variable \"cache-file\" is missing");

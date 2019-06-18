@@ -1,0 +1,7 @@
+dn: uid=pejo,dc=kommunen,dc=se
+changetype: modify
+replace: sn
+sn: Johanson
+-
+replace: displayName
+displayName: Per Johanson

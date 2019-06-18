@@ -36,8 +36,8 @@
 
 variables::variables() {
     const config_file &config = config_file::instance();
-    variable_entries.emplace(std::make_pair("cert", config.require("cert")));
-    variable_entries.emplace(std::make_pair("key", config.require("key")));
+    variable_entries.emplace(std::make_pair("cert", config.require_path("cert")));
+    variable_entries.emplace(std::make_pair("key", config.require_path("key")));
 }
 
 

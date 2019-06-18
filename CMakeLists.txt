@@ -36,7 +36,7 @@ else ()
     include_directories(${Boost_INCLUDE_DIRS})
 endif ()
 
-set(LDFLAGS -lldap -llber -lcurl)
+set(LDFLAGS -lldap -llber -lcurl -lstdc++fs)
 
 link_libraries(${LDFLAGS})
 

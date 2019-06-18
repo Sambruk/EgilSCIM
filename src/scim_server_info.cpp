@@ -18,10 +18,13 @@
 #include "scim_server_info.hpp"
 #include "config_file.hpp"
 #include <boost/property_tree/json_parser.hpp>
+#include <experimental/filesystem>
+
+using namespace std::experimental;
 
 SCIMServerInfo::SCIMServerInfo(const config_file& config) {
     if (config.has("metadata-path")) {
-        auto metadata_path = config.get("metadata-path");
+        auto metadata_path = config.get_path("metadata-path");
         auto entity_id = config.get("metadata-entity");
         auto server_name = config.get("metadata-server", true);
 
@@ -30,7 +33,7 @@ SCIMServerInfo::SCIMServerInfo(const config_file& config) {
     else {
         url = config.get("scim-url");
         pinned_public_keys = config.get("pinnedpubkey");
-        ca_bundle_path = config.get("metadata_ca_path") + config.get("metadata_ca_store");
+        ca_bundle_path = filesystem::path(config.get_path("metadata_ca_path")) / config.get("metadata_ca_store");
     }
 }
 

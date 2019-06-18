@@ -18,7 +18,7 @@
  *
  * Further development with groups and relations support
  * by Ola Mattsson - IT informa for Sambruk
-*/
+ */
 
 #ifndef SIMPLESCIM_CONFIG_FILE_H
 #define SIMPLESCIM_CONFIG_FILE_H
@@ -27,88 +27,93 @@
 #include <iostream>
 #include <map>
 #include "utility/utils.hpp"
+#include <experimental/filesystem>
 
 class config_file {
-	std::string filename;
-	std::map<std::string, std::string> variables{};
+    // Absolute, canonical path to the config file
+    std::experimental::filesystem::path filename;
 
-	// caches
-	mutable std::map< std::string, std::vector<std::string> > vector_cache;
-	mutable std::map< std::string, std::pair<std::string, std::string> > pair_cache;
+    std::map<std::string, std::string> variables{};
 
-	const std::string empty{};
-	bool is_test_run = false;
+    // caches
+    mutable std::map< std::string, std::vector<std::string> > vector_cache;
+    mutable std::map< std::string, std::pair<std::string, std::string> > pair_cache;
 
-	config_file() = default;
+    const std::string empty{};
+    bool is_test_run = false;
 
-	config_file(const config_file &other) = default;
+    config_file() = default;
 
-	std::string read(std::string filename);
+    config_file(const config_file &other) = default;
+
+    std::string read(const std::experimental::filesystem::path& path);
+
+    int load_variables();
+
+    int load_templates();
+
+    int load_template(const std::string &ss12000type, const std::string &filename);
 
 public:
-	static config_file &instance() {
-		static config_file theconfigfile;
-		return theconfigfile;
-	}
+    static config_file &instance() {
+        static config_file theconfigfile;
+        return theconfigfile;
+    }
 
-	const char *file_name() {
-		return filename.c_str();
-	}
+    const char *file_name() {
+        return filename.c_str();
+    }
 
-	int load(const std::string &file_name);
+    int load(const std::string &file_name);
 
-	int load_variables(const std::string &file_name);
+    bool test_run() const {
+        return is_test_run;
+    }
 
-	int load_templates();
+    void clear();
 
-	int load_template(const std::string &ss12000type, const std::string &filename);
+    int insert(const std::string &variable, const std::string &value);
 
-	bool test_run() const {
-		return is_test_run;
-	}
+    const std::string &get(const std::string &variable, bool silent = false) const;
 
-	void clear();
+    std::vector<std::string> get_vector(const std::string &variable, bool silent = false) const;
 
-	int insert(const std::string &variable, const std::string &value);
+    std::vector<std::string> get_vector_sorted_unique(const std::string &variable, bool silent = false) const;
 
-	const std::string &get(const std::string &variable, bool silent = false) const;
+    std::pair<std::string, std::string> get_pair(const std::string &variable, bool silent = false) const;
 
-	std::vector<std::string> get_vector(const std::string &variable, bool silent = false) const;
+    bool get_bool(const std::string &attrib) const {
+        return ::toUpper(get(attrib, true)) == "TRUE";
+    }
 
-	std::vector<std::string> get_vector_sorted_unique(const std::string &variable, bool silent = false) const;
-
-	std::pair<std::string, std::string> get_pair(const std::string &variable, bool silent = false) const;
-
-	bool get_bool(const std::string &attrib) const {
-		return ::toUpper(get(attrib, true)) == "TRUE";
-	}
+    std::string get_path(const std::string& variable, bool silent = false) const;
 
     bool has(const std::string& variable) const;
 
-	std::string require(const std::string &variable) const;
+    std::string require(const std::string &variable) const;
+    
+    std::string require_path(const std::string &variable) const;
 
-	std::map<std::string, std::string>::const_iterator begin() const { return std::begin(variables); }
+    std::map<std::string, std::string>::const_iterator begin() const { return std::begin(variables); }
 
-	std::map<std::string, std::string>::const_iterator end() const { return std::end(variables); }
+    std::map<std::string, std::string>::const_iterator end() const { return std::end(variables); }
 
-	void add_variable(const std::string &attrib, const std::string &var) {
-		auto old = variables.find(attrib);
-		if (old == variables.end()) {
-			insert(attrib, var);
-		} else {
-			old->second += ", " + var;
-		}
-	}
-	void replace_variable(const std::string &attrib, const std::string &var) {
-		auto iter = variables.find(attrib);
-		if (iter != variables.end()) {
-			iter->second = var;
-		} else {
-			variables.emplace(std::make_pair(attrib, var));
-		}
-	}
-
-	void process_metadata();
+    void add_variable(const std::string &attrib, const std::string &var) {
+        auto old = variables.find(attrib);
+        if (old == variables.end()) {
+            insert(attrib, var);
+        } else {
+            old->second += ", " + var;
+        }
+    }
+    void replace_variable(const std::string &attrib, const std::string &var) {
+        auto iter = variables.find(attrib);
+        if (iter != variables.end()) {
+            iter->second = var;
+        } else {
+            variables.emplace(std::make_pair(attrib, var));
+        }
+    }
 };
 
 #endif
