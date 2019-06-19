@@ -1,12 +1,12 @@
 #include "metadata_parser.hpp"
 #include <boost/property_tree/json_parser.hpp>
 
-namespace FederatedTLSAuth {
+namespace federated_tls_auth {
 
-ServerEndPoint load_from_metadata(const std::string& metadata_path,
-                                  const std::string& entity_id,
-                                  const std::string& server_name) {
-    ServerEndPoint result;
+server_end_point load_from_metadata(const std::string& metadata_path,
+                                    const std::string& entity_id,
+                                    const std::string& server_name) {
+    server_end_point result;
     boost::property_tree::ptree root;
     boost::property_tree::read_json(metadata_path, root);
 
@@ -66,7 +66,7 @@ ServerEndPoint load_from_metadata(const std::string& metadata_path,
         auto name = cur.second.get<std::string>("name");
         auto value = cur.second.get<std::string>("value");
 
-        result.pins.push_back(Pin(name, value));
+        result.pins.push_back(pin(name, value));
     }
 
     if (result.pins.empty()) {
@@ -91,13 +91,13 @@ ServerEndPoint load_from_metadata(const std::string& metadata_path,
     }
 
     // Place the certificates in a temporary file
-    result.ca_store.reset(new CAStoreFile());
-    result.ca_store->write(all_certs.c_str(), all_certs.size());
+    result.castore.reset(new castore_file());
+    result.castore->write(all_certs.c_str(), all_certs.size());
 
     return result;
 }
 
-std::string concatenate_keys(const std::vector<Pin>& pins) {
+std::string concatenate_keys(const std::vector<pin>& pins) {
     std::string result = "";
     for (const auto& cur : pins) {
         if (!result.empty()) {

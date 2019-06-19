@@ -6,28 +6,28 @@
 #include <memory>
 #include "castore_file.hpp"
 
-namespace FederatedTLSAuth {
+namespace federated_tls_auth {
 
-struct Pin {
+struct pin {
     std::string name;
     std::string value;
 
-    Pin(const std::string& n, const std::string& v)
+    pin(const std::string& n, const std::string& v)
             : name(n), value(v) {}
 };
 
-struct ServerEndPoint {
+struct server_end_point {
     std::string url;
-    std::vector<Pin> pins;
-    std::shared_ptr<CAStoreFile> ca_store;
+    std::vector<pin> pins;
+    std::shared_ptr<castore_file> castore;
 };
 
-std::string concatenate_keys(const std::vector<Pin>& pins);
+std::string concatenate_keys(const std::vector<pin>& pins);
 
-ServerEndPoint load_from_metadata(const std::string& metadata_path,
-                                  const std::string& entity_id,
-                                  const std::string& server_name);
+server_end_point load_from_metadata(const std::string& metadata_path,
+                                    const std::string& entity_id,
+                                    const std::string& server_name);
 
-} // namespace FederatedTLSAuth
+} // namespace federated_tls_auth
 
 #endif // FEDTLSAUTH_METADATA_PARSER_HPP

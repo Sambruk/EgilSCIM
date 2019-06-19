@@ -56,7 +56,7 @@ private:
     std::string pinned_public_keys;
     std::string ca_bundle_path;
 
-    std::shared_ptr<FederatedTLSAuth::CAStoreFile> castore_file;
+    std::shared_ptr<federated_tls_auth::castore_file> castore_file;
 };
 
 #endif // EGILSCIM_SCIM_SERVER_INFO_HPP

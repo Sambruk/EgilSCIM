@@ -4,15 +4,15 @@
 #include <stddef.h>
 #include <string>
 
-namespace FederatedTLSAuth {
+namespace federated_tls_auth {
 
-class CAStoreFile {
+class castore_file {
 public:
     // Creates a temporary file we can write to
-    CAStoreFile();
+    castore_file();
 
     // Closes and deletes the file
-    ~CAStoreFile();
+    ~castore_file();
 
     /*
      * Write some data to the file.
@@ -30,6 +30,6 @@ private:
     std::string path;
 };
 
-} // namespace FederatedTLSAuth
+} // namespace federated_tls_auth
 
 #endif // FEDTLSAUTH_CASTORE_FILE_HPP

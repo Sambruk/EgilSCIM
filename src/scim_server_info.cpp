@@ -30,12 +30,12 @@ SCIMServerInfo::SCIMServerInfo(const config_file& config) {
 
         try {
             auto end_point =
-                FederatedTLSAuth::load_from_metadata(metadata_path, entity_id, server_name);
+                federated_tls_auth::load_from_metadata(metadata_path, entity_id, server_name);
 
             url = end_point.url;
-            pinned_public_keys = FederatedTLSAuth::concatenate_keys(end_point.pins);
-            ca_bundle_path = end_point.ca_store->get_path();
-            castore_file = end_point.ca_store;
+            pinned_public_keys = federated_tls_auth::concatenate_keys(end_point.pins);
+            ca_bundle_path = end_point.castore->get_path();
+            castore_file = end_point.castore;
         }
         catch (const std::runtime_error& e) {
             std::cerr << "Failed to load metadata from " << metadata_path << std::endl;

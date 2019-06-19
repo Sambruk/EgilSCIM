@@ -2,9 +2,9 @@
 #include <stdexcept>
 #include <unistd.h>
 
-namespace FederatedTLSAuth {
+namespace federated_tls_auth {
 
-CAStoreFile::CAStoreFile() {
+castore_file::castore_file() {
     char template_path[] = "/tmp/fedtlsauthcastoreXXXXXX";
     fd = mkstemp(template_path);
     if (fd < 0) {
@@ -14,7 +14,7 @@ CAStoreFile::CAStoreFile() {
     path = template_path;
 }
 
-CAStoreFile::~CAStoreFile() {
+castore_file::~castore_file() {
     if (fd >= 0) {
         // Make sure it gets deleted when closed
         unlink(path.c_str());
@@ -22,15 +22,15 @@ CAStoreFile::~CAStoreFile() {
     }
 }
 
-void CAStoreFile::write(const void* data, size_t count) {
+void castore_file::write(const void* data, size_t count) {
     ssize_t res = ::write(fd, data, count);
     if (res != static_cast<ssize_t>(count)) {
         throw std::runtime_error("Failed to write to temporary file");
     }
 }
 
-std::string CAStoreFile::get_path() const {
+std::string castore_file::get_path() const {
     return path;
 }
 
-} // namespace FederatedTLSAuth
+} // namespace federated_tls_auth
