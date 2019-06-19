@@ -6,6 +6,12 @@
 
 namespace federated_tls_auth {
 
+/*
+ * A temporary file used as CA store during authentication.
+ *
+ * The temporary file is automatically deleted when the
+ * castore_file object is deleted.
+ */
 class castore_file {
 public:
     // Creates a temporary file we can write to

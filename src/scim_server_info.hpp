@@ -20,7 +20,7 @@
 
 #include <string>
 #include <memory>
-#include "castore_file.hpp"
+#include "fedtlsauth/castore_file.hpp"
 
 class config_file;
 

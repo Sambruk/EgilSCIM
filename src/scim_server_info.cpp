@@ -17,7 +17,7 @@
 
 #include "scim_server_info.hpp"
 #include "config_file.hpp"
-#include "metadata_parser.hpp"
+#include "fedtlsauth/metadata_parser.hpp"
 #include <experimental/filesystem>
 
 using namespace std::experimental;
