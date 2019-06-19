@@ -35,7 +35,7 @@ SCIMServerInfo::SCIMServerInfo(const config_file& config) {
             url = end_point.url;
             pinned_public_keys = FederatedTLSAuth::concatenate_keys(end_point.pins);
             ca_bundle_path = end_point.ca_store->get_path();
-            tempfile = end_point.ca_store;
+            castore_file = end_point.ca_store;
         }
         catch (const std::runtime_error& e) {
             std::cerr << "Failed to load metadata from " << metadata_path << std::endl;

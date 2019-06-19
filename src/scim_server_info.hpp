@@ -20,7 +20,7 @@
 
 #include <string>
 #include <memory>
-#include "tempfile.hpp"
+#include "castore_file.hpp"
 
 class config_file;
 
@@ -56,7 +56,7 @@ private:
     std::string pinned_public_keys;
     std::string ca_bundle_path;
 
-    std::shared_ptr<Tempfile> tempfile;
+    std::shared_ptr<FederatedTLSAuth::CAStoreFile> castore_file;
 };
 
 #endif // EGILSCIM_SCIM_SERVER_INFO_HPP

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "tempfile.hpp"
+#include "castore_file.hpp"
 
 namespace FederatedTLSAuth {
 
@@ -19,7 +19,7 @@ struct Pin {
 struct ServerEndPoint {
     std::string url;
     std::vector<Pin> pins;
-    std::shared_ptr<Tempfile> ca_store;
+    std::shared_ptr<CAStoreFile> ca_store;
 };
 
 std::string concatenate_keys(const std::vector<Pin>& pins);
@@ -28,6 +28,6 @@ ServerEndPoint load_from_metadata(const std::string& metadata_path,
                                   const std::string& entity_id,
                                   const std::string& server_name);
 
-}
+} // namespace FederatedTLSAuth
 
 #endif // FEDTLSAUTH_METADATA_PARSER_HPP

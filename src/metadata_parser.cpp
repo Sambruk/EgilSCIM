@@ -91,7 +91,7 @@ ServerEndPoint load_from_metadata(const std::string& metadata_path,
     }
 
     // Place the certificates in a temporary file
-    result.ca_store.reset(new Tempfile());
+    result.ca_store.reset(new CAStoreFile());
     result.ca_store->write(all_certs.c_str(), all_certs.size());
 
     return result;
