@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <boost/program_options.hpp>
+#include <experimental/filesystem>
 #include <vector>
 #include <string>
 
@@ -38,12 +39,30 @@
 #include "scim_server_info.hpp"
 
 namespace po = boost::program_options;
+namespace filesystem = std::experimental::filesystem;
 
 void print_usage(const std::string& program_name,
                  const po::options_description& options) {
     std::cout << "Usage: " << program_name << " [OPTIONS] <config-file1> [config-file2...]\n\n";
     std::cout << options << "\n";
 }    
+
+/*
+ * A config file option which can also be specified
+ * on the command line.
+ */
+struct config_file_option {
+    std::string name;
+    std::string description;
+    bool path;
+
+    config_file_option(const std::string& n,
+                       const std::string& d,
+                       bool p)
+            : name(n),
+              description(d),
+              path(p) {}
+};
 
 int main(int argc, char *argv[]) {
     try {
@@ -54,6 +73,21 @@ int main(int argc, char *argv[]) {
         generic.add_options()
             ("help,h", "produce help message")
             ("version,v", "displays version of this program");
+
+        // Config file variables exposed as command line options
+        std::vector<config_file_option> common_vars =
+            { { "cert",             "client certificate",               true },
+              { "key",              "client private key",               true },
+              { "cache-file",       "cache file",                       true },
+              { "metadata-path",    "metadata file",                    true },
+              { "metadata-entity",  "entity in metadata to connect to", false },
+              { "metadata-server",  "name of server to connect to",     false }
+            };
+
+        for (const auto& var : common_vars) {
+            generic.add_options()
+                (var.name.c_str(), po::value<std::string>(), var.description.c_str());
+        }
 
         hidden.add_options()
             ("config-file", po::value<std::vector<std::string>>(), "config file");
@@ -109,6 +143,16 @@ int main(int argc, char *argv[]) {
             } catch (std::string& msg) {
                 std::cerr << msg << std::endl;
                 return EXIT_FAILURE;
+            }
+
+            for (auto& var : common_vars) {
+                if (vm.count(var.name)) {
+                    auto value{vm[var.name].as<std::string>()};
+                    if (var.path) {
+                        value = filesystem::absolute(value);
+                    }
+                    config.replace_variable(var.name, value);
+                }
             }
 
             if (err == -1) {
