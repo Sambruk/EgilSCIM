@@ -144,6 +144,11 @@ int main(int argc, char *argv[]) {
                 std::cerr << msg << std::endl;
                 return EXIT_FAILURE;
             }
+            
+            if (err == -1) {
+                print_error();
+                continue;
+            }
 
             for (auto& var : common_vars) {
                 if (vm.count(var.name)) {
@@ -153,11 +158,6 @@ int main(int argc, char *argv[]) {
                     }
                     config.replace_variable(var.name, value);
                 }
-            }
-
-            if (err == -1) {
-                print_error();
-                continue;
             }
 
             /** Get objects from LDAP catalogue */
