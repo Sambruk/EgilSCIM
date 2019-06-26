@@ -25,40 +25,7 @@
 #include <algorithm>
 
 #include "utils.hpp"
-#include "EgilSCIM_config.h"
 #include "simplescim_error_string.hpp"
-
-void print_usage(const std::string &app_name) {
-  std::cout << app_name
-	    << " Version "
-	    << EgilSCIM_VERSION_MAJOR << '.'
-	    << EgilSCIM_VERSION_MINOR << std::endl;
-  std::cout << "Usage: "
-	    << app_name
-	    << " supplier.conf supplier.conf" << std::endl;
-}
-
-int check_params(int argc, char **argv) {
-    if (argc < 2) {
-        print_usage(argv[0]);
-        return -1;
-    }
-    if (argc >= 2) {
-        std::string first_param = argv[1];
-        if (first_param == "-v" || first_param == "--version") {
-            print_usage(argv[0]);
-            return -1;
-        } else if (first_param.find("--test_server_url") != std::string::npos) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-std::string get_test_server_url(char **argv) {
-    std::string s = argv[1];
-    return s.substr(s.find('=') + 1);
-}
 
 std::vector<std::string> string_to_vector(const std::string &s) {
     if (s.empty())
