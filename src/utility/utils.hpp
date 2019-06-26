@@ -46,9 +46,6 @@ void print_error();
 
 void print_status(const char *config_file_name);
 
-int check_params(int argc, char **argv);
-std::string get_test_server_url(char **argv);
-
 class uuid_util
 {
   boost::uuids::random_generator generator;

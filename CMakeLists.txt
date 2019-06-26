@@ -3,6 +3,7 @@ project(EgilSCIMClient CXX)
 
 set(EgilSCIM_VERSION_MAJOR 2)
 set(EgilSCIM_VERSION_MINOR 0)
+set(EgilSCIM_VERSION_PATCH 0)
 
 configure_file(
         "${PROJECT_SOURCE_DIR}/src/utility/EgilSCIM_config.h.in"
@@ -29,7 +30,7 @@ else()
     include_directories(${CURL_INCLUDE_DIRS})
 endif ()
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
 if (NOT Boost_FOUND)
     message(FATAL_ERROR "please install boost")
 else ()
@@ -50,7 +51,7 @@ add_library (Egil ${SOURCES})
 add_executable(EgilSCIMClient ${srcroot}/main.cpp)
 add_executable(tests ${TEST_SOURCES})
 
-target_link_libraries(EgilSCIMClient LINK_PUBLIC Egil)
+target_link_libraries(EgilSCIMClient LINK_PUBLIC Egil Boost::program_options)
 target_link_libraries(tests LINK_PUBLIC Egil)
 
 install (TARGETS EgilSCIMClient DESTINATION bin)
