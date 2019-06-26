@@ -68,7 +68,7 @@ Run EgilSCIM with:
 
 ## Ubuntu 18.04
     sudo apt-get update && sudo apt-get upgrade
-    sudo apt install git cmake pkg-config  libldap2-dev libcurl4-openssl-dev libboost-dev libsqlite3-dev uuid-dev
+    sudo apt install git cmake pkg-config  libldap2-dev libcurl4-openssl-dev libboost-all-dev libsqlite3-dev uuid-dev
     git clone git://github.com/Sambruk/EgilSCIM.git
     cd EgilSCIM
     mkdir build
@@ -97,35 +97,6 @@ Run EgilSCIM with:
     cd build
     cmake ..
     make
-
-## openSUSE Leap 15.1
-
-There is no official package included in Leap 15.1 for the Boost library,
-other SUSE distributions may include Boost as an official package.
-   
-Fortunately it is easy to download from https://www.boost.org/ and there's
-no installation required.
-
-Assuming you've downloaded the EgilSCIM client to:
-
- * ```/home/user/EGIL/EgilSCIM```
- 
-and Boost to:
-
- * ```/home/user/EGIL/boost_1_70_0```
-
-you can install required dependencies and build the client with these
-commands:
-
-```
-sudo zypper install gcc-c++ cmake openldap2-devel libcurl-devel
-cd /home/user/EGIL/EgilSCIM/build
-BOOST_ROOT=/home/user/EGIL/boost_1_70_0/ cmake ..
-make
-```
-
-(you can also set BOOST_ROOT as a permanent environment variable and
-replace the cmake command above with simply ```cmake ..```)
 
 ## Windows
     Instructions not yet available. The source code does not currently compile on Windows.
