@@ -131,6 +131,14 @@ func runTest(testName, testPath string,
 	cacheFile.Close()
 
 	for _, step := range testSpec.Steps {
+
+		// Check if our listener has reported an error
+		select {
+		case err := <-serverErrorChannel:
+			log.Fatalf("Error while listening on socket: %v", err)
+		default:
+		}
+
 		// Apply scenario
 		for _, scen := range step.Scenario {
 			cmd := exec.Command(path.Join(testRoot, "scripts", "apply_scenario"), scen)
@@ -259,7 +267,7 @@ func main() {
 			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, endpoint, logger) })
 	}
 
-	var ch chan error
+	ch := make(chan error)
 	go listenAndServe(*certp, *keyp, ch)
 
 	if *testrootp == "" {
