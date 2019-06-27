@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+source "${BASH_SOURCE%/*}/ldap_vars"
+ldapsearch ${ldap_cred_opts[@]} -b 'dc=kommunen,dc=se' -o ldif-wrap=no -s children '(&(objectClass=*)(!(cn=admin))(!(cn=readonly)))' dn | grep '^dn: ' | awk '{print $2}' | ldapdelete -r -c ${ldap_cred_opts[@]} &> /dev/null
+# ldapdelete will return an error if we delete a child
+# after it's parent (note that we use both -r and -c to
+# get rid of everything).
+# Hence we don't worry about errors from ldapdelete.
+true

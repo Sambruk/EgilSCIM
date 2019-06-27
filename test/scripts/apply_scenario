@@ -1,6 +1,3 @@
 #!/usr/bin/env bash
-host=localhost
-port=388
-user=cn=admin,dc=kommunen,dc=se
-passwd=verysecret
-ls $1/*.ldif | xargs -L 1 ldapmodify -e relax -h $host -p $port -D $user -w $passwd -f
+source "${BASH_SOURCE%/*}/ldap_vars"
+ls $1/*.ldif | xargs -L 1 ldapmodify -e relax ${ldap_cred_opts[@]} -f

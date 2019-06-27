@@ -216,14 +216,16 @@ static int simplescim_scim_send(CURL* curl,
         }
     }
 
-    /* Set pinned public key */
-    errnum = curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, simplescim_scim_send_pinnedpubkey.c_str());
-
-    if (errnum != CURLE_OK) {
-        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_PINNEDPUBLICKEY)", errnum);
-        return -1;
+    if (auth) {
+        /* Set pinned public key */
+        errnum = curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, simplescim_scim_send_pinnedpubkey.c_str());
+        
+        if (errnum != CURLE_OK) {
+            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_PINNEDPUBLICKEY)", errnum);
+            return -1;
+        }
     }
-
+    
     static bool verbose_curl = config_file::instance().get_bool("verbose_logging");
     errnum = curl_easy_setopt(curl, CURLOPT_VERBOSE, verbose_curl);
 

@@ -17,3 +17,4 @@
 .idea/*
 cmake-build-debug/*
 
+test/test_server_go/EGILTestServer/EGILTestServer
