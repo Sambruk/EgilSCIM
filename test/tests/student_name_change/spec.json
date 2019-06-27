@@ -1,0 +1,12 @@
+{
+    "description": "A student changes name",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [ "scenarios/base/student_name_change" ],
+	  "requests": "update.txt"
+	}
+    ]
+}

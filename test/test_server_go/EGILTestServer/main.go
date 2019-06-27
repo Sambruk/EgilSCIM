@@ -116,7 +116,7 @@ func runTest(testName, testPath string,
 	err = cmd.Run()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to reset LDAP: %v", err)
 	}
 
 	fmt.Printf("Running test '%s' - %s\n", testName, testSpec.Description)
@@ -264,6 +264,8 @@ func main() {
 			logger = &testLogger
 		}
 		http.HandleFunc("/"+endpoint,
+			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, endpoint, logger) })
+		http.HandleFunc("/"+endpoint+"/",
 			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, endpoint, logger) })
 	}
 
