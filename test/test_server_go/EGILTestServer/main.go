@@ -263,10 +263,11 @@ func main() {
 		} else {
 			logger = &testLogger
 		}
+		ep := endpoint
 		http.HandleFunc("/"+endpoint,
-			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, endpoint, logger) })
+			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, ep, logger) })
 		http.HandleFunc("/"+endpoint+"/",
-			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, endpoint, logger) })
+			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, ep, logger) })
 	}
 
 	ch := make(chan error)

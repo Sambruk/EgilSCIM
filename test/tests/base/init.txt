@@ -1,5 +1,5 @@
 ---
-Activities POST
+Organisations POST
 
 {
 "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Organisation"],
@@ -8,7 +8,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+SchoolUnits POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnit"],
@@ -27,7 +27,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+SchoolUnits POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnit"],
@@ -46,7 +46,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -78,7 +78,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -110,7 +110,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -132,7 +132,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -154,7 +154,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+StudentGroups POST
 
 {
   "schemas": [
@@ -182,7 +182,7 @@ Activities POST
   ]
 }---
 ---
-Activities POST
+StudentGroups POST
 
 {
   "schemas": [
@@ -205,7 +205,7 @@ Activities POST
   ]
 }---
 ---
-Activities POST
+Employments POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
@@ -223,7 +223,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+Employments POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
@@ -241,7 +241,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+Employments POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
