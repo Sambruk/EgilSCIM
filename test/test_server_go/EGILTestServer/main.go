@@ -93,7 +93,12 @@ type TestSpec struct {
 	Steps       []TestStep
 }
 
-func runTest(testName, testPath string, testLogger *TestLogger, serverErrorChannel chan error) {
+func runTest(testName, testPath string,
+	testLogger *TestLogger,
+	serverErrorChannel chan error,
+	cert string,
+	key string) {
+
 	specRaw, err := ioutil.ReadFile(path.Join(testPath, "spec.json"))
 	if err != nil {
 		log.Fatal(err)
@@ -116,7 +121,7 @@ func runTest(testName, testPath string, testLogger *TestLogger, serverErrorChann
 
 	fmt.Printf("Running test '%s' - %s\n", testName, testSpec.Description)
 
-	cacheFile, err := ioutil.TempFile("", "egiltest*.cache")
+	cacheFile, err := ioutil.TempFile("", "egiltest.cache")
 
 	if err != nil {
 		log.Fatal(err)
@@ -129,7 +134,6 @@ func runTest(testName, testPath string, testLogger *TestLogger, serverErrorChann
 		// Apply scenario
 		for _, scen := range step.Scenario {
 			cmd := exec.Command(path.Join(testRoot, "scripts", "apply_scenario"), scen)
-			cmd.Dir = testRoot
 			err = cmd.Run()
 
 			if err != nil {
@@ -142,7 +146,10 @@ func runTest(testName, testPath string, testLogger *TestLogger, serverErrorChann
 		// Run EGIL client
 		cmd = exec.Command(egilBinaryPath,
 			path.Join(testRoot, testSpec.Config),
-			"--cache-file="+cacheFile.Name())
+			"--cache-file="+cacheFile.Name(),
+			"--cert="+cert,
+			"--key="+key,
+			"--scim-auth-WEAK=true")
 
 		//cmd.Stderr = os.Stderr
 		//cmd.Stdout = os.Stdout
@@ -189,7 +196,7 @@ func findSubDirectories(p string) []string {
 	return result
 }
 
-func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error) {
+func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, key string) {
 	testSuitePath := path.Join(testRoot, "tests")
 
 	// Restart LDAP server
@@ -222,7 +229,7 @@ func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error) {
 	testDirectories := findSubDirectories(testSuitePath)
 
 	for _, dir := range testDirectories {
-		runTest(dir, path.Join(testSuitePath, dir), testLogger, serverErrorChannel)
+		runTest(dir, path.Join(testSuitePath, dir), testLogger, serverErrorChannel, cert, key)
 	}
 }
 
@@ -259,6 +266,6 @@ func main() {
 		err := <-ch
 		log.Fatal(err)
 	} else {
-		runTestSuite(&testLogger, ch)
+		runTestSuite(&testLogger, ch, *certp, *keyp)
 	}
 }
