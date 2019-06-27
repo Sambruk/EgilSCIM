@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+source "${BASH_SOURCE%/*}/ldap_vars"
+ldapsearch ${ldap_cred_opts[@]} -b 'dc=kommunen,dc=se' -o ldif-wrap=no -s children '(&(objectClass=*)(!(cn=admin))(!(cn=readonly)))' dn | grep '^dn: ' | awk '{print $2}' | ldapdelete -r -c ${ldap_cred_opts[@]} > /dev/null 2>&1

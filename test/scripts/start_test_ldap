@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
+source "${BASH_SOURCE%/*}/ldap_vars"
 docker container stop kommunens-ldap > /dev/null 2>&1
 docker container rm kommunens-ldap > /dev/null 2>&1
 docker run --env LDAP_ORGANISATION="Kommunen" \
        --env LDAP_DOMAIN="kommunen.se" \
-       --env LDAP_ADMIN_PASSWORD="verysecret" \
+       --env LDAP_ADMIN_PASSWORD=$adminpasswd \
        --env LDAP_TLS=false \
        --env LDAP_READONLY_USER=true \
        --env LDAP_READONLY_USER_USERNAME=readonly \
        --env LDAP_READONLY_PASSWORD=readonly \
-       -p 388:389 \
+       -p $port:389 \
        --name kommunens-ldap \
        --detach \
        osixia/openldap:1.2.4

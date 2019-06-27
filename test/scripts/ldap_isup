@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+source "${BASH_SOURCE%/*}/ldap_vars"
+ldapwhoami ${ldap_cred_opts[@]} > /dev/null
