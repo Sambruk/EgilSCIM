@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+testroot="${BASH_SOURCE%/*}/.."
+
+cert=$(mktemp /tmp/testcert.XXXXXX)
+key=$(mktemp /tmp/testkey.XXXXXX)
+
+openssl req -x509 -newkey rsa:4096 -keyout $key -out $cert -days 1 -nodes -subj '/CN=localhost' &> /dev/null
+
+${testroot}/test_server_go/EGILTestServer/EGILTestServer \
+  -cert $cert \
+  -key $key \
+  -testroot $testroot \
+  -binary ${testroot}/../build/EgilSCIMClient
+
+rm $cert
+rm $key
