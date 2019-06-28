@@ -20,7 +20,7 @@
 
 #include <string>
 #include <memory>
-#include "tempfile.hpp"
+#include "fedtlsauth/castore_file.hpp"
 
 class config_file;
 
@@ -51,16 +51,12 @@ public:
     // Full path to CA bundle file
     std::string get_ca_bundle_path() const;
 
-private:
-    void load_from_metadata(const std::string& metadata_path,
-                            const std::string& entity_id,
-                            const std::string& server_name);
-    
+private:    
     std::string url;
     std::string pinned_public_keys;
     std::string ca_bundle_path;
 
-    std::unique_ptr<Tempfile> tempfile;
+    std::shared_ptr<federated_tls_auth::castore_file> castore_file;
 };
 
 #endif // EGILSCIM_SCIM_SERVER_INFO_HPP
