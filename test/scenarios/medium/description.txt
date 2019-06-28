@@ -1,0 +1,15 @@
+A medium sized generated scenario using the same model schema as in
+the base scenario.
+
+There are:
+
+ 2 school units.
+ 100 groups (50 per school unit)
+ 1000 students (500 per school unit)
+ 100 teachers (50 per school unit)
+
+The number of members in each group varies, in total there are 1000
+membership relations per school unit.
+
+Some teachers or students are not in any group and will thus not be sent
+to the SCIM server.

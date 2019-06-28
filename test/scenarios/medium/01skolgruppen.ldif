@@ -1,0 +1,6 @@
+dn: ou=skolgruppen,dc=kommunen,dc=se
+changetype: add
+objectClass: organizationalUnit
+objectClass: top
+ou: skolgruppen
+entryUUID: b7cbd8b7-96a6-425f-b14c-d4564d989d84
