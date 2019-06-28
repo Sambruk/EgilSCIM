@@ -1,0 +1,1 @@
+This is the same as the medium scenario, but with 20 school units.
