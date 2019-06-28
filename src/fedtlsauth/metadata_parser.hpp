@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2019 Föreningen Sambruk
+ *
+ * You should have received a copy of the MIT license along with this project.
+ * If not, see <https://opensource.org/licenses/MIT>.
+ */
+
 #ifndef FEDTLSAUTH_METADATA_PARSER_HPP
 #define FEDTLSAUTH_METADATA_PARSER_HPP
 

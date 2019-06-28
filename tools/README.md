@@ -11,17 +11,17 @@ The script fetch_metadata.py will both download and verify the authentication
 metadata against a key. The decoded metadata can then be used by the EGIL
 client in order to connect to and authenticate a server.
 
-Before running the script you need to make sure that Python 3 and the jwcrypto
-package is installed.
+Before running the script you need to make sure that Python 3 and the 
+python-jose package is installed.
 
 For instance, to install on Debian these commands can be used:
 
 ```
 sudo apt-get install python3 python3-pip
-sudo pip3 install jwcrypto
+sudo pip3 install python-jose[cryptography]
 ```
 
-(If you don't wish to install jwcrypto globally, or don't have root access,
+(If you don't wish to install python-jose globally, or don't have root access,
 you can use ```virtualenv``` or ```pip3 --user```)
 
 To download and verify metadata:
