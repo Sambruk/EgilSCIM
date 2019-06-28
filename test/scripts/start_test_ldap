@@ -1,5 +1,20 @@
 #!/usr/bin/env bash
 source "${BASH_SOURCE%/*}/ldap_vars"
+
+bootstrap=$(mktemp /tmp/boostrap.ldif.XXXXXX)
+
+cat > ${bootstrap} <<EOF
+dn: cn=config
+changetype: modify
+replace: olcSizeLimit
+olcSizeLimit: 2000
+
+dn: olcDatabase={-1}frontend,cn=config
+changetype: modify
+replace: olcSizeLimit
+olcSizeLimit: 2000
+EOF
+
 docker container stop kommunens-ldap > /dev/null 2>&1
 docker container rm kommunens-ldap > /dev/null 2>&1
 docker run --env LDAP_ORGANISATION="Kommunen" \
@@ -12,4 +27,8 @@ docker run --env LDAP_ORGANISATION="Kommunen" \
        -p $port:389 \
        --name kommunens-ldap \
        --detach \
-       osixia/openldap:1.2.4
+       --volume ${bootstrap}:/container/service/slapd/assets/config/bootstrap/ldif/50-bootstrap.ldif \
+       osixia/openldap:1.2.4 \
+       --copy-service
+
+rm ${bootstrap}
