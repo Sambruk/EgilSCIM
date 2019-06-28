@@ -13,3 +13,5 @@
   - Tooling for fetching/formatting/verifying metadata (#18)
   - Relative paths in config files (#13)
   - Proper handling of command line arguments (#32)
+  - Framework for automated system testing (#12)
+
