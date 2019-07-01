@@ -26,6 +26,7 @@
 #include <string>
 #include <optional>
 #include <curl/curl.h>
+#include <fstream>
 
 class scim_sender {
 public:
@@ -115,6 +116,8 @@ public:
 
 private:
     CURL *curl;
+
+    std::ofstream http_log;
 };
 
 #endif

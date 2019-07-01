@@ -14,4 +14,4 @@
   - Relative paths in config files (#13)
   - Proper handling of command line arguments (#32)
   - Framework for automated system testing (#12)
-
+  - Option for logging all HTTP traffic to/from the client (#7)
