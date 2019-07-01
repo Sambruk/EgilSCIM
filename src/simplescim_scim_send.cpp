@@ -146,16 +146,10 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
     }
 }
 
-void send_log(const std::string &s) {
-    static bool verbose = config_file::instance().get_bool("verbose_logging");
-    if (verbose) {
-        std::cout << s << std::endl;
-    }
-}
-
 static int simplescim_scim_send(CURL* curl,
                                 const std::string &url, const std::string &resource,
-                                const std::string &method, char **response_data, long *response_code) {
+                                const std::string &method, char **response_data, long *response_code,
+                                std::ofstream& http_log) {
 
     CURLcode errnum;
     struct curl_slist *chunk;
@@ -199,7 +193,6 @@ static int simplescim_scim_send(CURL* curl,
     /* Set private key */
 
     errnum = curl_easy_setopt(curl, CURLOPT_SSLKEY, simplescim_scim_send_key.c_str());
-//    send_log(simplescim_scim_send_key);
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_SSLKEY)", errnum);
@@ -338,6 +331,16 @@ static int simplescim_scim_send(CURL* curl,
         return -1;
     }
 
+    if (http_log) {
+        http_log << ">>>>>>>>>>\n";
+        http_log << method << " to " << url;
+        if (!resource.empty()) {
+            http_log << " with body:\n" << resource;
+        }
+        http_log << "\n";
+        http_log << ">>>>>>>>>>\n";
+    }
+    
     /* Get response code */
 
     errnum = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
@@ -360,6 +363,16 @@ static int simplescim_scim_send(CURL* curl,
     }
 
     *response_code = http_code;
+
+    if (http_log) {
+        http_log << "<<<<<<<<<<\n";
+        http_log << "Got reply with HTTP code " << http_code;
+        if (response_data != nullptr) {
+            http_log << " and body:\n" << http_response.data;
+        }
+        http_log << "\n";
+        http_log << "<<<<<<<<<<\n";       
+    }    
 
     curl_slist_free_all(chunk);
 
@@ -406,6 +419,11 @@ int scim_sender::send_init(std::string cert,
     simplescim_scim_send_pinnedpubkey = pinnedpubkey;
     simplescim_scim_send_ca_bundle_path = ca_bundle_path;
 
+    auto http_log_file = config_file::instance().get_path("http-log-file", true);
+    if (http_log_file != "" && !http_log.is_open()) {
+        http_log.open(http_log_file, std::ios_base::out | std::ios_base::trunc);
+    }
+
     return 0;
 }
 
@@ -441,7 +459,7 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
     long response_code;
     int err;
 
-    err = simplescim_scim_send(curl, url, body, "POST", &response_data, &response_code);
+    err = simplescim_scim_send(curl, url, body, "POST", &response_data, &response_code, http_log);
 
     std::string res;
     if (err == -1) {
@@ -509,7 +527,7 @@ scim_sender::send_update(const std::string &url, const std::string &body) {
     long response_code;
     int err;
 
-    err = simplescim_scim_send(curl, url, body, "PUT", &response_data, &response_code);
+    err = simplescim_scim_send(curl, url, body, "PUT", &response_data, &response_code, http_log);
 
     if (err == -1) {
         free(response_data);
@@ -552,7 +570,7 @@ long scim_sender::send_delete(const std::string &url) {
     long response_code;
     int err;
 
-    err = simplescim_scim_send(curl, url, "", "DELETE", nullptr, &response_code);
+    err = simplescim_scim_send(curl, url, "", "DELETE", nullptr, &response_code, http_log);
 
     if (err == -1) {
         return -1;
