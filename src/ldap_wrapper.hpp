@@ -24,6 +24,7 @@
 #define EGILSCIMCLIENT_LDAP_WRAPPER_HPP
 
 #include "model/object_list.hpp"
+#include "utility/indented_logger.hpp"
 
 class ldap_wrapper {
   struct Impl;
@@ -44,7 +45,9 @@ public:
   /**
    * Performs the LDAP search operation.
    */
-  bool search(const std::string &type, const std::pair<std::string, std::string> &filters = {"", ""});
+  bool search(const std::string &type,
+              indented_logger& load_logger,
+              const std::pair<std::string, std::string> &filters = {"", ""});
 
   /**
    * Begins iteration over LDAP results from a search.

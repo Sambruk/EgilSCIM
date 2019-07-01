@@ -25,6 +25,7 @@
 
 #include <memory>
 #include "ldap_wrapper.hpp"
+#include "utility/indented_logger.hpp"
 
 class object_list;
 
@@ -35,7 +36,12 @@ class object_list;
  * simplescim_error_string is set to an appropriate error
  * message.
  */
-std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap, const std::string &type);
-void load_related(const std::string &type, const std::shared_ptr<object_list> &objects);
+std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap,
+                                      const std::string &type,
+                                      indented_logger& load_logger);
+
+void load_related(const std::string &type,
+                  const std::shared_ptr<object_list> &objects,
+                  indented_logger& load_logger);
 
 #endif

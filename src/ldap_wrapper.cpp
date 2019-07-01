@@ -151,7 +151,9 @@ struct ldap_wrapper::Impl {
         return true;
     }
 
-    bool search(const std::string &intype, const std::pair<std::string, std::string> &filters) {
+    bool search(const std::string &intype,
+                indented_logger& load_logger,
+                const std::pair<std::string, std::string> &filters) {
         if (!connection::instance().initialised)
             return false;
 
@@ -218,6 +220,10 @@ struct ldap_wrapper::Impl {
             return false;
         }
 
+        load_logger.log("Searching for " + type +
+                        ", base: " + filter_val.first +
+                        ", filter: " + filter_val.second);
+        
         /** Search */
         err = ldap_search_ext_s(connection::instance().simplescim_ldap_ld, filter_val.first.c_str(), scope_val,
                                 filter_val.second.c_str(),
@@ -347,8 +353,10 @@ bool ldap_wrapper::valid() {
     return connection::instance().initialised;
 }
 
-bool ldap_wrapper::search(const std::string &intype, const std::pair<std::string, std::string> &filters) {
-    return impl->search(intype, filters);
+bool ldap_wrapper::search(const std::string &intype,
+                          indented_logger& load_logger,
+                          const std::pair<std::string, std::string> &filters) {
+    return impl->search(intype, load_logger, filters);
 }
 
 std::shared_ptr<base_object> ldap_wrapper::first_object() {
