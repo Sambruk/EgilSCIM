@@ -33,8 +33,6 @@
 #include "ldap_wrapper.hpp"
 
 
-void load_related(const std::string &type, const std::shared_ptr<object_list> &objects);
-
 std::string
 store_relation(base_object &generated_object,
                const std::pair<std::string, std::string> &part_type,
@@ -47,35 +45,42 @@ store_relation(base_object &generated_object,
  * simplescim_error_string is set to an appropriate
  * error message.
  */
-std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap, const std::string& type) {
+std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
+                                                 const std::string& type,
+                                                 indented_logger& load_logger) {
   std::shared_ptr<object_list> objects;
   std::string uid;
 
   objects = std::make_shared<object_list>();
   std::shared_ptr<base_object> obj = ldap.first_object();
-  while (obj != nullptr) {
-    uid = obj->get_uid();
+  {
+      indented_logger::indenter indenter(load_logger);
+      while (obj != nullptr) {
+          uid = obj->get_uid();
 
-    if (!uid.empty()) {
-      objects->add_object(uid, obj);
-    }
+          if (!uid.empty()) {
+              objects->add_object(uid, obj);
 
-    obj = ldap.next_object();
+              load_logger.log("Found " + type + " " + uid);
+          }
+
+          obj = ldap.next_object();
+      }
   }
-  load_related(type, objects);
+  load_related(type, objects, load_logger);
   return objects;
 }  
 
 
-std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, const pair_map &queries) {
+std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, const pair_map &queries, indented_logger& load_logger) {
     data_server &server = data_server::instance();
 
     std::shared_ptr<object_list> list = server.get_by_type(type);
     if (!queries.empty()) {
         auto q = queries.find(type);
         ldap_wrapper ldap;
-        if (ldap.search(type, q->second))
-            list = ldap_to_object_list(ldap, type);
+        if (ldap.search(type, load_logger, q->second))
+            list = ldap_to_object_list(ldap, type, load_logger);
         server.add(type, list);
     }
     return list;
@@ -99,7 +104,8 @@ std::string create_relational_id(const string_pair &index_fields) {
  * @param type the type to generate
  * @return the list
  */
-std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type) {
+std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type,
+                                                         indented_logger& load_logger) {
     config_file &conf = config_file::instance();
 
     auto generated = std::make_shared<object_list>();
@@ -134,8 +140,8 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
                   << std::endl;
         return nullptr;
     }
-    auto student_groups = get_object_list_by_type(master_type, pair_map());
-    auto employments = get_object_list_by_type(related_type.first, pair_map());
+    auto student_groups = get_object_list_by_type(master_type, pair_map(), load_logger);
+    auto employments = get_object_list_by_type(related_type.first, pair_map(), load_logger);
 
     for (const auto &student_group : *student_groups) {
         base_object generated_object(type);
@@ -184,7 +190,8 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
  * @param type the type to generate
  * @return the list
  */
-std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &type) {
+std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &type,
+                                                           indented_logger& load_logger) {
     config_file &conf = config_file::instance();
     data_server &server = data_server::instance();
     std::set<std::string> missing_ids;
@@ -198,7 +205,7 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
     auto related_list = server.get_by_type(part_type.first);
 
     if (!related_list || related_list->empty())
-        related_list = get_object_list_by_type(part_type.first, queries);
+        related_list = get_object_list_by_type(part_type.first, queries, load_logger);
 
     string_pair related_id = conf.get_pair(type + "-remote-relation-id");
 
@@ -304,7 +311,9 @@ std::string store_relation(base_object &generated_object,
  * @param type
  * @param objects
 */
-void load_related(const std::string &type, const std::shared_ptr<object_list> &objects) {
+void load_related(const std::string &type,
+                  const std::shared_ptr<object_list> &objects,
+                  indented_logger& load_logger) {
     config_file &conf = config_file::instance();
     data_server &server = data_server::instance();
 
@@ -318,8 +327,12 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 
     ldap_wrapper ldap;
 
+    indented_logger::indenter indenter(load_logger);
+    
     for (auto &&main_object: *objects) {
         for (auto &&relation: relations) {
+            load_logger.log("Finding " + relation.type + " objects for " + type + " (" + main_object.second->get_uid() + ")");
+            indented_logger::indenter indenter(load_logger);
             if (relation.method == "object") {
                 auto relation_source = data_server::instance().get_by_type(relation.type);
                 if (relation_source) {
@@ -350,8 +363,8 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
 
                         auto filter = relation.get_ldap_filter(value);
 
-                        if (ldap.search(relation.type, filter)) {
-                            auto response = ldap_to_object_list(ldap, relation.type);
+                        if (ldap.search(relation.type, load_logger, filter)) {
+                            auto response = ldap_to_object_list(ldap, relation.type, load_logger);
                             if (response->size() == 1)
                                 remote = response->begin()->second;
                             else if (response->size() > 1) {
@@ -392,18 +405,19 @@ void load_related(const std::string &type, const std::shared_ptr<object_list> &o
     }
 }
 
-std::shared_ptr<object_list> ldap_get_generated(const std::string &type) {
+std::shared_ptr<object_list> ldap_get_generated(const std::string &type,
+                                                indented_logger& load_logger) {
     std::shared_ptr<object_list> list;
     if (type == "Activity")
-        list = ldap_get_generated_activity(type);
+        list = ldap_get_generated_activity(type, load_logger);
     else if (type == "Employment")
-        list = ldap_get_generated_employment(type);
+        list = ldap_get_generated_employment(type, load_logger);
     else {
         std::cerr << type << " can't be generated" << std::endl;
         return std::make_shared<object_list>();
     }
     if (list && !list->empty())
-        load_related(type, list);
+        load_related(type, list, load_logger);
     return list;
 }
 
@@ -414,15 +428,21 @@ std::shared_ptr<object_list> ldap_get_generated(const std::string &type) {
  * simplescim_error_string is set to an appropriate error
  * message.
  */
-std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap, const std::string &type) {
+std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap,
+                                      const std::string &type,
+                                      indented_logger& load_logger) {
+
+    load_logger.log(std::string("Loading entries for type ") + type);
+    indented_logger::indenter indenter(load_logger);
+    
     config_file &conf = config_file::instance();
 
     std::shared_ptr<object_list> objects;
     if (conf.get_bool(type + "-is-generated")) {
-        objects = ldap_get_generated(type);
+        objects = ldap_get_generated(type, load_logger);
     } else {
-        if (ldap.search(type)) {
-            objects = ldap_to_object_list(ldap, type);
+        if (ldap.search(type, load_logger)) {
+            objects = ldap_to_object_list(ldap, type, load_logger);
         }
     }
 

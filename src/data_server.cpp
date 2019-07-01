@@ -50,10 +50,16 @@ bool data_server::load() {
 
         } ldap;
         if (ldap.get().valid()) {
+
+            auto ldap_log_file = config_file::instance().get_path("ldap-log-file", true);
+            if (ldap_log_file != "" && !load_logger.is_open()) {
+                load_logger.open(ldap_log_file.c_str());
+            }
+            
             for (const auto &type : types) {
 //			std::string sourceType = config.get(type + "-scim-data-source");
 //			if (sourceType == "ldap") {
-                std::shared_ptr<object_list> l = ldap_get(ldap.get(), type);
+                std::shared_ptr<object_list> l = ldap_get(ldap.get(), type, load_logger);
                 if (l)
                     add(type, l);
                 else
