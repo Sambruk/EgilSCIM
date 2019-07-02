@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
 source "${BASH_SOURCE%/*}/ldap_vars"
-ls $1/*.ldif | xargs -L 1 ldapmodify -e relax ${ldap_cred_opts[@]} -f
+for f in $(ls $1/*.ldif)
+do
+    cat $f | docker exec --interactive $container ldapmodify -e relax -D $adminuser -w $adminpasswd
+done
+

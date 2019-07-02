@@ -15,8 +15,8 @@ replace: olcSizeLimit
 olcSizeLimit: 2000
 EOF
 
-docker container stop kommunens-ldap > /dev/null 2>&1
-docker container rm kommunens-ldap > /dev/null 2>&1
+docker container stop $container > /dev/null 2>&1
+docker container rm $container > /dev/null 2>&1
 docker run --env LDAP_ORGANISATION="Kommunen" \
        --env LDAP_DOMAIN="kommunen.se" \
        --env LDAP_ADMIN_PASSWORD=$adminpasswd \
@@ -25,7 +25,7 @@ docker run --env LDAP_ORGANISATION="Kommunen" \
        --env LDAP_READONLY_USER_USERNAME=readonly \
        --env LDAP_READONLY_PASSWORD=readonly \
        -p $port:389 \
-       --name kommunens-ldap \
+       --name $container \
        --detach \
        --volume ${bootstrap}:/container/service/slapd/assets/config/bootstrap/ldif/50-bootstrap.ldif \
        osixia/openldap:1.2.4 \

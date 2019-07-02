@@ -3,4 +3,4 @@ host=localhost
 port=388
 adminuser=cn=admin,dc=kommunen,dc=se
 adminpasswd=verysecret
-ldap_cred_opts=(-h $host -p $port -D $adminuser -w $adminpasswd)
+container=kommunens-ldap
