@@ -319,7 +319,7 @@ void load_related(const std::string &type,
 
     relations_vector relations =
             json_data_file::json_to_ldap_remote_relations(
-                    conf.get(type + "-remote-relations", true));
+                conf.get(type + "-remote-relations", true), type);
     if (relations.empty())
         return;
 

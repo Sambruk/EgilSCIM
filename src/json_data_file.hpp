@@ -44,10 +44,10 @@ struct relations {
 };
 
 struct data_cache {
-	std::string type;
-	std::string index_attribute;
-	std::string ldap_base;
-	std::string filter;
+    std::string type;
+    std::string index_attribute;
+    std::string ldap_base;
+    std::string filter;
 
 };
 using pair_map = std::map<std::string, std::pair<std::string, std::string>>;
@@ -55,24 +55,24 @@ using relations_vector = std::vector<relations>;
 using data_cache_vector = std::vector<data_cache> ;
 
 class json_data_file {
-	std::string filename;
-	std::stringstream json;
-	static std::map<std::string, pair_map> json_cache;
+    std::string filename;
+    std::stringstream json;
+    static std::map<std::string, pair_map> json_cache;
 
 public:
 
-	std::shared_ptr<object_list> get_users();
+    std::shared_ptr<object_list> get_users();
 
-	void get_users(std::shared_ptr<object_list> list);
+    void get_users(std::shared_ptr<object_list> list);
 
-	static pair_map
-	json_to_ldap_query(const std::string &json) noexcept;
+    static pair_map
+    json_to_ldap_query(const std::string &json) noexcept;
 
-	static data_cache_vector
-	json_to_ldap_cache_requests(const std::string &json) noexcept;
+    static data_cache_vector
+    json_to_ldap_cache_requests(const std::string &json) noexcept;
 
-	static relations_vector
-	json_to_ldap_remote_relations(const std::string &json) noexcept;
+    static relations_vector
+    json_to_ldap_remote_relations(const std::string& json, const std::string& type) noexcept;
 
 };
 
