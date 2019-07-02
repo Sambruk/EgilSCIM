@@ -257,6 +257,17 @@ static int simplescim_scim_send(CURL* curl,
         }
     }
 
+    /* Set empty body for DELETE operations */
+    
+    if (method == "DELETE") {
+        errnum = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "");
+
+        if (errnum != CURLE_OK) {
+            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_POSTFIELDS)", errnum);
+            return -1;
+        }        
+    }
+
     /* Set HTTP headers for SCIM */
 
     chunk = simplescim_scim_send_create_slist(method);
