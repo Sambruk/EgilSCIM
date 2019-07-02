@@ -1,6 +1,6 @@
 ## Releases
 
-### Unreleased
+### v2.1.0 (2019-07-02)
 #### Bugfixes
   - Expansion of ${value} in LDAP relations (#23)
   - Better handling of UUIDs (#26)
