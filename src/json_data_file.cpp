@@ -98,10 +98,10 @@ relations_vector json_data_file::json_to_ldap_remote_relations(const std::string
 			values.emplace_back(std::move(r));
 		}
 	} catch (const boost::exception &ex) {
-		std::cerr << "Failed to read json\n" << json << std::endl <<
+		std::cerr << "Failed to read JSON\n" << json << std::endl <<
 		          boost::diagnostic_information(ex);
 	} catch (...) {
-		std::cout << "Failed to read json\n" << json << std::endl;
+		std::cerr << "Failed to read JSON\n" << json << std::endl;
 	}
 
 	return values;
@@ -127,10 +127,10 @@ data_cache_vector json_data_file::json_to_ldap_cache_requests(const std::string 
 			values.emplace_back(std::move(r));
 		}
 	} catch (const boost::exception &ex) {
-		std::cerr << "Failed to read json\n" << json << std::endl <<
+		std::cerr << "Failed to read JSON\n" << json << std::endl <<
 		          boost::diagnostic_information(ex);
 	} catch (...) {
-		std::cout << "Failed to read json\n" << json << std::endl;
+		std::cerr << "Failed to read JSON\n" << json << std::endl;
 	}
 
 	return values;
@@ -164,7 +164,7 @@ pair_map json_data_file::json_to_ldap_query(const std::string &type) noexcept {
 		std::cerr << "Failed to read json\n" << filter_json << std::endl <<
 		          boost::diagnostic_information(ex);
 	} catch (...) {
-		std::cout << "Failed to read json\n" << filter_json << std::endl;
+		std::cerr << "Failed to read JSON\n" << filter_json << std::endl;
 	}
 	json_cache.emplace(std::make_pair(type, values));
 	return values;

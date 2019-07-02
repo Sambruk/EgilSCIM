@@ -269,7 +269,7 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
     std::string urlified = unifyurl(object.get_uid());
     std::string endpoint = config_file::instance().get(object.getSS12000type() + "-scim-url-endpoint");
     url += '/' + endpoint + '/' + urlified;
-//	std::cout << url  << std::endl;
+
     /* Send SCIM delete request */
     int err = scim_sender::instance().send_delete(url);
 
@@ -304,7 +304,7 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
     std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
     url += '/' + endpoint;
-//	std::cout << url << " " << copied_user.get_uid() << std::endl;
+
     /* Send SCIM create request */
     std::optional<std::string> response_json = scim_sender::instance().send_create(url, parsed_json);
     std::string uid = copied_user.get_uid();

@@ -57,17 +57,16 @@ bool data_server::load() {
             }
             
             for (const auto &type : types) {
-//			std::string sourceType = config.get(type + "-scim-data-source");
-//			if (sourceType == "ldap") {
                 std::shared_ptr<object_list> l = ldap_get(ldap.get(), type, load_logger);
-                if (l)
+                if (l) {
                     add(type, l);
-                else
-                    std::cout << type << " returned nullptr" << std::endl;
-//			}
+                }
+                else {
+                    std::cerr << "ldap_get for " << type << " returned nullptr" << std::endl;
+                }
             }
         } else {
-            std::cout << "can't connect to ldap" << std::endl;
+            std::cerr << "can't connect to ldap" << std::endl;
         }
     } catch (std::string msg) {
         return false;
