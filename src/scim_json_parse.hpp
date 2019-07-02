@@ -24,21 +24,16 @@
 #define SIMPLESCIM_SCIM_JSON_H
 
 #include <string>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/exception/diagnostic_information.hpp>
-#include <boost/exception_ptr.hpp>
-
 
 class base_object;
 
 /**
  * Parses the input JSON template string 'json' and
- * replaces specified values with values from 'user'.
+ * replaces specified values with values from 'object'.
  * On success, the parsed output JSON string is returned.
- * On error, NULL is returned and simplescim_error_string
+ * On error, "" is returned and simplescim_error_string
  * is set to an appropriate error message.
  */
-std::string scim_json_parse(const std::string &json, const base_object &user);
+std::string scim_json_parse(const std::string &json, const base_object &object);
 
 #endif

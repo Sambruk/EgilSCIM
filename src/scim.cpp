@@ -22,6 +22,8 @@
 
 #include <iostream>
 #include <algorithm>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include "scim.hpp"
 #include "utility/simplescim_error_string.hpp"
@@ -235,9 +237,9 @@ bool ScimActions::verify_json(const std::string & json, const std::string &type)
     try {
         pt::read_json(os, root);
         verified_types.emplace_back(type);
-    } catch (const boost::exception &ex) {
-        std::cout << json << std::endl;
-        std::cerr << "Failed to parse json " << boost::diagnostic_information(ex);
+    } catch (const pt::ptree_error& e) {
+        std::cerr << "Failed to parse JSON for " << type << std::endl;
+        simplescim_error_string_set_message(e.what());
         return false;
     }
     return true;
@@ -290,6 +292,11 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
 
     std::string template_json = actions.conf.get(type + "-scim-json-template");
     std::string parsed_json = scim_json_parse(template_json, copied_user);
+    
+    if (parsed_json == "") {
+        std::cerr << "Failed to parse JSON template for " << type << std::endl;
+        return -1;
+    }
 
     if (!actions.verify_json(parsed_json, type))
         return -1;
@@ -329,6 +336,11 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
     std::string template_json = config_file::instance().get(create_var);
     std::string parsed_json = scim_json_parse(template_json, copied_user);
 
+    if (parsed_json == "") {
+        std::cerr << "Failed to parse JSON template for " << type << std::endl;
+        return -1;
+    }
+    
     if (!actions.verify_json(parsed_json, type)) {
         return -1;
     }

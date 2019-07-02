@@ -30,7 +30,6 @@
 #include <iterator>
 
 #include "utility/simplescim_error_string.hpp"
-//#include "model/value_list.hpp"
 #include "model/base_object.hpp"
 #include "utility/utils.hpp"
 
@@ -873,17 +872,10 @@ void scim_json_parser::progress() {
     ++j_iter;
 }
 
-/**
- * Parses the input JSON template string 'json' and
- * replaces specified values with values from 'user'.
- * On success, the parsed output JSON string is returned.
- * On error, nullptr is returned and simplescim_error_string
- * is set to an appropriate error message.
- */
-std::string scim_json_parse(const std::string &json, const base_object &user) {
+std::string scim_json_parse(const std::string &json, const base_object &object) {
     int err;
 
-    scim_json_parser parser(json, user);
+    scim_json_parser parser(json, object);
     err = parser.parse();
 
 
