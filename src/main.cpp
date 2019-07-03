@@ -162,6 +162,12 @@ int main(int argc, char *argv[]) {
                 }
             }
 
+            if (config.get_bool("scim-auth-WEAK")) {
+                std::cout << "WARNING, running without authentication, this "
+                    "will either fail or the server might not be who you think it is. "
+                    "Use only for testing locally" << std::endl;
+            }
+
             /** Get objects from LDAP catalogue */
             data_server &server = data_server::instance();
             try {

@@ -170,9 +170,6 @@ static int simplescim_scim_send(CURL* curl,
     if (auth) {
         errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     } else {
-        std::cerr << "WARNING, running with out authentication, this "
-                     "will either fail or the server might not be who you think it is. "
-                     "Use only for testing locally" << std::endl;
         errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
         errnum = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     }
