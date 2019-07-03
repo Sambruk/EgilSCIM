@@ -15,3 +15,11 @@ be useful to debug HTTP connection or authentication problems.
 You can get all HTTP traffic to and from the client logged to a text file
 by setting the variable `http-log-file` to a file path. If the file exists
 it will be overwritten when the client runs.
+
+# LDAP log file
+
+You can log the LDAP load process to a text file by setting the variable
+`ldap-log-file` to a file path. If the file exists it will be overwritten when
+the client runs. It will show you the order in which LDAP queries are performed,
+what the base and filter is for each query, and show the recursive process by
+indenting the log file according to what is currently loaded.
