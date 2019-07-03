@@ -53,6 +53,8 @@ func genericSCIMHandler(w http.ResponseWriter, r *http.Request, endpoint string,
 	if r.Method == "POST" && r.Header.Get("Content-Type") != "application/scim+json" {
 		log.Println("Invalid media-type!")
 		http.Error(w, "Bad media type", 415)
+	} else if r.Method == "DELETE" {
+		w.WriteHeader(204)
 	} else {
 		fmt.Fprintln(w, "Hello, World")
 	}
@@ -127,8 +129,12 @@ func runTest(testName, testPath string,
 		log.Fatal(err)
 	}
 
-	defer os.Remove(cacheFile.Name()) // clean up
+	// We don't actually want the file, just a unique name
 	cacheFile.Close()
+	os.Remove(cacheFile.Name())
+
+	// Remove again after the test
+	defer os.Remove(cacheFile.Name())
 
 	for _, step := range testSpec.Steps {
 
@@ -159,7 +165,7 @@ func runTest(testName, testPath string,
 			"--key="+key,
 			"--scim-auth-WEAK=true")
 
-		//cmd.Stderr = os.Stderr
+		cmd.Stderr = os.Stderr
 		//cmd.Stdout = os.Stdout
 		err = cmd.Run()
 
