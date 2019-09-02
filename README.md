@@ -17,6 +17,6 @@ After downloading EGIL SCIM client, you can find example configuration
 files in the `master_config` directory.
 
 EgilSCIM is free software, distributed under the terms of the GNU
-General Public License as published by the Free Software Foundation,
+Affero General Public License as published by the Free Software Foundation,
 version 3 of the License.  For more information, see the file
 [COPYING](COPYING).
