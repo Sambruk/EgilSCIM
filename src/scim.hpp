@@ -82,6 +82,17 @@ public:
     ScimActions(const SCIMServerInfo& si)
            : scim_server_info(si) {
         scim_new_cache = std::make_unique<object_list>();
+
+        int err = simplescim_scim_init();
+
+        if (err == -1) {
+            throw std::runtime_error("Failed to init SCIM");
+        }
+    }
+
+    ~ScimActions() {
+        /* Clean up */
+        simplescim_scim_clear();
     }
 
     int perform(const data_server &current, const object_list &cached) const;
@@ -122,6 +133,9 @@ public:
         int operator()(const ScimActions &);
     };
 
+    std::shared_ptr<object_list> get_empty_objects_from_scim_server() {
+        return std::make_shared<object_list>();
+    }
 };
 
 

@@ -68,8 +68,9 @@ int main(int argc, char *argv[]) {
         po::options_description hidden("Hidden options");
 
         generic.add_options()
-            ("help,h", "produce help message")
-            ("version,v", "displays version of this program");
+            ("help,h",             "produce help message")
+            ("version,v",          "displays version of this program")
+            ("rebuild-cache,r",    "ignores cache file contents and instead queries SCIM server for list of objects");
 
         // Config file variables exposed as command line options
         std::vector<config_file_option> common_vars =
@@ -180,10 +181,19 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
+            SCIMServerInfo server_info{config};
+            ScimActions scim_actions{server_info};
 
             /** Get objects from cache file */
-            std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
+            std::shared_ptr<object_list> cache;
 
+            if (vm.count("rebuild-cache")) {
+                cache = scim_actions.get_empty_objects_from_scim_server();
+            }
+            else {
+                cache = cache_file::instance().get_contents();
+            }
+            
             if (cache == nullptr) {
                 print_error();
                 server.clear();
@@ -193,7 +203,7 @@ int main(int argc, char *argv[]) {
 
             /** Perform SCIM operations */
             try {
-                err = ScimActions(SCIMServerInfo(config)).perform(server, *cache);
+                err = scim_actions.perform(server, *cache);
             } catch (const std::string& err_msg) {
                 std::cerr << err_msg << std::endl;
             }

@@ -24,6 +24,8 @@
 #include <optional>
 #include <curl/curl.h>
 #include <fstream>
+#include <vector>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 class scim_sender {
 public:
@@ -110,6 +112,16 @@ public:
      * error message.
      */
     long send_delete(const std::string &url);
+
+    /**
+     * Gets all resources for an endpoint. Handles pagination
+     * if the server uses it (so this function may do several GETs
+     * before it's done).
+     *
+     * Throws an std::runtime_error if there is a failure to
+     * retrieve the resources.
+     */
+    void query(const std::string& url, std::vector<boost::property_tree::ptree>& resources);
 
 private:
     CURL *curl;

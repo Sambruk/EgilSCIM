@@ -177,14 +177,6 @@ void ScimActions::print_statistics(const std::string& type,
  * error message.
  */
 int ScimActions::perform(const data_server &current, const object_list &cached) const {
-    int err;
-
-    /* Initialise SCIM */
-    err = simplescim_scim_init();
-
-    if (err == -1) {
-        return -1;
-    }
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = string_to_vector(types_string);
     std::map<std::string, statistics> stats;
@@ -212,10 +204,7 @@ int ScimActions::perform(const data_server &current, const object_list &cached) 
     }
 
     /* Save new cache file */
-    err = cache_file::instance().save(scim_new_cache);
-
-    /* Clean up */
-    simplescim_scim_clear();
+    int err = cache_file::instance().save(scim_new_cache);
 
     return err;
 }
