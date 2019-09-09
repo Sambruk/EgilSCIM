@@ -131,7 +131,8 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
         }
 
         return chunk;
-    } else if (method == "DELETE") {
+    }
+    else if (method == "DELETE") {
         chunk = curl_slist_append(nullptr, "Accept:");
 
         if (chunk == nullptr) {
@@ -140,7 +141,17 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
         }
 
         return chunk;
-    } else {
+    }
+    else if (method == "GET") {
+        chunk = curl_slist_append(nullptr, http_header("Accept", media_type).c_str());
+
+        if (chunk == nullptr) {
+            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
+            return nullptr;
+        }
+        return chunk;
+    }
+    else {
         simplescim_error_string_set("simplescim_scim_send_create_slist", "invalid HTTP method");
         return nullptr;
     }
