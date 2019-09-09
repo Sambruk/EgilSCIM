@@ -84,8 +84,10 @@ void ScimActions::simplescim_scim_clear() const {
  * 'current' and 'cache' if the object has been updated.
  */
 void ScimActions::process_changes(const object_list& current,
-                                 const object_list &cache,
-                                 statistics& stats) const {
+                                  const object_list &cache,
+                                  statistics& stats,
+                                  bool rebuild_cache,
+                                  const std::set<std::string>& all_scim_uuids) const {
     int err;
 
     for (const auto &iter : current) {
@@ -93,9 +95,18 @@ void ScimActions::process_changes(const object_list& current,
         const std::string &uid = iter.first;
 
         auto object = iter.second;
-        auto cached_object = cache.get_object(uid);
+        std::shared_ptr<base_object> cached_object;
+        bool create = false;
 
-        if (cached_object == nullptr) {
+        if (rebuild_cache) {
+            create = (all_scim_uuids.count(uid) == 0);
+        }
+        else {
+            cached_object = cache.get_object(uid);
+            create = (cached_object == nullptr);
+        }
+
+        if (create) {
             ++stats.n_create;
             auto create_functor = ScimActions::create_func(*object);
             err = create_functor(*this);
@@ -105,9 +116,16 @@ void ScimActions::process_changes(const object_list& current,
                 std::cerr << simplescim_error_string_get() << std::endl;
             }
         } else {
-            /* Object exists in 'cache' */
-            if (*object == *cached_object) {
+            bool copy = false;
 
+            if (rebuild_cache) {
+                copy = false;
+            }
+            else {
+                copy = (*object == *cached_object);
+            }
+            
+            if (copy) {
                 // Object is the same, copy it
                 ++stats.n_copy;
                 auto copy_functor = ScimActions::copy_func(*cached_object);
@@ -117,7 +135,7 @@ void ScimActions::process_changes(const object_list& current,
                 }
             } else {
                 ++stats.n_update;
-                ScimActions::update_func update_f(*object, *cached_object);
+                ScimActions::update_func update_f(*object);
 
                 if (update_f(*this) == -1) {
                     ++stats.n_update_fail;
@@ -159,6 +177,24 @@ void ScimActions::process_deletes(const object_list& current,
     }
 }
 
+void ScimActions::process_deletes_per_endpoint(const std::vector<std::string>& to_delete,
+                                               const std::string& endpoint,
+                                               statistics& stats) const {
+    auto prefix = scim_server_info.get_url() + '/' + endpoint + '/';
+
+    for (const auto& uuid : to_delete) {
+        ++stats.n_delete;
+
+        const auto urlified = unifyurl(uuid);
+        int err = scim_sender::instance().send_delete(prefix + urlified);
+    
+        if (err != 0) {
+            ++stats.n_delete_fail;
+            fprintf(stderr, "%s\n", simplescim_error_string_get());
+        }
+    }
+}
+
 void ScimActions::print_statistics(const std::string& type,
                                    const statistics& stats) {
     printf("Status:   Success   Failure     Total  of type: %s\n", type.c_str());
@@ -175,23 +211,55 @@ int ScimActions::perform(const data_server &current,
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = string_to_vector(types_string);
     std::map<std::string, statistics> stats;
+
+    std::set<std::string> all_scim_uuids;
+    if (rebuild_cache) {
+        for (const auto& cur : all_scim_objects) {
+            all_scim_uuids.insert(cur.uuid);
+        }
+    }
+    
     for (const auto& type : types) {
         std::shared_ptr<object_list> allOfType = current.get_by_type(type);
         if (!allOfType) {
             allOfType = std::make_shared<object_list>();
         }
-        process_changes(*allOfType, cached, stats[type]);
+        process_changes(*allOfType, cached, stats[type], rebuild_cache, all_scim_uuids);
     }
 
     auto types_reversed(types);
     std::reverse(types_reversed.begin(), types_reversed.end());
 
-    for (const auto& type : types_reversed) {
-        std::shared_ptr<object_list> allOfType = current.get_by_type(type);
-        if (!allOfType) {
-            allOfType = std::make_shared<object_list>();
+    if (rebuild_cache) {
+        std::set<std::string> endpoints;
+        for (const auto& type : types_reversed) {
+            std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
+
+            if (endpoints.count(endpoint)) {
+                continue;
+            }
+            endpoints.insert(endpoint);
+
+            std::vector<std::string> to_delete;
+
+            for (const auto& obj : all_scim_objects) {
+                if (obj.endpoint == endpoint &&
+                    !current.has_object(obj.uuid)) {
+                    to_delete.push_back(obj.uuid);
+                }
+            }
+            
+            process_deletes_per_endpoint(to_delete, endpoint, stats["<Unqualified>"]);
         }
-        process_deletes(*allOfType, cached, type, stats[type]);        
+    }
+    else {
+        for (const auto& type : types_reversed) {
+            std::shared_ptr<object_list> allOfType = current.get_by_type(type);
+            if (!allOfType) {
+                allOfType = std::make_shared<object_list>();
+            }
+            process_deletes(*allOfType, cached, type, stats[type]);        
+        }
     }
     
     for (const auto& type : types) {

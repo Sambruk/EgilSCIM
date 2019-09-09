@@ -82,6 +82,8 @@ public:
     std::shared_ptr<base_object>
     find_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value);
 
+    bool has_object(const std::string& uuid) const;
+
     std::shared_ptr<object_list> get_by_type(const std::string &type) const;
 
     /**

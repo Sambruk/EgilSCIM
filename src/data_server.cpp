@@ -190,5 +190,18 @@ data_server::find_object_by_attribute(const std::string &type, const std::string
 }
 
 
+bool data_server::has_object(const std::string& uuid) const {
+    for (const auto& cur : static_data) {
+        if (cur.second->get_object(uuid) != nullptr) {
+            return true;
+        }
+    }
 
-
+    for (const auto& cur : dynamic_data) {
+        if (cur.second->get_object(uuid) != nullptr) {
+            return true;
+        }
+    }
+    
+    return false;
+}

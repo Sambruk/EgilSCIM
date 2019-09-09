@@ -49,6 +49,28 @@ struct variables {
 };
 
 class ScimActions {
+public:
+        /** A reference to an object in the SCIM server.
+     *  Contains a UUID and an endpoint.
+     *
+     *  This type is used when rebuilding the cache and fetch
+     *  all objects from the server. Since we fetch by endpoint,
+     *  and not all SS12000 types have different endpoints
+     *  (Students and Teachers both end up under Users), we
+     *  won't easily know what type of object it is. But need to
+     *  remember the endpoint so we can delete it if needed.
+     */
+    struct scim_object_ref {
+        std::string uuid;
+        std::string endpoint;
+
+        scim_object_ref(std::string u, std::string e)
+                : uuid(u),
+                  endpoint(e) {
+        }
+    };    
+
+private:
     std::shared_ptr<object_list> scim_new_cache;
     variables vars = variables();
     mutable string_vector verified_types;
@@ -67,13 +89,19 @@ class ScimActions {
     };    
     
     void process_changes(const object_list& current,
-                        const object_list& cache,
-                        statistics& stats) const;
+                         const object_list& cache,
+                         statistics& stats,
+                         bool rebuild_cache,
+                         const std::set<std::string>& all_scim_uuids) const;
 
     void process_deletes(const object_list& current,
                          const object_list& cache,
                          const std::string& type,
                          statistics& stats) const;
+
+    void process_deletes_per_endpoint(const std::vector<std::string>& to_delete,
+                                      const std::string& endpoint,
+                                      statistics& stats) const;    
 
     static void print_statistics(const std::string& type,
                                  const statistics& stats);
@@ -93,28 +121,7 @@ public:
     ~ScimActions() {
         /* Clean up */
         simplescim_scim_clear();
-    }
-
-    /** A reference to an object in the SCIM server.
-     *  Contains a UUID and an endpoint.
-     *
-     *  This type is used when rebuilding the cache and fetch
-     *  all objects from the server. Since we fetch by endpoint,
-     *  and not all SS12000 types have different endpoints
-     *  (Students and Teachers both end up under Users), we
-     *  won't easily know what type of object it is. But need to
-     *  remember the endpoint so we can delete it if needed.
-     */
-    struct scim_object_ref {
-        std::string uuid;
-        std::string endpoint;
-
-        scim_object_ref(std::string u, std::string e)
-                : uuid(u),
-                  endpoint(e) {
-        }
-    };    
-    
+    }    
     
     /**
      * Makes SCIM requests by comparing the two user lists and
@@ -156,10 +163,8 @@ public:
 
     class update_func {
         const base_object &object;
-//		const base_object &cached_object;
     public:
-        update_func(const base_object &o, const base_object &co) : object(o)
-//		, cached_object(co)
+        update_func(const base_object &o) : object(o)
             {}
 
         int operator()(const ScimActions &);
