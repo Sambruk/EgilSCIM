@@ -262,8 +262,8 @@ int ScimActions::perform(const data_server &current,
         }
     }
     
-    for (const auto& type : types) {
-        print_statistics(type, stats[type]);
+    for (const auto& p : stats) {
+        print_statistics(p.first, p.second);
     }
 
     /* Save new cache file */
