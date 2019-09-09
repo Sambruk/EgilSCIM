@@ -95,7 +95,47 @@ public:
         simplescim_scim_clear();
     }
 
-    int perform(const data_server &current, const object_list &cached) const;
+    /** A reference to an object in the SCIM server.
+     *  Contains a UUID and an endpoint.
+     *
+     *  This type is used when rebuilding the cache and fetch
+     *  all objects from the server. Since we fetch by endpoint,
+     *  and not all SS12000 types have different endpoints
+     *  (Students and Teachers both end up under Users), we
+     *  won't easily know what type of object it is. But need to
+     *  remember the endpoint so we can delete it if needed.
+     */
+    struct scim_object_ref {
+        std::string uuid;
+        std::string endpoint;
+
+        scim_object_ref(std::string u, std::string e)
+                : uuid(u),
+                  endpoint(e) {
+        }
+    };    
+    
+    
+    /**
+     * Makes SCIM requests by comparing the two user lists and
+     * reading JSON templates from the configuration file.
+     * Updates (or creates) the cache file.
+     *
+     * If rebuilding the cache (rebuild_cache = true), this
+     * function will ignore what's in cached and instead use
+     * all_scim_objects. For all objects in current, we will
+     * then either create or update (depending on if the object
+     * already exists in the SCIM server). All objects in
+     * all_scim_objects which aren't in current will be deleted.
+     *
+     * On success, zero is returned. On error, -1 is returned
+     * and simplescim_error_string is set to an appropriate
+     * error message.
+     */
+    int perform(const data_server &current,
+                const object_list &cached,
+                bool rebuild_cache,
+                const std::vector<scim_object_ref>& all_scim_objects) const;
     bool verify_json(const std::string &json, const std::string &type) const ;
 
     class copy_func {
@@ -132,10 +172,14 @@ public:
 
         int operator()(const ScimActions &);
     };
-
-    std::shared_ptr<object_list> get_empty_objects_from_scim_server() {
-        return std::make_shared<object_list>();
-    }
+    
+    /** Gets a list of all resources in the SCIM server.
+     *  Will query the endpoints for the SS12000 types included in scim-type-send-order.
+     *
+     *  This function will throw std::runtime_error if we fail to get the resources
+     *  from the SCIM server.
+     */
+    std::vector<scim_object_ref> get_all_objects_from_scim_server();
 };
 
 

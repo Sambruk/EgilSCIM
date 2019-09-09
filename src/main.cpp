@@ -185,13 +185,10 @@ int main(int argc, char *argv[]) {
             ScimActions scim_actions{server_info};
 
             /** Get objects from cache file */
-            std::shared_ptr<object_list> cache;
-
+            std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
+            std::vector<ScimActions::scim_object_ref> all_scim_objects;
             if (vm.count("rebuild-cache")) {
-                cache = scim_actions.get_empty_objects_from_scim_server();
-            }
-            else {
-                cache = cache_file::instance().get_contents();
+                all_scim_objects = scim_actions.get_all_objects_from_scim_server();
             }
             
             if (cache == nullptr) {
@@ -203,7 +200,7 @@ int main(int argc, char *argv[]) {
 
             /** Perform SCIM operations */
             try {
-                err = scim_actions.perform(server, *cache);
+                err = scim_actions.perform(server, *cache, vm.count("rebuild-cache"), all_scim_objects);
             } catch (const std::string& err_msg) {
                 std::cerr << err_msg << std::endl;
             }

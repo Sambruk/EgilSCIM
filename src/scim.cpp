@@ -168,15 +168,10 @@ void ScimActions::print_statistics(const std::string& type,
     printf("Delete: %9lu %9lu %9lu\n", stats.n_delete - stats.n_delete_fail, stats.n_delete_fail, stats.n_delete);
 }
 
-/**
- * Makes SCIM requests by comparing the two user lists and
- * reading JSON templates from the configuration file.
- * Updates (or creates) the cache file.
- * On success, zero is returned. On error, -1 is returned
- * and simplescim_error_string is set to an appropriate
- * error message.
- */
-int ScimActions::perform(const data_server &current, const object_list &cached) const {
+int ScimActions::perform(const data_server &current,
+                         const object_list &cached,
+                         bool rebuild_cache,
+                         const std::vector<ScimActions::scim_object_ref>& all_scim_objects) const {
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = string_to_vector(types_string);
     std::map<std::string, statistics> stats;
@@ -348,4 +343,31 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 
     return 0;
 
+}
+
+std::vector<ScimActions::scim_object_ref> ScimActions::get_all_objects_from_scim_server() {
+    std::string types_string = config_file::instance().get("scim-type-send-order");
+    string_vector types = string_to_vector(types_string);
+
+    std::set<std::string> endpoints;
+
+    for (const auto& type : types) {
+        endpoints.insert(config_file::instance().get(type + "-scim-url-endpoint"));
+    }
+
+    std::vector<scim_object_ref> results;
+    
+    for (const auto& endpoint : endpoints) {
+        std::vector<boost::property_tree::ptree> resources;
+        std::string url = scim_server_info.get_url();
+        url += '/' + endpoint;
+        scim_sender::instance().query(url, resources);
+
+        for (const auto& resource : resources) {
+            auto uuid = resource.get<std::string>("externalId");
+            results.push_back(scim_object_ref(uuid, endpoint));
+        }
+    }
+
+    return results;
 }
