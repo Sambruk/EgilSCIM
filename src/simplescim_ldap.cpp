@@ -216,9 +216,9 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
         string_vector relational_items = a_master.second->get_values(relational_key.second);
         if (relational_items.empty()) {
 
-            std::cerr << " Creating Employment: " << type
-                      << "-generate-key with value not found with "
-                      << pair_to_string(relational_key) << std::endl;
+            std::cerr << "Creating Employment: didn't find values for " << relational_key.second
+                      << " for " << relational_key.first << " " << a_master.first
+                      << std::endl;
         }
 
         // for each entry create a new relational object and
