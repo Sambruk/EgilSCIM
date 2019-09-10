@@ -23,9 +23,12 @@
 #include <string.h>
 #include <string>
 #include <iostream>
+#include <boost/property_tree/json_parser.hpp>
 
 #include "utility/simplescim_error_string.hpp"
 #include "config_file.hpp"
+
+namespace pt = boost::property_tree;
 
 struct http_response {
     size_t len;
@@ -128,7 +131,8 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
         }
 
         return chunk;
-    } else if (method == "DELETE") {
+    }
+    else if (method == "DELETE") {
         chunk = curl_slist_append(nullptr, "Accept:");
 
         if (chunk == nullptr) {
@@ -137,7 +141,17 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
         }
 
         return chunk;
-    } else {
+    }
+    else if (method == "GET") {
+        chunk = curl_slist_append(nullptr, http_header("Accept", media_type).c_str());
+
+        if (chunk == nullptr) {
+            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
+            return nullptr;
+        }
+        return chunk;
+    }
+    else {
         simplescim_error_string_set("simplescim_scim_send_create_slist", "invalid HTTP method");
         return nullptr;
     }
@@ -600,3 +614,72 @@ long scim_sender::send_delete(const std::string &url) {
     return 0;
 }
 
+/**
+  * A function type for performing a GET.
+  * Used in order to mock the http traffic in unit tests.
+  */
+typedef std::function<int(const std::string& url, char **response_data, long *response_code)> GetFunc;
+
+/**
+ * This is the actual implementation for querying a SCIM server for
+ * all resources for an endpoint.
+ *
+ * scim_sender::query has the clean interface, whereas this function
+ * allows for mocking the http GET and has a parameter for start_Index
+ * so it can recursively call itself to continue fetching.
+ */
+void simplescim_query_impl(const std::string& url, std::vector<pt::ptree>& resources, GetFunc getter, int start_index = 1) {
+    char *response_data;
+    long response_code;
+
+    auto url_complete{url};
+    if (start_index != 1) {
+        url_complete += "?startIndex=" + std::to_string(start_index);
+    }
+    
+    int err = getter(url_complete, &response_data, &response_code);
+
+    if (err == -1) {
+        throw std::runtime_error(simplescim_error_string_get());
+    }
+
+    if (response_code != 200) {
+        throw std::runtime_error("Failed to GET " + url + ", HTTP response code " + std::to_string(response_code) + " returned, expected 200");
+    }
+
+    std::string response(response_data);
+    std::istringstream iss(response);
+    pt::ptree root;
+    pt::read_json(iss, root);
+
+    auto totalResults = root.get<int>("totalResults");
+
+    if (totalResults == 0) {
+        return;
+    }
+
+    auto itr = root.find("Resources");
+    
+    if (itr == root.not_found()) {
+        throw std::runtime_error("No Resources list in query result");
+    }
+
+    auto page_size = 0;
+    for (const auto& cur : itr->second) {
+        resources.push_back(cur.second);
+        ++page_size;
+    }
+
+    if (static_cast<int>(resources.size()) < totalResults) {
+        simplescim_query_impl(url, resources, getter, start_index + page_size);
+    }
+}
+
+void scim_sender::query(const std::string& url, std::vector<pt::ptree>& resources) {
+    auto curl_getter =
+        [this](const std::string& url, char **response_data, long *response_code) -> int {
+        return simplescim_scim_send(curl, url, "", "GET", response_data, response_code, http_log);
+    };
+    
+    simplescim_query_impl(url, resources, curl_getter);
+}

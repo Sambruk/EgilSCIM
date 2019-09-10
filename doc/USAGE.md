@@ -115,3 +115,40 @@ EgilSCIM /etc/EgilSCIM/conf/service{1,2}.conf
 `service1.conf` and `service2.conf`. First, the configuration file
 for *service1* is executed to completion and then the configuration
 file for *service2* is executed to completion.
+
+## Cache file
+
+After an initial sync has been done to the SCIM server, we would ideally
+only send changed objects. The client stores all the objects it sends to
+the server in its cache file, when the client runs next time it will compare
+the current data against the cache file and figure out which objects need
+to be updated, created or deleted.
+
+It's important that the cache file is stored somewhere safe, and that
+different cache files are used for different SCIM servers.
+
+### Rebuilding the cache file
+
+If all works as it should you shouldn't need to rebuild the cache file.
+But if the cache file is lost or corrupted, or in some cases when the
+server and client are out of sync, you can ask the client to rebuild
+the cache file.
+
+Note that this will only work if the SCIM server has implemented querying
+the resource type endpoints so that the client can fetch all objects.
+
+The server does not need to implement filtering or sorting, but it needs
+to be able to return all objects for a resource type (either as one response
+or with pagination).
+
+The client will rebuild the cache by first fetching all UUIDs from the SCIM
+server. Objects that exist both locally (e.g. in LDAP) and in the SCIM server
+will always be updated (i.e. sent to the SCIM server again). In other words,
+no comparison is done. The whole process can take a long time, similar to the
+first sync without a cache.
+
+To rebuild the cache, run the client with the `--rebuild-cache` argument.
+
+You should still specify a path to a cache file (either on the command line
+or in the config file), so a new cache file can be created. Next time you
+run the client there shouldn't be a need for `--rebuild-cache` anymore.

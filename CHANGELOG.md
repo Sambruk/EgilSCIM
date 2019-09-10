@@ -1,5 +1,9 @@
 ## Releases
 
+### Unreleased
+#### New features
+  - Functionality for rebuilding the cache file (e.g. if lost) (#10)
+
 ### v2.1.0 (2019-07-02)
 #### Bugfixes
   - Expansion of ${value} in LDAP relations (#23)

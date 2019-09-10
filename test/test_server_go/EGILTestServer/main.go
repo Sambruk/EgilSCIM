@@ -50,11 +50,13 @@ func genericSCIMHandler(w http.ResponseWriter, r *http.Request, endpoint string,
 	fmt.Fprintf(requestLogger, "%s %s\n", endpoint, r.Method)
 	io.Copy(requestLogger, r.Body)
 	fmt.Fprintln(requestLogger, "---")
-	if r.Method == "POST" && r.Header.Get("Content-Type") != "application/scim+json" {
+	if (r.Method == "POST" || r.Method == "PUT") && r.Header.Get("Content-Type") != "application/scim+json" {
 		log.Println("Invalid media-type!")
 		http.Error(w, "Bad media type", 415)
 	} else if r.Method == "DELETE" {
 		w.WriteHeader(204)
+	} else if r.Method == "GET" {
+		http.Error(w, "Not implemented", http.StatusNotImplemented)
 	} else {
 		fmt.Fprintln(w, "Hello, World")
 	}

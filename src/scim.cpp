@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <assert.h>
 
 #include "scim.hpp"
 #include "utility/simplescim_error_string.hpp"
@@ -84,8 +85,10 @@ void ScimActions::simplescim_scim_clear() const {
  * 'current' and 'cache' if the object has been updated.
  */
 void ScimActions::process_changes(const object_list& current,
-                                 const object_list &cache,
-                                 statistics& stats) const {
+                                  const object_list &cache,
+                                  statistics& stats,
+                                  bool rebuild_cache,
+                                  const std::set<std::string>& all_scim_uuids) const {
     int err;
 
     for (const auto &iter : current) {
@@ -93,9 +96,18 @@ void ScimActions::process_changes(const object_list& current,
         const std::string &uid = iter.first;
 
         auto object = iter.second;
-        auto cached_object = cache.get_object(uid);
+        std::shared_ptr<base_object> cached_object;
+        bool create = false;
 
-        if (cached_object == nullptr) {
+        if (rebuild_cache) {
+            create = (all_scim_uuids.count(uid) == 0);
+        }
+        else {
+            cached_object = cache.get_object(uid);
+            create = (cached_object == nullptr);
+        }
+
+        if (create) {
             ++stats.n_create;
             auto create_functor = ScimActions::create_func(*object);
             err = create_functor(*this);
@@ -105,9 +117,16 @@ void ScimActions::process_changes(const object_list& current,
                 std::cerr << simplescim_error_string_get() << std::endl;
             }
         } else {
-            /* Object exists in 'cache' */
-            if (*object == *cached_object) {
+            bool copy = false;
 
+            if (rebuild_cache) {
+                copy = false;
+            }
+            else {
+                copy = (*object == *cached_object);
+            }
+            
+            if (copy) {
                 // Object is the same, copy it
                 ++stats.n_copy;
                 auto copy_functor = ScimActions::copy_func(*cached_object);
@@ -117,7 +136,7 @@ void ScimActions::process_changes(const object_list& current,
                 }
             } else {
                 ++stats.n_update;
-                ScimActions::update_func update_f(*object, *cached_object);
+                ScimActions::update_func update_f(*object);
 
                 if (update_f(*this) == -1) {
                     ++stats.n_update_fail;
@@ -159,6 +178,24 @@ void ScimActions::process_deletes(const object_list& current,
     }
 }
 
+void ScimActions::process_deletes_per_endpoint(const std::vector<std::string>& to_delete,
+                                               const std::string& endpoint,
+                                               statistics& stats) const {
+    auto prefix = scim_server_info.get_url() + '/' + endpoint + '/';
+
+    for (const auto& uuid : to_delete) {
+        ++stats.n_delete;
+
+        const auto urlified = unifyurl(uuid);
+        int err = scim_sender::instance().send_delete(prefix + urlified);
+    
+        if (err != 0) {
+            ++stats.n_delete_fail;
+            fprintf(stderr, "%s\n", simplescim_error_string_get());
+        }
+    }
+}
+
 void ScimActions::print_statistics(const std::string& type,
                                    const statistics& stats) {
     printf("Status:   Success   Failure     Total  of type: %s\n", type.c_str());
@@ -168,54 +205,107 @@ void ScimActions::print_statistics(const std::string& type,
     printf("Delete: %9lu %9lu %9lu\n", stats.n_delete - stats.n_delete_fail, stats.n_delete_fail, stats.n_delete);
 }
 
-/**
- * Makes SCIM requests by comparing the two user lists and
- * reading JSON templates from the configuration file.
- * Updates (or creates) the cache file.
- * On success, zero is returned. On error, -1 is returned
- * and simplescim_error_string is set to an appropriate
- * error message.
- */
-int ScimActions::perform(const data_server &current, const object_list &cached) const {
-    int err;
+/** This function will convert from SCIM endpoint (e.g. "SchoolUnits")
+  * to SS12000 type (e.g. "SchoolUnit") if there is an unambiguous 
+  * mapping between the two.
+  *
+  * For the "Users" endpoint, which could map to either "Student" or
+  * "Teacher", this function will return "<Unqualified>".
+  *
+  * It is used to categorize the deletes in the statistics we present
+  * after all SCIM operations have completed.
+  *
+  * @param endpoint is the endpoint to convert
+  * @param types should include all SS12000 types used for this SCIM server.
+  */
+std::string endpoint_to_SS12000_type(const std::string& endpoint,
+                                     const std::vector<std::string> types) {
+    std::map<std::string, std::string> endpoint_to_SS12000;
 
-    /* Initialise SCIM */
-    err = simplescim_scim_init();
+    for (const auto& type : types) {
+        auto ep = config_file::instance().get(type + "-scim-url-endpoint");
 
-    if (err == -1) {
-        return -1;
+        if (endpoint_to_SS12000.find(ep) == endpoint_to_SS12000.end()) {
+            endpoint_to_SS12000[ep] = type;
+        }
+        else {
+            endpoint_to_SS12000[ep] = "<Unqualified>";
+        }
     }
+
+    if (endpoint_to_SS12000.find(endpoint) != endpoint_to_SS12000.end()) {
+        return endpoint_to_SS12000[endpoint];
+    }
+    else {
+        assert(false);
+        return "<Unqualified>";
+    }
+}
+
+int ScimActions::perform(const data_server &current,
+                         const object_list &cached,
+                         bool rebuild_cache,
+                         const std::vector<ScimActions::scim_object_ref>& all_scim_objects) const {
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = string_to_vector(types_string);
     std::map<std::string, statistics> stats;
+
+    std::set<std::string> all_scim_uuids;
+    if (rebuild_cache) {
+        for (const auto& cur : all_scim_objects) {
+            all_scim_uuids.insert(cur.uuid);
+        }
+    }
+    
     for (const auto& type : types) {
         std::shared_ptr<object_list> allOfType = current.get_by_type(type);
         if (!allOfType) {
             allOfType = std::make_shared<object_list>();
         }
-        process_changes(*allOfType, cached, stats[type]);
+        process_changes(*allOfType, cached, stats[type], rebuild_cache, all_scim_uuids);
     }
 
     auto types_reversed(types);
     std::reverse(types_reversed.begin(), types_reversed.end());
 
-    for (const auto& type : types_reversed) {
-        std::shared_ptr<object_list> allOfType = current.get_by_type(type);
-        if (!allOfType) {
-            allOfType = std::make_shared<object_list>();
+    if (rebuild_cache) {
+        std::set<std::string> endpoints;
+        for (const auto& type : types_reversed) {
+            std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
+
+            if (endpoints.count(endpoint)) {
+                continue;
+            }
+            endpoints.insert(endpoint);
+
+            std::vector<std::string> to_delete;
+
+            for (const auto& obj : all_scim_objects) {
+                if (obj.endpoint == endpoint &&
+                    !current.has_object(obj.uuid)) {
+                    to_delete.push_back(obj.uuid);
+                }
+            }
+            
+            process_deletes_per_endpoint(to_delete, endpoint, stats[endpoint_to_SS12000_type(endpoint, types)]);
         }
-        process_deletes(*allOfType, cached, type, stats[type]);        
+    }
+    else {
+        for (const auto& type : types_reversed) {
+            std::shared_ptr<object_list> allOfType = current.get_by_type(type);
+            if (!allOfType) {
+                allOfType = std::make_shared<object_list>();
+            }
+            process_deletes(*allOfType, cached, type, stats[type]);        
+        }
     }
     
-    for (const auto& type : types) {
-        print_statistics(type, stats[type]);
+    for (const auto& p : stats) {
+        print_statistics(p.first, p.second);
     }
 
     /* Save new cache file */
-    err = cache_file::instance().save(scim_new_cache);
-
-    /* Clean up */
-    simplescim_scim_clear();
+    int err = cache_file::instance().save(scim_new_cache);
 
     return err;
 }
@@ -359,4 +449,31 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 
     return 0;
 
+}
+
+std::vector<ScimActions::scim_object_ref> ScimActions::get_all_objects_from_scim_server() {
+    std::string types_string = config_file::instance().get("scim-type-send-order");
+    string_vector types = string_to_vector(types_string);
+
+    std::set<std::string> endpoints;
+
+    for (const auto& type : types) {
+        endpoints.insert(config_file::instance().get(type + "-scim-url-endpoint"));
+    }
+
+    std::vector<scim_object_ref> results;
+    
+    for (const auto& endpoint : endpoints) {
+        std::vector<boost::property_tree::ptree> resources;
+        std::string url = scim_server_info.get_url();
+        url += '/' + endpoint;
+        scim_sender::instance().query(url, resources);
+
+        for (const auto& resource : resources) {
+            auto uuid = resource.get<std::string>("externalId");
+            results.push_back(scim_object_ref(uuid, endpoint));
+        }
+    }
+
+    return results;
 }
