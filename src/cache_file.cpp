@@ -272,8 +272,6 @@ std::shared_ptr<object_list> cache_file::get_contents() {
 		simplescim_error_string_set("get_users", "required variable \"cache-file\" is missing");
 		return nullptr;
 	}
-	if (cache_file_filename == "nocache")
-		return std::make_shared<object_list>();
 
 	return get_objects_from_file(cache_file_filename.c_str());
 
