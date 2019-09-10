@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <assert.h>
 
 #include "scim.hpp"
 #include "utility/simplescim_error_string.hpp"
@@ -204,6 +205,43 @@ void ScimActions::print_statistics(const std::string& type,
     printf("Delete: %9lu %9lu %9lu\n", stats.n_delete - stats.n_delete_fail, stats.n_delete_fail, stats.n_delete);
 }
 
+/** This function will convert from SCIM endpoint (e.g. "SchoolUnits")
+  * to SS12000 type (e.g. "SchoolUnit") if there is an unambiguous 
+  * mapping between the two.
+  *
+  * For the "Users" endpoint, which could map to either "Student" or
+  * "Teacher", this function will return "<Unqualified>".
+  *
+  * It is used to categorize the deletes in the statistics we present
+  * after all SCIM operations have completed.
+  *
+  * @param endpoint is the endpoint to convert
+  * @param types should include all SS12000 types used for this SCIM server.
+  */
+std::string endpoint_to_SS12000_type(const std::string& endpoint,
+                                     const std::vector<std::string> types) {
+    std::map<std::string, std::string> endpoint_to_SS12000;
+
+    for (const auto& type : types) {
+        auto ep = config_file::instance().get(type + "-scim-url-endpoint");
+
+        if (endpoint_to_SS12000.find(ep) == endpoint_to_SS12000.end()) {
+            endpoint_to_SS12000[ep] = type;
+        }
+        else {
+            endpoint_to_SS12000[ep] = "<Unqualified>";
+        }
+    }
+
+    if (endpoint_to_SS12000.find(endpoint) != endpoint_to_SS12000.end()) {
+        return endpoint_to_SS12000[endpoint];
+    }
+    else {
+        assert(false);
+        return "<Unqualified>";
+    }
+}
+
 int ScimActions::perform(const data_server &current,
                          const object_list &cached,
                          bool rebuild_cache,
@@ -249,7 +287,7 @@ int ScimActions::perform(const data_server &current,
                 }
             }
             
-            process_deletes_per_endpoint(to_delete, endpoint, stats["<Unqualified>"]);
+            process_deletes_per_endpoint(to_delete, endpoint, stats[endpoint_to_SS12000_type(endpoint, types)]);
         }
     }
     else {
