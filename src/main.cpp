@@ -188,7 +188,11 @@ int main(int argc, char *argv[]) {
             std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
             std::vector<ScimActions::scim_object_ref> all_scim_objects;
             if (vm.count("rebuild-cache")) {
-                all_scim_objects = scim_actions.get_all_objects_from_scim_server();
+                try {
+                    all_scim_objects = scim_actions.get_all_objects_from_scim_server();
+                } catch (const std::runtime_error& e) {
+                    std::cerr << "Failed to get objects from SCIM server (" << e.what() << ")" << std::endl;
+                }
             }
             
             if (cache == nullptr) {
