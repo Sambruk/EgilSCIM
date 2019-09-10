@@ -1,0 +1,20 @@
+dn: uid=grgr,dc=kommunen,dc=se
+changetype: add
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Greger Gregersson
+sn: Gregersson
+displayName: Greger Gregersson
+employeeType: student
+givenName: Greger
+mail: grgr@skolan.kommunen.se
+ou: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
+uid: grgr
+entryUUID: ed2ecfd6-4805-4302-9c32-f4cc1b58e471
+
+dn: cn=grupp1,dc=kommunen,dc=se
+changetype: modify
+add: member
+member: uid=grgr,dc=kommunen,dc=se
