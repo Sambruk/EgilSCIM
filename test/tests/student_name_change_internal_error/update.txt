@@ -1,0 +1,32 @@
+---
+Users PUT
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "2b3a480f-d0b9-4c09-bbac-70f915964b02",
+	"userName": "pejo@skola.kommunen.se",
+	"displayName": "Per Johanson",
+	"name": {
+		"familyName": "Johanson",
+		"givenName": "Per"
+	},
+	"emails": [
+        
+        {
+          "value": "pejo@skolan.kommunen.se" 
+        } 
+        
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+        "enrolments": [
+            
+            {
+                "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+                "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+            } 
+            
+        ]
+    }
+}
+---

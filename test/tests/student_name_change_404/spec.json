@@ -1,0 +1,15 @@
+{
+    "description": "A student changes name, SCIM server says it doesn't exist",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [ "scenarios/base/student_name_change" ],
+	  "requests": "update.txt",
+	  "failWith": 404
+	},
+	{ "requests": "create.txt"
+	}
+    ]
+}
