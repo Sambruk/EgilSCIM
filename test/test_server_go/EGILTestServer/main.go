@@ -45,11 +45,18 @@ func readerToString(r io.Reader) string {
 	return buf.String()
 }
 
+var genericHandlerFailWith int
+
 func genericSCIMHandler(w http.ResponseWriter, r *http.Request, endpoint string, requestLogger io.Writer) {
 	fmt.Fprintln(requestLogger, "---")
 	fmt.Fprintf(requestLogger, "%s %s\n", endpoint, r.Method)
 	io.Copy(requestLogger, r.Body)
 	fmt.Fprintln(requestLogger, "---")
+
+	if genericHandlerFailWith != 0 {
+		http.Error(w, "Failing test step", genericHandlerFailWith)
+		return
+	}
 	if (r.Method == "POST" || r.Method == "PUT") && r.Header.Get("Content-Type") != "application/scim+json" {
 		log.Println("Invalid media-type!")
 		http.Error(w, "Bad media type", 415)
@@ -88,6 +95,7 @@ func listenAndServe(cert, key string, ch chan error) {
 type TestStep struct {
 	Scenario []string
 	Requests string
+	FailWith int
 }
 
 // TestSpec represents a whole test (consisting of possibly multiple steps)
@@ -157,6 +165,8 @@ func runTest(testName, testPath string,
 			}
 		}
 
+		genericHandlerFailWith = step.FailWith
+
 		testLogger.Reset()
 
 		// Run EGIL client
@@ -167,8 +177,9 @@ func runTest(testName, testPath string,
 			"--key="+key,
 			"--scim-auth-WEAK=true")
 
-		cmd.Stderr = os.Stderr
-		//cmd.Stdout = os.Stdout
+		if step.FailWith == 0 {
+			cmd.Stderr = os.Stderr
+		}
 		err = cmd.Run()
 
 		if err != nil {
