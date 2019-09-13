@@ -539,7 +539,6 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
  * simplescim_error_string is set to an appropriate error
  * message.
  */
-//int scim_sender::send_update(const char *url, const char *resource, const char **response) {
 std::optional<std::string>
 scim_sender::send_update(const std::string &url, const std::string &body) {
     char *response_data;
@@ -558,18 +557,10 @@ scim_sender::send_update(const std::string &url, const std::string &body) {
         simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 200L);
         free(response_data);
         return {};
-    } else if (response_code == 413) {
-        std::string message = " data to " + url + " to large.";
-        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-                                            message.c_str());
-        return {};
-    } else if (response_code == 403) {
-        std::string message = " unathorized ";
-        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-                                            message.c_str());
-        return {};
     }
-    return {response_data};
+    std::string result{response_data};
+    free(response_data);
+    return result;
 }
 
 /**
