@@ -437,11 +437,17 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
     std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
     url += '/' + endpoint + '/' + unified;
 
-    std::optional<std::string> response_json = scim_sender::instance().send_update(url, parsed_json);
+    bool non_existent = false;
+    std::optional<std::string> response_json =
+        scim_sender::instance().send_update(url, parsed_json, non_existent);
 
     /* Insert copied object into new cache */
     if (!response_json) {
-        actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(object));
+        if (!non_existent) {
+            // Keep it in cache, but make sure we retry the update next run
+            copied_user.add_attribute("_failed_put", { std::to_string(time(NULL)) });
+            actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
+        }
         return -1;
     } else {
         actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));

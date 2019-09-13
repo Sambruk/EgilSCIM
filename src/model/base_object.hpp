@@ -183,15 +183,8 @@ public:
 		return attributes.size();
 	}
 
-	/*
-	 * testing if all in other is in this
-	 * since one side may have a scim-id, other way doesn't work
-	 * todo so: compare all except scim-id instead of all in other is in this
-	 */
 	bool operator==(const base_object &rhs) const {
-		bool result = std::includes(rhs.attributes.begin(), rhs.attributes.end(), attributes.begin(), attributes.end());
-
-		return result;
+       return attributes == rhs.attributes;
 	}
 
 };

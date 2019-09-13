@@ -521,26 +521,12 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
     return result;
 }
 
-/**
- * Sends a request to update a SCIM resource.
- *
- * 'url' must be of the format:
- * <protocol>://<host><endpoint>/<resource-identifier>
- *
- * For example:
- * https://example.com/Users/2819c223-7f76-453a-919d-413861904646
- *
- * 'resource' must be the string representation of a JSON
- * object representing the SCIM resource.
- *
- * On success, zero is returned and 'response' is set to
- * the string representation of the JSON object returned by
- * the server. On error, -1 is returned and
- * simplescim_error_string is set to an appropriate error
- * message.
- */
 std::optional<std::string>
-scim_sender::send_update(const std::string &url, const std::string &body) {
+scim_sender::send_update(const std::string &url,
+                         const std::string &body,
+                         bool& non_existent) {
+    non_existent = false;
+    
     char *response_data;
     long response_code;
     int err;
@@ -556,6 +542,11 @@ scim_sender::send_update(const std::string &url, const std::string &body) {
         simplescim_error_string_set_prefix("simplescim_scim_send_update");
         simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 200L);
         free(response_data);
+
+        if (response_code == 404) {
+            non_existent = true;
+        }
+        
         return {};
     }
     std::string result{response_data};
