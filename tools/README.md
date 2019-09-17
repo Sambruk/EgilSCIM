@@ -55,3 +55,10 @@ To list all server names for a specific entity:
 ```
 ./list_metadata.py --servers --entity example.com metadata.txt
 ```
+
+## public_key_pin
+A script for generating a public key pin based on an x509 certificate.
+
+```
+./public_key_pin.sh certificate.pem
+```
