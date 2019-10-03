@@ -185,6 +185,8 @@ public:
      *  from the SCIM server.
      */
     std::vector<scim_object_ref> get_all_objects_from_scim_server();
+
+    std::shared_ptr<object_list> get_new_cache() { return scim_new_cache; }
 };
 
 

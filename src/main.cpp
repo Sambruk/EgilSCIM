@@ -22,6 +22,7 @@
 #include <experimental/filesystem>
 #include <vector>
 #include <string>
+#include <time.h>
 
 #include "EgilSCIM_config.h"
 #include "utility/simplescim_error_string.hpp"
@@ -61,6 +62,41 @@ struct config_file_option {
               path(p) {}
 };
 
+// Writes the status JSON file
+void write_status(const std::string& file,
+                  time_t start_time,
+                  int duration,
+                  std::shared_ptr<object_list> synced_objects) {
+
+    std::map<std::string, int> resourceCounts;
+
+    for (const auto &iter : *synced_objects) {
+        auto object = iter.second;
+
+        resourceCounts[object->getSS12000type()]++;
+    }
+
+    // TODO: Write JSON with boost::ptree instead?
+    std::ofstream of(file);
+
+    of << "{" << std::endl;
+    of << "  \"startTime\": " << start_time << "," << std::endl;
+    of << "  \"duration\": " << duration << "," << std::endl;
+    of << "  \"resourceCounts\": {" << std::endl;
+
+    bool first = true;
+    for (const auto &iter : resourceCounts) {
+        if (!first) {
+            of << "," << std::endl;
+        }
+        first = false;
+        of << "    \"" << iter.first << "\":" << iter.second;
+    }
+
+    of << "  }" << std::endl;
+    of << "}" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
     try {
         po::options_description cmdline_options("All options");
@@ -81,7 +117,9 @@ int main(int argc, char *argv[]) {
               { "metadata-entity",  "entity in metadata to connect to", false },
               { "metadata-server",  "name of server to connect to",     false },
               { "scim-auth-WEAK",
-                    "whether server authentication should be disabled", false }
+                "whether server authentication should be disabled",     false },
+              { "status-file",
+                "file in which to write a summary of the run",          true },
             };
 
         for (const auto& var : common_vars) {
@@ -137,6 +175,9 @@ int main(int argc, char *argv[]) {
         for (const auto& file : files) {
             /** Load configuration file */
             std::cout << "processing: " << file << std::endl;
+
+            time_t start_time = time(nullptr);
+            
             int err = 0;
             try {
                 err = config.load(file);
@@ -214,6 +255,15 @@ int main(int argc, char *argv[]) {
                 print_error();
                 config.clear();
                 continue;
+            }
+
+            time_t end_time = time(nullptr);
+
+            if (config.has("status-file")) {
+                write_status(config.get("status-file"),
+                             start_time,
+                             end_time-start_time,
+                             scim_actions.get_new_cache());
             }
 
             print_status(file.c_str());
