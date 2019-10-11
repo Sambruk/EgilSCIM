@@ -120,6 +120,9 @@ int main(int argc, char *argv[]) {
                 "whether server authentication should be disabled",     false },
               { "status-file",
                 "file in which to write a summary of the run",          true },
+              { "scim-type-send-order",
+                "which SS12000 types to include "\
+                "and in which order to send them",                      false },
             };
 
         for (const auto& var : common_vars) {
