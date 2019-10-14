@@ -97,6 +97,23 @@ void write_status(const std::string& file,
     of << "}" << std::endl;
 }
 
+/**
+ * Splits a string with format "variable=value" into its parts.
+ * Used on the command line for overriding config file variables.
+ */
+void parse_override(const std::string& override_str,
+                    std::string& variable,
+                    std::string& value) {
+    auto pos = override_str.find('=');
+
+    if (pos == std::string::npos) {
+        throw std::runtime_error("Malformed variable override (" + override_str + ")");
+    }
+
+    variable = override_str.substr(0, pos);
+    value = override_str.substr(pos+1);
+}
+
 int main(int argc, char *argv[]) {
     try {
         po::options_description cmdline_options("All options");
@@ -130,6 +147,10 @@ int main(int argc, char *argv[]) {
                 (var.name.c_str(), po::value<std::string>(), var.description.c_str());
         }
 
+        generic.add_options()
+            ("D", po::value<std::vector<std::string>>(), "Generic config variable override " \
+             "(e.g. --D ldap-passwd=secret)");
+
         hidden.add_options()
             ("config-file", po::value<std::vector<std::string>>(), "config file");
 
@@ -146,7 +167,7 @@ int main(int argc, char *argv[]) {
             print_usage(argv[0], generic);
             return EXIT_SUCCESS;
         }
-
+        
         if (vm.count("version")) {
             std::cout << "EGIL SCIM client version "
                       << EgilSCIM_VERSION_MAJOR << "."
@@ -201,6 +222,16 @@ int main(int argc, char *argv[]) {
                         value = filesystem::absolute(value);
                     }
                     config.replace_variable(var.name, value);
+                }
+            }
+
+            if (vm.count("D")) {
+                auto overrides = vm["D"].as<std::vector<std::string>>();
+
+                for (auto override_str : overrides) {
+                    std::string variable, value;
+                    parse_override(override_str, variable, value);
+                    config.replace_variable(variable, value);
                 }
             }
 
