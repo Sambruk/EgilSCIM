@@ -6,6 +6,7 @@
 
 # Temporary emacs files
 *~
+TAGS
 
 # Latex intermediate files
 *.aux

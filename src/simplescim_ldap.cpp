@@ -28,6 +28,7 @@
 #include "utility/utils.hpp"
 #include "data_server.hpp"
 #include "ldap_wrapper.hpp"
+#include "load_limiter.hpp"
 
 
 std::string
@@ -44,6 +45,7 @@ store_relation(base_object &generated_object,
  */
 std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
                                                  const std::string& type,
+                                                 std::shared_ptr<load_limiter> limiter,
                                                  indented_logger& load_logger) {
   std::shared_ptr<object_list> objects;
   std::string uid;
@@ -55,7 +57,7 @@ std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
       while (obj != nullptr) {
           uid = obj->get_uid();
 
-          if (!uid.empty()) {
+          if (!uid.empty() && limiter->include(obj.get())) {
               objects->add_object(uid, obj);
 
               load_logger.log("Found " + type + " " + uid);
@@ -69,17 +71,10 @@ std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
 }  
 
 
-std::shared_ptr<object_list> get_object_list_by_type(const std::string &type, const pair_map &queries, indented_logger& load_logger) {
+std::shared_ptr<object_list> get_object_list_by_type(const std::string &type) {
     data_server &server = data_server::instance();
 
     std::shared_ptr<object_list> list = server.get_by_type(type);
-    if (!queries.empty()) {
-        auto q = queries.find(type);
-        ldap_wrapper ldap;
-        if (ldap.search(type, load_logger, q->second))
-            list = ldap_to_object_list(ldap, type, load_logger);
-        server.add(type, list);
-    }
     return list;
 }
 
@@ -137,8 +132,10 @@ std::shared_ptr<object_list> ldap_get_generated_activity(const std::string &type
                   << std::endl;
         return nullptr;
     }
-    auto student_groups = get_object_list_by_type(master_type, pair_map(), load_logger);
-    auto employments = get_object_list_by_type(related_type.first, pair_map(), load_logger);
+
+    data_server &server = data_server::instance();
+    auto student_groups = server.get_by_type(master_type);
+    auto employments = server.get_by_type(related_type.first);
 
     for (const auto &student_group : *student_groups) {
         base_object generated_object(type);
@@ -197,12 +194,8 @@ std::shared_ptr<object_list> ldap_get_generated_employment(const std::string &ty
     string_pair relational_key = conf.get_pair(type + "-generate-key");
     string_pair part_type = conf.get_pair(type + "-generate-remote-part");
 
-    pair_map queries = json_data_file::json_to_ldap_query(type);
     auto master_list = server.get_by_type(relational_key.first);
     auto related_list = server.get_by_type(part_type.first);
-
-    if (!related_list || related_list->empty())
-        related_list = get_object_list_by_type(part_type.first, queries, load_logger);
 
     string_pair related_id = conf.get_pair(type + "-remote-relation-id");
 
@@ -361,7 +354,8 @@ void load_related(const std::string &type,
                         auto filter = relation.get_ldap_filter(value);
 
                         if (ldap.search(relation.type, load_logger, filter)) {
-                            auto response = ldap_to_object_list(ldap, relation.type, load_logger);
+                            auto limiter = get_limiter(relation.type);
+                            auto response = ldap_to_object_list(ldap, relation.type, limiter, load_logger);
                             if (response->size() == 1)
                                 remote = response->begin()->second;
                             else if (response->size() > 1) {
@@ -439,7 +433,8 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap,
         objects = ldap_get_generated(type, load_logger);
     } else {
         if (ldap.search(type, load_logger)) {
-            objects = ldap_to_object_list(ldap, type, load_logger);
+            auto limiter = get_limiter(type);            
+            objects = ldap_to_object_list(ldap, type, limiter, load_logger);
         }
     }
 

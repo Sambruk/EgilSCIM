@@ -3,6 +3,7 @@
 ### Unreleased
 #### New features
   - Functionality for rebuilding the cache file (e.g. if lost) (#10)
+  - Support for limiting which objects to load with a list of values (#46)
 
 #### Bugfixes
   - Failed updates (PUT) are handled better (#42)

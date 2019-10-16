@@ -99,6 +99,50 @@ the following variables need to be configured:
 * `metadata_ca_path` is the path to the directory containing the certificate store.
 * `metadata_ca_store` is the name of a CA store in PEM file format.
 
+## Loading objects from LDAP
+
+The objects will be loaded in the order specified in the variable `scim-type-load-order`.
+During the loading process, objects related to those loaded will also be loaded recursively.
+For instance, if StudentGroup objects are loaded first and those objects have relations to
+Student objects, those Student objects will also be loaded as a consequence of loading the
+StudentGroups. Because of this, `scim-type-load-order` should not include those object
+types that should be found through relations.
+
+For every type _X_ included in `scim-type-load-order` there should either be a variable named
+`X-ldap-filter`, which tells the client how to search for the objects in the LDAP server, or
+the type needs to be one of the generated types (Employment and Activity).
+
+Since the generated types are generated based on the objects loaded from LDAP, the generated
+types should come last in `scim-type-load-order`.
+
+### Limiting the load process
+
+Which objects to load from LDAP is typically specified with an LDAP filter as described above.
+However, this can be further restricted in other ways. This can be helpful if you want to
+specify a long list of specific objects, or if you have one shared configuration file which loads
+everything from LDAP but which needs to be restricted in different ways depending on the recipient
+(SCIM server).
+
+#### File of attribute values
+
+If you'd like to specify exactly which objects to load you can create a text file containing
+a list of values. You can choose which type to limit and by which attribute. For instance, if
+you'd like to specify a list of StudentGroups to include:
+
+```
+StudentGroup-limit-with = list
+StudentGroup-limit-list = groups.txt
+StudentGroup-limit-by = cn
+```
+
+The first variable specifies that we want to use a file with a list of values. The second variable
+gives the path to that file. The third variable specifies which LDAP attribute to match against
+the values in the list.
+
+Only those objects which match one of the values in the file will be included in the load process.
+
+If you want to match against UUID the `limit-by` variable should be omitted.
+
 ## Execution
 
 EgilSCIM is executed by typing `EgilSCIM file...` where `file...`
