@@ -73,7 +73,7 @@ private:
     const std::string attribute;
 };
 
-std::shared_ptr<load_limiter> get_limiter(const std::string& type) {
+std::shared_ptr<load_limiter> create_limiter(const std::string& type) {
     config_file &conf = config_file::instance();
 
     if (conf.has(type + "-limit-with")) {
@@ -91,4 +91,21 @@ std::shared_ptr<load_limiter> get_limiter(const std::string& type) {
     else {
         return std::make_shared<null_limiter>();
     }
+}
+
+std::shared_ptr<load_limiter> get_limiter(const std::string& type) {
+    config_file &conf = config_file::instance();
+
+    static std::string current_config;
+    static std::map<std::string, std::shared_ptr<load_limiter>> limiters;
+
+    if (conf.file_name() != current_config) {
+        limiters.clear();
+        current_config = conf.file_name();
+    }
+
+    if (limiters.find(type) == limiters.end()) {
+        limiters[type] = create_limiter(type);
+    }
+    return limiters[type];
 }
