@@ -70,14 +70,6 @@ std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
   return objects;
 }  
 
-
-std::shared_ptr<object_list> get_object_list_by_type(const std::string &type) {
-    data_server &server = data_server::instance();
-
-    std::shared_ptr<object_list> list = server.get_by_type(type);
-    return list;
-}
-
 /**
  * Create a new UUID for a relation, based on two UUIDs.
  *
