@@ -80,7 +80,7 @@ std::shared_ptr<load_limiter> get_limiter(const std::string& type) {
         auto limit_type = conf.get(type + "-limit-with");
 
         if (toUpper(limit_type) == "LIST") {
-            auto filename = conf.get(type + "-limit-list");
+            auto filename = conf.get_path(type + "-limit-list");
             auto attribute = conf.get(type + "-limit-by", true);
             return std::make_shared<list_limiter>(filename, attribute);
         }
