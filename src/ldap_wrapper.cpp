@@ -292,7 +292,17 @@ struct ldap_wrapper::Impl {
             std::string attr_clone = attr;
             for (size_t i = 0; i < len; ++i) {
                 if (attr_clone == ldap_UUID) {
+                    if (type == "Organisation") {
+                        fprintf(stderr, "Raw:\n");
+                        for (int bi = 0; bi < 16; ++bi) {
+                            fprintf(stderr, "%x ", (unsigned char)vals[i]->bv_val[bi]);
+                        }
+                        fprintf(stderr, "\n");
+                    }
                     std::string st = uuid_util::instance().un_parse_uuid(vals[i]->bv_val);
+                    if (type == "Organisation") {
+                        fprintf(stderr, "Parsed:\n%s\n", st.c_str());
+                    }
                     list.emplace_back(st);
                 } else {
                     list.emplace_back(std::string(vals[i]->bv_val));
