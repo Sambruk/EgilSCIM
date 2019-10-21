@@ -65,6 +65,16 @@ struct ldap_wrapper::Impl {
         std::string ldap_uri{};
         std::string ldap_who{};
         std::string ldap_password{};
+
+        /**
+         * Initialises LDAP session.
+         */
+        bool ldap_init();
+        
+        void ldap_close();
+
+        int get_variables();        
+        
     public:
 
         connection() {
@@ -76,16 +86,7 @@ struct ldap_wrapper::Impl {
         }
         
         LDAP *simplescim_ldap_ld = nullptr;
-        
-        int get_variables();
-        
-        /**
-         * Initialises LDAP session.
-         */
-        bool ldap_init();
-        
-        void ldap_close();
-        
+                        
         bool initialised = false;
     };
 
