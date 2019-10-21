@@ -19,6 +19,7 @@
 
 #include "data_server.hpp"
 #include "config_file.hpp"
+#include "generated_load.hpp"
 #include "simplescim_ldap.hpp"
 #include "json_data_file.hpp"
 
@@ -46,24 +47,33 @@ bool data_server::load() {
             }
 
         } ldap;
-        if (ldap.get().valid()) {
-
-            auto ldap_log_file = config_file::instance().get_path("ldap-log-file", true);
-            if (ldap_log_file != "" && !load_logger.is_open()) {
-                load_logger.open(ldap_log_file.c_str());
+        auto load_log_file = config_file::instance().get_path("load-log-file", true);
+        if (load_log_file != "" && !load_logger.is_open()) {
+            load_logger.open(load_log_file.c_str());
+        }
+        
+        for (const auto &type : types) {
+            std::shared_ptr<object_list> l;
+            if (config.get_bool(type + "-is-generated")) {
+                l = get_generated(type, load_logger);
             }
-            
-            for (const auto &type : types) {
-                std::shared_ptr<object_list> l = ldap_get(ldap.get(), type, load_logger);
-                if (l) {
-                    add(type, l);
+            else if (config.has(type + "-ldap-filter")) {
+                if (ldap.get().valid()) {
+                    l = ldap_get(ldap.get(), type, load_logger);
                 }
                 else {
-                    std::cerr << "ldap_get for " << type << " returned nullptr" << std::endl;
+                    std::cerr << "can't connect to ldap" << std::endl;                        
                 }
             }
-        } else {
-            std::cerr << "can't connect to ldap" << std::endl;
+            else if (config.has(type + "-csv-files")) {
+
+            }
+            if (l) {
+                add(type, l);
+            }
+            else {
+                std::cerr << "load for " << type << " returned nothing" << std::endl;
+            }
         }
     } catch (std::string msg) {
         return false;
