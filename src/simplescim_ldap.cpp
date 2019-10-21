@@ -91,8 +91,6 @@ void load_related(const std::string &type,
 
     string_vector scim_vars = conf.get_vector_sorted_unique(type + "-scim-variables");
 
-    ldap_wrapper ldap;
-
     indented_logger::indenter indenter(load_logger);
     
     for (auto &&main_object: *objects) {
@@ -128,6 +126,13 @@ void load_related(const std::string &type,
                     if (!remote) {
 
                         auto filter = relation.get_ldap_filter(value);
+
+                        ldap_wrapper& ldap = *server.get_ldap_wrapper();
+
+                        if (!ldap.valid()) {
+                            std::cerr << "can't connect to LDAP" << std::endl;
+                            throw std::runtime_error("failed to connect to LDAP");
+                        }
 
                         if (ldap.search(relation.type, load_logger, filter)) {
                             auto limiter = get_limiter(relation.type);

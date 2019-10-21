@@ -35,18 +35,7 @@ bool data_server::load() {
 
         std::shared_ptr<object_list> all = std::make_shared<object_list>();
         string_vector types = config.get_vector("scim-type-load-order");
-        struct closer {
-            ldap_wrapper ldap;
 
-            ldap_wrapper &get() {
-                return ldap;
-            }
-
-            ~closer() {
-                ldap.ldap_close();
-            }
-
-        } ldap;
         auto load_log_file = config_file::instance().get_path("load-log-file", true);
         if (load_log_file != "" && !load_logger.is_open()) {
             load_logger.open(load_log_file.c_str());
@@ -58,11 +47,13 @@ bool data_server::load() {
                 l = get_generated(type, load_logger);
             }
             else if (config.has(type + "-ldap-filter")) {
-                if (ldap.get().valid()) {
-                    l = ldap_get(ldap.get(), type, load_logger);
+                auto ldap_wrapper = get_ldap_wrapper();
+                if (ldap_wrapper->valid()) {
+                    l = ldap_get(*ldap_wrapper, type, load_logger);
                 }
                 else {
-                    std::cerr << "can't connect to ldap" << std::endl;                        
+                    std::cerr << "can't connect to LDAP" << std::endl;
+                    return false;
                 }
             }
             else if (config.has(type + "-csv-files")) {
