@@ -101,9 +101,9 @@ void load_related(const std::string &type,
                 auto relation_source = data_server::instance().get_by_type(relation.type);
                 if (relation_source) {
                     string_vector values = main_object.second->get_values(relation.local_attribute);
-                    if (values.size() == 1) {
+                    for (size_t i = 0; i < values.size(); ++i) {
                         auto remote_object = server.find_object_by_attribute(relation.type,
-                                                                             relation.remote_attribute, values.at(0));
+                                                                             relation.remote_attribute, values[i]);
                         if (remote_object) {
                             for (auto &&var : scim_vars) {
                                 auto p = string_to_pair(var);
