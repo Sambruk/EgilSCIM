@@ -109,9 +109,19 @@ void load_related(const std::string &type,
                                 auto p = string_to_pair(var);
                                 if (p.first == relation.type) {
                                     string_vector v = remote_object->get_values(p.second);
-                                    main_object.second->add_attribute(var, v);
+                                    main_object.second->append_values(var, v);
                                 }
                             }
+
+                            auto relations_scim_vars = conf.get_vector(relation.type + "-scim-variables");
+                            for (auto &&var : relations_scim_vars) {
+                                auto p = string_to_pair(var);
+                                if (p.first == type) {
+                                    auto id = main_object.second->get_values(p.second);
+                                    remote_object->append_values(type + "." + p.second, id, true);
+                                }
+                            }
+                            
                         }
                     }
                 }
