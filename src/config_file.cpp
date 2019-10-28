@@ -227,6 +227,15 @@ std::string config_file::get_path(const std::string& variable, bool silent) cons
     return filesystem::absolute(str, filename.parent_path());
 }
 
+std::vector<std::string> config_file::get_paths(const std::string& variable, bool silent) const {
+    auto strs = get_vector(variable, silent);
+
+    for (size_t i = 0; i < strs.size(); ++i) {
+        strs[i] = filesystem::absolute(strs[i], filename.parent_path());
+    }
+    return strs;
+}
+
 bool config_file::has(const std::string& variable) const {
     return variables.find(variable) != variables.end();
 }
