@@ -1,0 +1,327 @@
+---
+Organisations POST
+
+{
+"schemas": ["urn:scim:schemas:extension:sis:school:1.0:Organisation"],
+"externalId": "d80428c4-8788-47d7-aca7-761681fbe66a",
+"displayName": "Kommunen"
+}
+---
+---
+SchoolUnits POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnit"],
+    "externalId": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+    "displayName": "skolenhet2",
+    "schoolUnitCode": "11111111",
+    "schoolUnitGroup":  {
+        "value": "b7cbd8b7-96a6-425f-b14c-d4564d989d84",
+        "$ref": "SchoolUnitGroups/b7cbd8b7-96a6-425f-b14c-d4564d989d84"
+    },
+    "organisation":  {
+        "value": "d80428c4-8788-47d7-aca7-761681fbe66a",
+        "$ref": "Organisations/d80428c4-8788-47d7-aca7-761681fbe66a"
+    },
+    "municipalityCode": "9999"
+}
+---
+---
+SchoolUnits POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnit"],
+    "externalId": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "displayName": "skolenhet1",
+    "schoolUnitCode": "12345678",
+    "schoolUnitGroup":  {
+        "value": "b7cbd8b7-96a6-425f-b14c-d4564d989d84",
+        "$ref": "SchoolUnitGroups/b7cbd8b7-96a6-425f-b14c-d4564d989d84"
+    },
+    "organisation":  {
+        "value": "d80428c4-8788-47d7-aca7-761681fbe66a",
+        "$ref": "Organisations/d80428c4-8788-47d7-aca7-761681fbe66a"
+    },
+    "municipalityCode": "9999"
+}
+---
+---
+SchoolUnitGroups POST
+
+{
+	"schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnitGroup"],
+	"externalId": "b7cbd8b7-96a6-425f-b14c-d4564d989d84",
+	"displayName": "skolgruppen"
+}
+---
+---
+Users POST
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "2b3a480f-d0b9-4c09-bbac-70f915964b02",
+	"userName": "pejo@skola.kommunen.se",
+	"displayName": "Per Johansson",
+	"name": {
+		"familyName": "Johansson",
+		"givenName": "Per"
+	},
+	"emails": [
+        
+        {
+          "value": "pejo@skolan.kommunen.se" 
+        } 
+        
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+        "enrolments": [
+            
+            {
+                "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+                "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+            } 
+            
+        ]
+    }
+}
+---
+---
+Users POST
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
+	"userName": "lini@skola.kommunen.se",
+	"displayName": "Lisa Nilsson",
+	"name": {
+		"familyName": "Nilsson",
+		"givenName": "Lisa"
+	},
+	"emails": [
+        
+        {
+          "value": "lini@skolan.kommunen.se" 
+        } 
+        
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+        "enrolments": [
+            
+            {
+                "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+                "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+            } 
+            
+        ]
+    }
+}
+---
+---
+Users POST
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "75c666db-e60e-4687-bdd3-1af191fa6799",
+	"userName": "baje@skola.kommunen.se",
+	"displayName": "Babs Jensen",
+	"name": {
+		"familyName": "Jensen",
+		"givenName": "Barbara"
+	},
+	"emails": [
+        
+        {
+          "value": "baje@skolan.kommunen.se" 
+        } 
+        
+    ]
+}
+---
+---
+Users POST
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "88c0f298-8e33-4566-ace7-6e26228a9bc6",
+	"userName": "anan@skola.kommunen.se",
+	"displayName": "Anders Andersson",
+	"name": {
+		"familyName": "Andersson",
+		"givenName": "Anders"
+	},
+	"emails": [
+        
+        {
+          "value": "anan@skolan.kommunen.se" 
+        } 
+        
+    ]
+}
+---
+---
+Employments POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
+    "externalId": "163cbddb-9fd0-53df-81e4-e022c5dd5c71",
+    "employedAt":  {
+                   "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+                   "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+    },
+    "user":  {
+             "value": "75c666db-e60e-4687-bdd3-1af191fa6799",
+             "$ref": "Users/75c666db-e60e-4687-bdd3-1af191fa6799"
+    },
+    "employmentRole": "Lärare",
+    "signature": "baje"
+}
+---
+---
+Employments POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
+    "externalId": "3b86c590-551e-5464-84ee-d505effff97e",
+    "employedAt":  {
+                   "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+                   "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
+    },
+    "user":  {
+             "value": "75c666db-e60e-4687-bdd3-1af191fa6799",
+             "$ref": "Users/75c666db-e60e-4687-bdd3-1af191fa6799"
+    },
+    "employmentRole": "Lärare",
+    "signature": "baje"
+}
+---
+---
+Employments POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
+    "externalId": "db405316-e9d1-50d2-89c5-776f91ac2c98",
+    "employedAt":  {
+                   "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+                   "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+    },
+    "user":  {
+             "value": "88c0f298-8e33-4566-ace7-6e26228a9bc6",
+             "$ref": "Users/88c0f298-8e33-4566-ace7-6e26228a9bc6"
+    },
+    "employmentRole": "Lärare",
+    "signature": "anan"
+}
+---
+---
+Activities POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
+    "externalId": "7f9f75d8-9c01-5c1d-83df-b0d47cf1e4c9",
+    "displayName": "grupp2-Activity",
+    "owner": {
+        "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+        "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"  
+    },
+    "group": {
+        "value": "645ebd9d-55b5-4e7a-900a-92b9369c8f6a",
+        "$ref": "StudentGroups/645ebd9d-55b5-4e7a-900a-92b9369c8f6a"
+    },
+    "teachers": [
+        
+        {
+            "value": "db405316-e9d1-50d2-89c5-776f91ac2c98",
+            "$ref": "Employments/db405316-e9d1-50d2-89c5-776f91ac2c98"
+            
+        },
+        
+        {
+            "value": "163cbddb-9fd0-53df-81e4-e022c5dd5c71",
+            "$ref": "Employments/163cbddb-9fd0-53df-81e4-e022c5dd5c71"
+            
+        } 
+        
+    ]
+}
+---
+---
+Activities POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
+    "externalId": "857d1f1d-3e23-5896-9877-406ce84be599",
+    "displayName": "grupp1-Activity",
+    "owner": {
+        "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+        "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"  
+    },
+    "group": {
+        "value": "39074b36-e0ed-4443-a501-5148992014b9",
+        "$ref": "StudentGroups/39074b36-e0ed-4443-a501-5148992014b9"
+    },
+    "teachers": [
+        
+        {
+            "value": "163cbddb-9fd0-53df-81e4-e022c5dd5c71",
+            "$ref": "Employments/163cbddb-9fd0-53df-81e4-e022c5dd5c71"
+            
+        } 
+        
+    ]
+}
+---
+---
+StudentGroups POST
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "39074b36-e0ed-4443-a501-5148992014b9",
+  "displayName": "grupp1",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
+      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
+    },
+    
+    {
+      "value": "2b3a480f-d0b9-4c09-bbac-70f915964b02",
+      "$ref": "Users/2b3a480f-d0b9-4c09-bbac-70f915964b02"
+    } 
+    
+  ]
+}---
+---
+StudentGroups POST
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "645ebd9d-55b5-4e7a-900a-92b9369c8f6a",
+  "displayName": "grupp2",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
+      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
+    } 
+    
+  ]
+}---

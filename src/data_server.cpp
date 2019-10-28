@@ -21,6 +21,7 @@
 #include "config_file.hpp"
 #include "generated_load.hpp"
 #include "simplescim_ldap.hpp"
+#include "csv_load.hpp"
 #include "json_data_file.hpp"
 
 /**
@@ -57,7 +58,7 @@ bool data_server::load() {
                 }
             }
             else if (config.has(type + "-csv-files")) {
-
+                l = csv_get(type, load_logger);
             }
             if (l) {
                 add(type, l);

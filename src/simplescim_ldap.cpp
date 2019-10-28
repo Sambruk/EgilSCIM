@@ -171,7 +171,6 @@ void load_related(const std::string &type,
                         server.add(relation.type, remote);
                     }
                 }
-
             }
         }
     }
@@ -188,7 +187,7 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap,
                                       const std::string &type,
                                       indented_logger& load_logger) {
 
-    load_logger.log(std::string("Loading entries for type ") + type);
+    load_logger.log(std::string("Loading entries for type ") + type + " from LDAP");
     indented_logger::indenter indenter(load_logger);
     
     std::shared_ptr<object_list> objects;
