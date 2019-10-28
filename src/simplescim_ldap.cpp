@@ -319,17 +319,27 @@ void load_related(const std::string &type,
                 auto relation_source = data_server::instance().get_by_type(relation.type);
                 if (relation_source) {
                     string_vector values = main_object.second->get_values(relation.local_attribute);
-                    if (values.size() == 1) {
+                    for (size_t i = 0; i < values.size(); ++i) {
                         auto remote_object = server.find_object_by_attribute(relation.type,
-                                                                             relation.remote_attribute, values.at(0));
+                                                                             relation.remote_attribute, values[i]);
                         if (remote_object) {
                             for (auto &&var : scim_vars) {
                                 auto p = string_to_pair(var);
                                 if (p.first == relation.type) {
                                     string_vector v = remote_object->get_values(p.second);
-                                    main_object.second->add_attribute(var, v);
+                                    main_object.second->append_values(var, v);
                                 }
                             }
+
+                            auto relations_scim_vars = conf.get_vector(relation.type + "-scim-variables");
+                            for (auto &&var : relations_scim_vars) {
+                                auto p = string_to_pair(var);
+                                if (p.first == type) {
+                                    auto id = main_object.second->get_values(p.second);
+                                    remote_object->append_values(type + "." + p.second, id, true);
+                                }
+                            }
+                            
                         }
                     }
                 }
