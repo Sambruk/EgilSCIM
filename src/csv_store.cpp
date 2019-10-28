@@ -18,6 +18,23 @@
  */
 
 #include "csv_store.hpp"
+#include "config_file.hpp"
+
+csv_store::csv_store() {
+    separator = ',';
+
+    auto separator_setting = config_file::instance().get("csv-separator", true);
+    if (!separator_setting.empty()) {
+        separator = separator_setting[0];
+    }
+
+    quote = '"';
+
+    auto quote_setting = config_file::instance().get("csv-quote", true);
+    if (!quote_setting.empty()) {
+        quote = quote_setting[0];
+    }    
+}
 
 std::shared_ptr<csv_file> csv_store::get_file(const std::string& path) {
     auto itr = cache.find(path);
@@ -26,7 +43,7 @@ std::shared_ptr<csv_file> csv_store::get_file(const std::string& path) {
         return itr->second;
     }
 
-    auto file{std::make_shared<csv_file>(path)};
+    auto file{std::make_shared<csv_file>(path, separator, quote)};
     cache[path] = file;
     return file;
 }

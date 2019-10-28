@@ -31,17 +31,17 @@
  *
  *    - Unix style line endings
  *    - Configurable separator and quote character
- *    - Unicode text
+ *    - UTF-8 encoded text
  *
  * The whole file is loaded and kept in memory.
  */
 class csv_file {
 public:
     // Load from a given file
-    csv_file(const std::string& path);
+    csv_file(const std::string& path, char separator = ',', char quote = '"');
 
     // Load from a stream
-    csv_file(std::istream& is);
+    csv_file(std::istream& is, char sep = ',', char q = '"');
 
     // A row in the file is a vector of strings
     typedef std::vector<std::string> row;
@@ -62,6 +62,9 @@ public:
     };
 
 private:
+    const char SEPARATOR;
+    const char QUOTE;
+    
     void load(std::istream& is);
 
     row header;

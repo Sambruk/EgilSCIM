@@ -32,9 +32,14 @@
  */
 class csv_store {
 public:
+    csv_store();
+    
     std::shared_ptr<csv_file> get_file(const std::string& path);
 
 private:
+    char separator;
+    char quote;
+    
     std::map<std::string, std::shared_ptr<csv_file>> cache;
 };
 

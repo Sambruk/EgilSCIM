@@ -21,7 +21,9 @@
 #include <fstream>
 #include <cassert>
 
-csv_file::csv_file(const std::string& path) {
+csv_file::csv_file(const std::string& path, char separator, char quote)
+        : SEPARATOR(separator),
+          QUOTE(quote) {
     std::ifstream fs(path);
 
     if (!fs) {
@@ -31,7 +33,9 @@ csv_file::csv_file(const std::string& path) {
     load(fs);
 }
 
-csv_file::csv_file(std::istream& is) {
+csv_file::csv_file(std::istream& is, char separator, char quote)
+        : SEPARATOR(separator),
+          QUOTE(quote) {
     load(is);
 }
 
@@ -59,11 +63,11 @@ void eat_newline(std::istream& is) {
     }
 }
 
-std::string parse_non_escaped_field(std::istream& is) {
+std::string parse_non_escaped_field(std::istream& is, const char SEPARATOR, const char QUOTE) {
     std::string result;
 
-    while (!end_of_record(is) && is.peek() != ',') {
-        if (is.peek() == '"') {
+    while (!end_of_record(is) && is.peek() != SEPARATOR) {
+        if (is.peek() == QUOTE) {
             throw csv_file::format_error("unexpected quote in non-quoted field");
         }
         result += (char)is.get();
@@ -71,16 +75,16 @@ std::string parse_non_escaped_field(std::istream& is) {
     return result;
 }
 
-std::string parse_escaped_field(std::istream& is) {
+std::string parse_escaped_field(std::istream& is, const char QUOTE) {
     auto ch = is.get();
-    assert(ch == '"');
+    assert(ch == QUOTE);
     
     std::string result;
     do {
         ch = is.get();
         
-        if (ch == '"') {
-            if (is.peek() == '"') {
+        if (ch == QUOTE) {
+            if (is.peek() == QUOTE) {
                 is.get();
                 result += (char)ch;
             }
@@ -96,33 +100,33 @@ std::string parse_escaped_field(std::istream& is) {
     throw csv_file::format_error("unexpected end-of-file in quoted field");
 }
 
-std::string parse_field(std::istream& is) {
+std::string parse_field(std::istream& is, const char SEPARATOR, const char QUOTE) {
     if (end_of_record(is)) {
         return "";
     }
 
     std::string result;
-    if (is.peek() == '"') {
-        result = parse_escaped_field(is);
+    if (is.peek() == QUOTE) {
+        result = parse_escaped_field(is, QUOTE);
     }
     else {
-        result = parse_non_escaped_field(is);
+        result = parse_non_escaped_field(is, SEPARATOR, QUOTE);
     }
 
     return result;
 }
 
-csv_file::row parse_record(std::istream& is) {
+csv_file::row parse_record(std::istream& is, const char SEPARATOR, const char QUOTE) {
     csv_file::row result;
-    auto field = parse_field(is);
+    auto field = parse_field(is, SEPARATOR, QUOTE);
     result.push_back(field);
     
     while (!end_of_record(is)) {
         auto ch = is.get();
-        if (ch != ',') {
-            throw csv_file::format_error(std::string("expected '") + ',' + "', got " + (char)ch);
+        if (ch != SEPARATOR) {
+            throw csv_file::format_error(std::string("expected '") + SEPARATOR + "', got " + (char)ch);
         }
-        field = parse_field(is);
+        field = parse_field(is, SEPARATOR, QUOTE);
         result.push_back(field);
     }
     eat_newline(is);
@@ -132,13 +136,13 @@ csv_file::row parse_record(std::istream& is) {
 }
 
 void csv_file::load(std::istream& is) {
-    header = parse_record(is);
+    header = parse_record(is, SEPARATOR, QUOTE);
 
     while (is.good() && is.peek() != EOF) {
         auto record_number = data.size() + 1;
 
         try {
-            data.push_back(parse_record(is));
+            data.push_back(parse_record(is, SEPARATOR, QUOTE));
             if (data.back().size() != header.size()) {
                 throw format_error("incorrect number of fields in record");
             }
