@@ -20,6 +20,8 @@ it will be overwritten when the client runs.
 
 You can log the load process to a text file by setting the variable
 `load-log-file` to a file path. If the file exists it will be overwritten when
-the client runs. It will show you the order in which LDAP queries are performed,
-what the base and filter is for each query, and show the recursive process by
-indenting the log file according to what is currently loaded.
+the client runs. It will show you the order in which objects are loaded
+(regardless of whether they are loaded from LDAP or CSV), which LDAP queries
+are performed, what the base and filter is for each query, and show the
+recursive process by indenting the log file according to what is currently
+loaded.
