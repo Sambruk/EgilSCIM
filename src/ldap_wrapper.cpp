@@ -55,7 +55,6 @@ struct ldap_wrapper::Impl {
     std::string ldap_attrsonly{};
 
     std::string type{};
-    std::pair<std::string, std::string> override_filter{};
     pair_map multi_queries{};
     
      /**
@@ -161,6 +160,7 @@ struct ldap_wrapper::Impl {
         if (!ldap_get_type_variables())
             return false;
 
+        std::pair<std::string, std::string> override_filter{};        
         if (!filters.first.empty() && !filters.second.empty())
             override_filter = filters;
 
