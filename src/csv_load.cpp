@@ -21,6 +21,7 @@
 #include "config_file.hpp"
 #include "load_limiter.hpp"
 #include "data_server.hpp"
+#include "utility/utils.hpp"
 
 // Constructs a base_object from a CSV record
 std::shared_ptr<base_object> csv_entry_to_base_object(const string_vector& values,
@@ -36,6 +37,22 @@ std::shared_ptr<base_object> csv_entry_to_base_object(const string_vector& value
     return std::make_shared<base_object>(std::move(attributes));
 }
 
+// Generates a UUID attribute for an object, based on some other attribute
+void generate_uuid(std::shared_ptr<base_object> object,
+                   const std::string& generator,
+                   const std::string& uuid_attribute) {
+    
+    auto values = object->get_values(generator);
+
+    if (values.size() != 1) {
+        throw std::runtime_error("UUID generator must have exactly one value for each object");
+    }
+
+    auto generator_value = values[0];
+    auto uuid = uuid_util::instance().generate(generator_value);
+    object->add_attribute(uuid_attribute, {uuid});
+}
+
 // Goes through all records in a CSV file and creates base_objects 
 std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
                                                 const std::string& type,
@@ -46,6 +63,12 @@ std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
     
     for (size_t i = 0; i < file->size(); ++i) {
         auto object = csv_entry_to_base_object((*file)[i], attribute_names, type);
+
+        if (config_file::instance().has(type + "-UUID-generator")) {
+            generate_uuid(object,
+                          config_file::instance().get(type + "-UUID-generator"),
+                          config_file::instance().get(type + "-unique-identifier"));
+        }
 
         auto uid = object->get_uid();
         if (!uid.empty() && limiter->include(object.get())) {
