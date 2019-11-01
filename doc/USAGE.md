@@ -51,8 +51,39 @@ value, it is a part of the value and is not interpreted as a comment.
 
 EgilSCIM has a set of required variable names that must be assigned
 meaningful values. The set of required variable names may change in
-future versions of EgilSCIM, but in the current version, the
-required variable names are:
+future versions of EgilSCIM and depends on whether LDAP and/or CSV
+is used as data source.
+
+The following variables should be configured regardless of data source:
+
+* `cache-file` specifies the configuration file's cache file used to
+  remember previous executions of the configuration file.
+* `cert` is the path to the client's certificate file (PEM).
+* `key` is the path to the client's private key file (PEM).
+* `scim-type-send-order` is the order in which objects are sent to the SCIM server.
+* `scim-type-load-order` is the order in which we load objects from the data source.
+
+Type specific configuration can be placed in a separate configuration file
+(e.g. Student.conf). To include such a configuration file, the main configuration
+file needs to specify it in `<type>-scim-conf`, for instance:
+
+```
+Student-scim-conf = Student.conf
+```
+
+Type-specific variables:
+
+* `<type>-scim-url-endpoint` specifies where to send objects of this type.
+* `<type>-unique-identifier` is the name of the attribute which should be used as UUID.
+* `<type>-hidden-attributes` can be used to specify attributes which should be fetched from LDAP even though EgilSCIM can't deduce it automatically (for instance because they're not used in the JSON templates).
+* `<type>-remote-relations` is used to define relations between objects.
+* `<type>-scim-json-template` specifies the JSON object to send when creating and
+    updating a new object.
+
+#### LDAP connection and authentication
+
+The following variables need to be configured in order to connect to
+an LDAP server:
 
 * `ldap-uri` is the uri to the LDAP server that contains the _schema_
   (i.e. `ldap://`, `ldaps://`, `ldapi://` and `cldap://`), the _host_
@@ -60,21 +91,6 @@ required variable names are:
   e.g. `ldaps://ldap.example.com:1234`.
 * `ldap-who` is the DN to bind as.
 * `ldap-passwd` is the password associated with the entry.
-* `ldap-base` is the DN of the entry at which to start the search.
-* `ldap-scope` is the scope of the search, i.e. `BASE`, `ONELEVEL`,
-  `SUBTREE` or `CHILDREN`.
-
-
-* `ldap-filter` is the filter to apply in the search. Leave empty for
-  the filter `(objectClass=*)`.
-
-* `cache-file` specifies the configuration file's cache file used to
-  remember previous executions of the configuration file.
-* `cert` is the path to the client's certificate file (PEM).
-* `key` is the path to the client's private key file (PEM).
-* `<type>-scim-json-template` specifies the JSON object to send when creating and
-    updating a new object.
-    
 
 #### SCIM connection and authentication
 If you wish to run against Skolfederation's metadata file, the following
@@ -114,6 +130,76 @@ the type needs to be one of the generated types (Employment and Activity).
 
 Since the generated types are generated based on the objects loaded from LDAP, the generated
 types should come last in `scim-type-load-order`.
+
+## Loading objects from CSV
+
+If objects of a type _X_ should be loaded from CSV files instead of from LDAP, they should
+have a `X-csv-files` variable instead of the `X-ldap-filter`.
+
+The `X-csv-files` variable should be a path to a CSV file, or a space separated list of paths.
+The first file is used to load all objects of that type, one object per record in the CSV file.
+The columns in the file will correspond to attributes in the objects created.
+
+If more than one file is specified, the other files are used to specify multi-valued
+attributes. These files should have two columns, the first acting as a foreign key to the
+objects given in the first file and the second containing values for the attribute.
+
+### Example
+
+Lets say we have groups in CSV files, and each group has a multi-valued "members" attribute.
+
+In your EgilSCIM configuration file, specify that StudentGroup should be loaded from CSV:
+
+```
+StudentGroup-csv-files = groups.csv members.csv
+```
+
+groups.csv might then look something like this:
+
+```
+groupName,schoolUnitCode
+English-XC-03,12345678
+History-CC-02,12345678
+```
+
+This alone would give us groups with two single-valued attributes. The multi-valued "members"
+attribute comes from the members.csv file, which might look something like this:
+
+```
+groupName,member
+English-XC-03,student2
+History-CC-02,student1
+English-XC-03,student1
+```
+
+The first column name specifies which attribute in the first file to use to identify the object
+(make sure it can be used as a unique identifier). The second column name gives the name of
+the multi-valued attribute in the object.
+
+### UUIDs
+
+In the example above, there are no UUIDs given. These can be included as its own column if you
+have appropriate UUIDs, or they can be generated by EgilSCIM on the fly based on one of the
+other attributes. This is done with the `<type>-UUID-generator` variable, for example:
+
+```
+StudentGroup-UUID-generator = groupName
+```
+
+Make sure that the attribute used really is something that uniquely identifies the object
+(not just unique within that type of objects, but within all types). The generated UUID
+attribute will be available as whatever you've specified as `<type>-unique-identifier`.
+
+### CSV format
+
+The files are assumed to conform to [RFC 4180](https://tools.ietf.org/html/rfc4180) with
+the following additions:
+
+ * The header line must be included
+ * Unix-style line endings are allowed
+ * The separator character can be configured (with the `csv-separator` variable)
+ * The quote character can be configured (with the `csv-quote` variable)
+ * UTF-8 encoded text is allowed
 
 ### Limiting the load process
 
