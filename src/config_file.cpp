@@ -224,14 +224,14 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
 
 std::string config_file::get_path(const std::string& variable, bool silent) const {
     auto str = get(variable, silent);
-    return filesystem::absolute(str, filename.parent_path());
+    return filesystem::absolute(str, filename.parent_path()).u8string();
 }
 
 std::vector<std::string> config_file::get_paths(const std::string& variable, bool silent) const {
     auto strs = get_vector(variable, silent);
 
     for (size_t i = 0; i < strs.size(); ++i) {
-        strs[i] = filesystem::absolute(strs[i], filename.parent_path());
+        strs[i] = filesystem::absolute(strs[i], filename.parent_path()).u8string();
     }
     return strs;
 }
@@ -266,7 +266,7 @@ std::string config_file::require_path(const std::string &variable) const {
         return "";
     }
 
-    return filesystem::absolute(str, filename.parent_path());
+    return filesystem::absolute(str, filename.parent_path()).u8string();
 }
 
 //static size_t send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {

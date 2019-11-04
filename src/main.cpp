@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
                 if (vm.count(var.name)) {
                     auto value{vm[var.name].as<std::string>()};
                     if (var.path) {
-                        value = filesystem::absolute(value);
+                        value = filesystem::absolute(value).u8string();
                     }
                     config.replace_variable(var.name, value);
                 }
@@ -296,7 +296,7 @@ int main(int argc, char *argv[]) {
             if (config.has("status-file")) {
                 write_status(config.get("status-file"),
                              start_time,
-                             end_time-start_time,
+                             int(end_time-start_time),
                              scim_actions.get_new_cache());
             }
 

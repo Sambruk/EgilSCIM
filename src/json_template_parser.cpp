@@ -20,6 +20,7 @@
 #include "json_template_parser.hpp"
 #include <regex>
 #include <iostream>
+#include <sstream>
 
 namespace JSONTemplateParser {
 
