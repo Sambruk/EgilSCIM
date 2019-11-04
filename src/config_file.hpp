@@ -85,6 +85,8 @@ public:
 
     std::string get_path(const std::string& variable, bool silent = false) const;
 
+    std::vector<std::string> get_paths(const std::string& variable, bool silent = false) const;
+
     bool has(const std::string& variable) const;
 
     std::string require(const std::string &variable) const;

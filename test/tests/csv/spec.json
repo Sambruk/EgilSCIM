@@ -1,0 +1,12 @@
+{
+    "description": "Initial sync with CSV",
+    "config": "configs/csv/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "init.txt"
+	},
+	{ "scenario": [],
+	  "requests": null
+	}
+    ]
+}

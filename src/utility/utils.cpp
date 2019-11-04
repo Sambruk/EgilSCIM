@@ -151,12 +151,11 @@ std::string toUpper(const std::string &s) {
     return out;
 }
 
-std::string uuid_util::generate() {
-    boost::uuids::uuid uuid = generator();
-    return boost::uuids::to_string(uuid);
+std::string uuid_util::generate(const std::string &a, const std::string &b) {
+    return generate(a + b);
 }
 
-std::string uuid_util::generate(const std::string &a, const std::string &b) {
+std::string uuid_util::generate(const std::string& a) {
 #if BOOST_VERSION < 106700
     // Older versions of Boost don't define name_generator_sha1 or
     // boost::uuids::ns::oid().
@@ -169,7 +168,7 @@ std::string uuid_util::generate(const std::string &a, const std::string &b) {
     boost::uuids::name_generator_sha1 name_generator(boost::uuids::ns::oid());
 #endif
 
-    boost::uuids::uuid uuid = name_generator(a + b);
+    boost::uuids::uuid uuid = name_generator(a);
     return boost::uuids::to_string(uuid);
 }
 

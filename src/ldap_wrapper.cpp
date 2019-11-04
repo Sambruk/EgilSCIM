@@ -35,36 +35,6 @@ void ldap_print_error(int err, const char *func) {
     simplescim_error_string_set_message("%s", ldap_err2string(err));
 }
 
-  
-/**
- * LDAP state variables
- */
-class connection {
-    connection() = default;
-
-public:
-    std::string ldap_uri{};
-    std::string ldap_who{};
-    std::string ldap_password{};
-    LDAP *simplescim_ldap_ld = nullptr;
-
-    int get_variables();
-
-    static connection &instance() {
-        static connection con;
-        return con;
-    }
-
-    /**
-     * Initialises LDAP session.
-     */
-    bool ldap_init();
-
-    void ldap_close();
-
-    bool initialised = false;
-};
-
 } // namespace
 
 struct ldap_wrapper::Impl {
@@ -85,13 +55,43 @@ struct ldap_wrapper::Impl {
     std::string ldap_attrsonly{};
 
     std::string type{};
-    std::pair<std::string, std::string> override_filter{};
     pair_map multi_queries{};
+    
+     /**
+      * LDAP state variables
+      */
+    class connection {
+        std::string ldap_uri{};
+        std::string ldap_who{};
+        std::string ldap_password{};
+
+        /**
+         * Initialises LDAP session.
+         */
+        bool ldap_init();
+        
+        void ldap_close();
+
+        int get_variables();        
+        
+    public:
+
+        connection() {
+            ldap_init();
+        }
+        
+        ~connection() {
+            ldap_close();
+        }
+        
+        LDAP *simplescim_ldap_ld = nullptr;
+                        
+        bool initialised = false;
+    };
+
+    connection conn;
 
     Impl() {
-        if (!connection::instance().initialised) {
-            connection::instance().ldap_init();
-        }
         ldap_get_variables();
 
         std::vector<std::string> attributes = config_file::instance().get_vector("all-scim-variables");
@@ -151,7 +151,7 @@ struct ldap_wrapper::Impl {
     bool search(const std::string &intype,
                 indented_logger& load_logger,
                 const std::pair<std::string, std::string> &filters) {
-        if (!connection::instance().initialised)
+        if (!conn.initialised)
             return false;
 
         if (!intype.empty())
@@ -160,6 +160,7 @@ struct ldap_wrapper::Impl {
         if (!ldap_get_type_variables())
             return false;
 
+        std::pair<std::string, std::string> override_filter{};        
         if (!filters.first.empty() && !filters.second.empty())
             override_filter = filters;
 
@@ -222,7 +223,7 @@ struct ldap_wrapper::Impl {
                         ", filter: " + filter_val.second);
         
         /** Search */
-        err = ldap_search_ext_s(connection::instance().simplescim_ldap_ld, filter_val.first.c_str(), scope_val,
+        err = ldap_search_ext_s(conn.simplescim_ldap_ld, filter_val.first.c_str(), scope_val,
                                 filter_val.second.c_str(),
                                 attrs_val,
                                 attrsonly_val,
@@ -260,15 +261,15 @@ struct ldap_wrapper::Impl {
         attrib_map attributes;
 
         /** Create the user object. */
-        for (char *attr = ldap_first_attribute(connection::instance().simplescim_ldap_ld, entry, &ber);
-             attr != nullptr; attr = ldap_next_attribute(connection::instance().simplescim_ldap_ld, entry, ber)) {
+        for (char *attr = ldap_first_attribute(conn.simplescim_ldap_ld, entry, &ber);
+             attr != nullptr; attr = ldap_next_attribute(conn.simplescim_ldap_ld, entry, ber)) {
 
             /** Get and clone 'vals'. */
-            berval **vals = ldap_get_values_len(connection::instance().simplescim_ldap_ld, entry, attr);
+            berval **vals = ldap_get_values_len(conn.simplescim_ldap_ld, entry, attr);
 
             if (vals == nullptr) {
                 int ld_errno;
-                int err = ldap_get_option(connection::instance().simplescim_ldap_ld, LDAP_OPT_RESULT_CODE, &ld_errno);
+                int err = ldap_get_option(conn.simplescim_ldap_ld, LDAP_OPT_RESULT_CODE, &ld_errno);
 
                 if (err != LDAP_OPT_SUCCESS) {
                     ldap_print_error(err, "ldap_get_option");
@@ -313,8 +314,7 @@ struct ldap_wrapper::Impl {
     }
 
     std::shared_ptr<base_object> first_object() {
-        connection &con = connection::instance();
-        current_entry = ldap_first_entry(con.simplescim_ldap_ld, simplescim_ldap_res);
+        current_entry = ldap_first_entry(conn.simplescim_ldap_ld, simplescim_ldap_res);
 
         if (current_entry == nullptr) {
             return nullptr;
@@ -324,8 +324,7 @@ struct ldap_wrapper::Impl {
     }
   
     std::shared_ptr<base_object> next_object() {
-        connection &con = connection::instance();
-        current_entry = ldap_next_entry(con.simplescim_ldap_ld, current_entry);
+        current_entry = ldap_next_entry(conn.simplescim_ldap_ld, current_entry);
 
         if (current_entry == nullptr) {
             return nullptr;
@@ -342,12 +341,8 @@ ldap_wrapper::ldap_wrapper()
 ldap_wrapper::~ldap_wrapper() {
 }  
 
-void ldap_wrapper::ldap_close() {
-    connection::instance().ldap_close();
-}
-
 bool ldap_wrapper::valid() {
-    return connection::instance().initialised;
+    return impl->conn.initialised;
 }
 
 bool ldap_wrapper::search(const std::string &intype,
@@ -364,7 +359,7 @@ std::shared_ptr<base_object> ldap_wrapper::next_object() {
     return impl->next_object();
 }
 
-bool connection::ldap_init() {
+bool ldap_wrapper::Impl::connection::ldap_init() {
     int ldap_version = LDAP_VERSION3;
     struct berval cred{};
     int err;
@@ -413,7 +408,7 @@ bool connection::ldap_init() {
     return true;
 }
 
-int connection::get_variables() {
+int ldap_wrapper::Impl::connection::get_variables() {
     config_file &con = config_file::instance();
     ldap_uri = con.get("ldap-uri");
     ldap_who = con.get("ldap-who");
@@ -421,7 +416,7 @@ int connection::get_variables() {
     return 0;
 }
 
-void connection::ldap_close() {
+void ldap_wrapper::Impl::connection::ldap_close() {
 
     if (simplescim_ldap_ld != nullptr) {
         /* Disregard the return value. */

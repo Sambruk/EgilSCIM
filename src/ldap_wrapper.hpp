@@ -35,8 +35,6 @@ public:
 
   ~ldap_wrapper();
 
-  void ldap_close();
-
   bool valid();
 
   /**

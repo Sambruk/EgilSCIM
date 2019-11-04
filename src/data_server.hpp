@@ -25,6 +25,8 @@
 #include <set>
 #include "model/object_list.hpp"
 #include "utility/indented_logger.hpp"
+#include "ldap_wrapper.hpp"
+#include "csv_store.hpp"
 
 class data_server {
     // static data is loaded once. They are known full sets like SchoolUnit
@@ -46,7 +48,8 @@ class data_server {
     string_vector static_types;
     string_vector dynamic_types;
 
-
+    std::unique_ptr<ldap_wrapper> ldap;
+    std::unique_ptr<csv_store> csv;
 
     data_server(const data_server &other) = default;
 
@@ -71,6 +74,8 @@ public:
         dynamic_types.clear();
         static_data.clear();
         dynamic_data.clear();
+        ldap.reset();
+        csv.reset();
     }
 
     bool empty() {
@@ -103,6 +108,20 @@ public:
     void add(const std::string& type, std::shared_ptr<object_list> list);
 
     void add(const std::string &type, std::shared_ptr<base_object> object);
+
+    ldap_wrapper* get_ldap_wrapper() {
+        if (ldap.get() == nullptr) {
+            ldap.reset(new ldap_wrapper());
+        }
+        return ldap.get();
+    }
+
+    csv_store* get_csv_store() {
+        if (csv.get() == nullptr) {
+            csv.reset(new csv_store());
+        }
+        return csv.get();
+    }
 
 private:
     /**

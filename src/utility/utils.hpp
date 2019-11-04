@@ -45,28 +45,35 @@ void print_status(const char *config_file_name);
 
 class uuid_util
 {
-  boost::uuids::random_generator generator;
+    boost::uuids::random_generator generator;
 
-  uuid_util() = default;
+    uuid_util() = default;
 public:
-  static uuid_util &instance() {
-    static uuid_util gen;
-    return gen;
-  }
-  std::string generate();
+    static uuid_util &instance() {
+        static uuid_util gen;
+        return gen;
+    }
 
-  /**
-   * Generates a UUID based on two strings, in
-   * a repeatable deterministic way.
-   *
-   * Technically we'll create a UUID version 5 (SHA-1)
-   * from the two strings concatenated, with the standard
-   * UUID for object identifiers as namespace.
-   */
-  std::string generate(const std::string &a, const std::string &b);
+    /**
+     * Generates a UUID based on a string, in
+     * a repeatable deterministic way.
+     *
+     * Technically we'll create a UUID version 5 (SHA-1)
+     * from the string, with the standard UUID for object
+     * identifiers as namespace.
+     */
+    std::string generate(const std::string& a);
 
+    /**
+     * Generates a UUID based on two strings, in
+     * a repeatable deterministic way.
+     *
+     * This is the same as the version with just one string,
+     * except the strings are are concatenated before hashing.
+     */
+    std::string generate(const std::string &a, const std::string &b);    
 
-  std::string un_parse_uuid(char * val);
+    std::string un_parse_uuid(char * val);
 
 };
 
