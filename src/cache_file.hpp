@@ -17,19 +17,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SIMPLESCIM_CACHE_FILE_H
-#define SIMPLESCIM_CACHE_FILE_H
+#ifndef EGILSCIM_CACHE_FILE_HPP
+#define EGILSCIM_CACHE_FILE_HPP
 
-#include <functional>
-#include <cstdint>
-#include <cstddef>
 #include <string>
+#include <fstream>
 #include "model/base_object.hpp"
 
 class object_list;
-
-class base_object;
-
 
 /**
  * Reads cache file specified in configuration file and
@@ -41,47 +36,48 @@ class base_object;
  * message.
  */
 class cache_file {
-	int cache_file_fd{};
-	std::string cache_file_filename;
+    std::ifstream ifs;
+    std::ofstream ofs;
+    std::string cache_file_filename;
 public:
-	static cache_file &instance() {
-		static cache_file the_cache;
-		return the_cache;
-	}
+    static cache_file &instance() {
+        static cache_file the_cache;
+        return the_cache;
+    }
 
-	~cache_file();
+    ~cache_file();
 
-	std::shared_ptr<object_list> get_contents();
+    std::shared_ptr<object_list> get_contents();
 
-	int save(std::shared_ptr<object_list> objects);
+    int save(std::shared_ptr<object_list> objects);
 
 private:
 
-	std::shared_ptr<object_list> read_objects();
+    std::shared_ptr<object_list> read_objects();
 
-	std::shared_ptr<base_object> read_object(std::string *uidp);
+    std::shared_ptr<base_object> read_object(std::string *uidp);
 
-	std::shared_ptr<object_list> get_objects_from_file(const char *filename);
+    std::shared_ptr<object_list> get_objects_from_file(const char *filename);
 
-	int write_n(const uint8_t *buf, size_t n);
+    int write_n(const void *buf, size_t n);
 
-	int write_uint64(uint64_t n);
+    int write_uint64(uint64_t n);
 
-	int write_value(const std::string &av);
+    int write_value(const std::string &av);
 
-	int write_value_list(const std::vector<std::string> &al);
+    int write_value_list(const std::vector<std::string> &al);
 
-	int write_attribute(const std::string &attribute, const std::vector<std::string> &values);
+    int write_attribute(const std::string &attribute, const std::vector<std::string> &values);
 
-	int write_object(const std::string &uid, const base_object &object);
+    int write_object(const std::string &uid, const base_object &object);
 
-	int read_n(uint8_t *buf, size_t n);
+    int read_n(void *buf, size_t n);
 
-	int read_uint64(uint64_t *buf);
+    int read_uint64(uint64_t *buf);
 
-	int read_value(std::string *avp);
+    int read_value(std::string *avp);
 
-	int read_value_list(std::vector<std::string> *alp);
+    int read_value_list(std::vector<std::string> *alp);
 
 };
 
