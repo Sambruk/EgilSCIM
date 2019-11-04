@@ -17,8 +17,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <unistd.h>
-#include <fcntl.h>
+#include <experimental/filesystem>
 
 #include "cache_file.hpp"
 #include "utility/simplescim_error_string.hpp"
@@ -279,9 +278,7 @@ std::shared_ptr<object_list> cache_file::get_objects_from_file(const char *filen
 
     cache_file_filename = filename;
 
-    /* Check if cache file exists.
-       If not, return an empty object list. */
-    if (access(filename, F_OK) == -1) {
+    if (!std::experimental::filesystem::exists(filename)) {
         return std::make_shared<object_list>();
     }
 
