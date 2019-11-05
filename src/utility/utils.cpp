@@ -63,6 +63,10 @@ std::string pair_to_string(const std::pair<std::string, std::string> &pair) {
     return pair.first + '.' + pair.second;
 }
 
+bool startsWith(const std::string& s, const std::string& prefix) {
+    return s.substr(0, prefix.size()) == prefix;
+}
+
 void print_error() {
     if (has_errors_to_print())
         std::cerr << simplescim_error_string_get() << std::endl;

@@ -56,7 +56,7 @@ std::string store_relation(base_object &generated_object,
             } else {
                 std::cerr << "failed to generate relation, can't create its ID" << std::endl;
             }
-        } catch (std::out_of_range &oor) {
+        } catch (std::out_of_range &) {
             std::cerr << "Failed to create relational object: " << type << " some relation is missing it's GUID"
                       << std::endl;
         }

@@ -39,7 +39,7 @@ SCIMServerInfo::SCIMServerInfo(const config_file& config) {
             ca_bundle_path = end_point.castore->get_path();
             castore_file = end_point.castore;
         }
-        catch (const std::runtime_error& e) {
+        catch (const std::runtime_error&) {
             std::cerr << "Failed to load metadata from " << metadata_path << std::endl;
             throw;
         }
@@ -47,7 +47,7 @@ SCIMServerInfo::SCIMServerInfo(const config_file& config) {
     else {
         url = config.get("scim-url");
         pinned_public_keys = config.get("pinnedpubkey");
-        ca_bundle_path = filesystem::path(config.get_path("metadata_ca_path")) / config.get("metadata_ca_store");
+        ca_bundle_path = (filesystem::path(config.get_path("metadata_ca_path")) / filesystem::path(config.get("metadata_ca_store"))).u8string();
     }
 }
 

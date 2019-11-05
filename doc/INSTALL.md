@@ -99,4 +99,8 @@ Run EgilSCIM with:
     make
 
 ## Windows
-    Instructions not yet available. The source code does not currently compile on Windows.
+The code can be built for Windows with Microsoft Visual C++ (and probably
+other C++ compilers as well). You'll need to have header files and libraries
+for Boost and CURL installed.
+
+The program hasn't been tested much on Windows yet.
