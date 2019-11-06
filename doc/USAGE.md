@@ -201,7 +201,80 @@ the following additions:
  * The quote character can be configured (with the `csv-quote` variable)
  * UTF-8 encoded text is allowed
 
-### Limiting the load process
+## Defining relations between objects
+
+Objects can be related to other objects. For instance a StudentGroup is typically
+related to the Students and Teachers that are included in the group. A
+StudentGroup is also typically associated with a single SchoolUnit object.
+
+The relations for a type _X_ is defined in the variable _X_-remote-relations.
+For instance, for a StudentGroup it might look something like:
+
+```
+StudentGroup-remote-relations = <?
+{
+    "relations": {
+        "SchoolUnit": {
+            "local_attribute": "owningSchoolUnit",
+            "remote_attribute": "schoolUnitCode",
+            "ldap_base": "ou=SchoolObjects,o=Organisation",
+            "ldap_filter": "(schoolUnitCode=${value})",
+            "method": "ldap"
+        },
+        "Student": {
+            "local_attribute": "groupMember",
+            "remote_attribute": "personFDN",
+            "ldap_base": "${value}",
+            "ldap_filter": "(roleIdentifier=Student)",
+            "method": "ldap"
+        },
+        "Teacher": {
+            "local_attribute": "groupMember",
+            "remote_attribute": "personFDN",
+            "ldap_base": "${value}",
+            "ldap_filter": "(roleIdentifier=Staff)",
+            "method": "ldap"
+        }
+    }
+}
+?>
+```
+
+The relations are defined in JSON format in an object called `relations`. The `relations`
+object will contain one member for each other type with which we want to establish a relation.
+In the example above, StudentGroup will have relations to SchoolUnit, Student and Teacher.
+
+### LDAP relations
+If the `method` attribute in the relation is set to "ldap", the related object will be found
+by executing LDAP queries. Typically there is an LDAP attribute in one of the objects that should
+be matched with an LDAP attribute in the other object. The `local_attribute` should be set to
+the name of the LDAP attribute of the type for which we're defining the relations. In the
+example above where we're defining relations for StudentGroups, `local_attribute` should
+specify an LDAP attribute for the student groups. `remote_attribute` is the corresponding
+attribute in the related object. The `local_attribute` can be a single-valued or multi-valued
+attribute, for each value there will be an LDAP query executed with whatever is specified in
+`ldap_base` and `ldap_filter`. If the special variable `${value}` is used anywhere in `ldap_base`
+or `ldap_filter`, that will be replaced by the value from the local attribute.
+
+The LDAP query should return zero (no match) or exactly one object (which will then be related).
+
+If an object is found this way, and it hasn't already been loaded, the load process will
+continue recursively from that object and load its related objects as well.
+
+### Object relations
+If the `method` attribute in the relation is set to "object", the related object will be
+found by searching through the objects which have already been loaded into memory.
+
+In this case, `ldap_base` and `ldap_filter` need not be specified and the related object
+is found simply by matching `local_attribute` against `remote_attribute`.
+
+In order to use this method, the related objects' type need to be listed before the type
+from which we wish to establish the relation in `scim-type-load-order`. For instance, if
+the object method is used in `StudentGroup-remote-relations` to find the SchoolUnit object
+for a given StudentGroup, SchoolUnit should come before StudentGroup in `scim-type-load-order`,
+so that the SchoolUnit objects are already loaded in memory when we load the StudentGroups.
+
+## Limiting the load process
 
 Which objects to load from LDAP is typically specified with an LDAP filter as described above.
 However, this can be further restricted in other ways. This can be helpful if you want to
@@ -209,7 +282,7 @@ specify a long list of specific objects, or if you have one shared configuration
 everything from LDAP but which needs to be restricted in different ways depending on the recipient
 (SCIM server).
 
-#### File of attribute values
+### File of attribute values
 
 If you'd like to specify exactly which objects to load you can create a text file containing
 a list of values. You can choose which type to limit and by which attribute. For instance, if
