@@ -58,7 +58,7 @@ public:
     }
 
     const char *file_name() {
-        return filename.c_str();
+        return filename.u8string().c_str();
     }
 
     int load(const std::string &file_name);

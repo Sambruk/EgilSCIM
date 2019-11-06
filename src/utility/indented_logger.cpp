@@ -18,6 +18,7 @@
  */
 
 #include "indented_logger.hpp"
+#include <string>
 
 void indented_logger::open(const char* filename) {
     of.open(filename, std::ios_base::out | std::ios_base::trunc);

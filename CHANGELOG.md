@@ -5,6 +5,7 @@
   - Functionality for rebuilding the cache file (e.g. if lost) (#10)
   - Support for limiting which objects to load with a list of values (#46)
   - Import from CSV files (#49)
+  - It's now possible to build on Windows (with Visual C++) (#57)
 
 #### Bugfixes
   - Failed updates (PUT) are handled better (#42)

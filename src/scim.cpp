@@ -199,10 +199,10 @@ void ScimActions::process_deletes_per_endpoint(const std::vector<std::string>& t
 void ScimActions::print_statistics(const std::string& type,
                                    const statistics& stats) {
     printf("Status:   Success   Failure     Total  of type: %s\n", type.c_str());
-    printf("Copy:   %9lu %9lu %9lu\n", stats.n_copy - stats.n_copy_fail, stats.n_copy_fail, stats.n_copy);
-    printf("Create: %9lu %9lu %9lu\n", stats.n_create - stats.n_create_fail, stats.n_create_fail, stats.n_create);
-    printf("Update: %9lu %9lu %9lu\n", stats.n_update - stats.n_update_fail, stats.n_update_fail, stats.n_update);
-    printf("Delete: %9lu %9lu %9lu\n", stats.n_delete - stats.n_delete_fail, stats.n_delete_fail, stats.n_delete);
+    printf("Copy:   %9zu %9zu %9zu\n", stats.n_copy - stats.n_copy_fail, stats.n_copy_fail, stats.n_copy);
+    printf("Create: %9zu %9zu %9zu\n", stats.n_create - stats.n_create_fail, stats.n_create_fail, stats.n_create);
+    printf("Update: %9zu %9zu %9zu\n", stats.n_update - stats.n_update_fail, stats.n_update_fail, stats.n_update);
+    printf("Delete: %9zu %9zu %9zu\n", stats.n_delete - stats.n_delete_fail, stats.n_delete_fail, stats.n_delete);
 }
 
 /** This function will convert from SCIM endpoint (e.g. "SchoolUnits")

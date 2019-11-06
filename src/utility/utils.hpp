@@ -39,6 +39,8 @@ std::string pair_to_string(const std::pair<std::string, std::string> &pair);
 
 std::string toUpper(const std::string &s);
 
+bool startsWith(const std::string& s, const std::string& prefix);
+
 void print_error();
 
 void print_status(const char *config_file_name);

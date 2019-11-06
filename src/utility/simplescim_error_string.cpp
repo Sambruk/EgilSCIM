@@ -24,6 +24,11 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef _WIN32
+// We use strerror instead of strerror_s as MSVC thinks we should use
+#pragma warning( disable : 4996 )
+#endif
+
 static int prefix_present = 0;
 static char prefix_buffer[1024];
 

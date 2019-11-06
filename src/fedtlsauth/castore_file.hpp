@@ -35,9 +35,15 @@ public:
 
     // Full path to the file
     std::string get_path() const;
+
 private:
+#ifdef _WIN32
+	// The temp file stream
+	FILE* f = nullptr;
+#else
     // The file descriptor
     int fd;
+#endif
 
     // The full path of the file
     std::string path;
