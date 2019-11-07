@@ -176,8 +176,19 @@ std::string uuid_util::generate(const std::string& a) {
     return boost::uuids::to_string(uuid);
 }
 
-std::string uuid_util::un_parse_uuid(char *val) {
+std::string uuid_util::un_parse_uuid(const void *val) {
     boost::uuids::uuid uuid{};
     ::memcpy(&uuid, val, 16);
     return boost::lexical_cast<std::string>(uuid);
+}
+
+std::string uuid_util::un_parse_ms_uuid(const void *val) {
+    const unsigned char* cval = static_cast<const unsigned char*>(val);
+    std::vector<unsigned char> buf(cval, cval + 16);
+    
+    std::reverse(buf.begin(),   buf.begin()+4);
+    std::reverse(buf.begin()+4, buf.begin()+6);
+    std::reverse(buf.begin()+6, buf.begin()+8);
+
+    return un_parse_uuid(&buf[0]);
 }

@@ -404,7 +404,13 @@ struct ldap_wrapper::Impl {
             std::string attr_clone = attr;
             for (size_t i = 0; i < len; ++i) {
                 if (attr_clone == ldap_UUID) {
-                    std::string st = uuid_util::instance().un_parse_uuid(vals[i]->bv_val);
+                    std::string st;
+                    if (config_file::instance().get_bool("ldap-MS-UUID")) {
+                        st = uuid_util::instance().un_parse_ms_uuid(vals[i]->bv_val);
+                    }
+                    else {
+                        st = uuid_util::instance().un_parse_uuid(vals[i]->bv_val);
+                    }
                     list.emplace_back(st);
                 } else {
                     list.emplace_back(std::string(vals[i]->bv_val));
