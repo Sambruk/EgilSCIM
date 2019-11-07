@@ -75,8 +75,11 @@ public:
      */
     std::string generate(const std::string &a, const std::string &b);    
 
-    std::string un_parse_uuid(char * val);
+    // Parses a binary UUID, without any re-ordering of the bytes
+    std::string un_parse_uuid(const void *val);
 
+    // Parses a binary UUID in Microsoft format by first re-ordering some of the bytes
+    std::string un_parse_ms_uuid(const void *val);
 };
 
 #endif //SIMPLESCIM_UTILS_HPP
