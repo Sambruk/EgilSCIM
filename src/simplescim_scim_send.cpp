@@ -30,12 +30,6 @@
 
 namespace pt = boost::property_tree;
 
-struct http_response {
-    size_t len;
-    size_t alloc;
-    char *data;
-};
-
 std::string simplescim_scim_send_cert;
 std::string simplescim_scim_send_key;
 std::string simplescim_scim_send_pinnedpubkey;
@@ -66,38 +60,18 @@ static void simplescim_scim_send_print_curl_error(const char *function, CURLcode
 }
 
 static size_t simplescim_scim_send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
-    struct http_response *http_response;
-    size_t len;
-    size_t i;
-    char *tmp;
-    char c;
+    std::vector<char> *http_response = static_cast<std::vector<char>*>(userdata);
+    size_t len = size * nmemb;
 
-    http_response = static_cast<struct http_response *>(userdata);
-    len = size * nmemb;
-
-    for (i = 0; i < len; ++i) {
-        c = ((char *) ptr)[i];
+    for (size_t i = 0; i < len; ++i) {
+        char c = ((char *) ptr)[i];
 
         if (c == '\r') {
             continue;
         }
 
-        if (http_response->len + 1 == http_response->alloc) {
-            tmp = static_cast<char *>(realloc(http_response->data, http_response->alloc * 2));
-
-            if (tmp == nullptr) {
-                return i;
-            }
-
-            http_response->data = tmp;
-            http_response->alloc *= 2;
-        }
-
-        http_response->data[http_response->len] = c;
-        ++http_response->len;
+        http_response->push_back(c);
     }
-
-    http_response->data[http_response->len] = '\0';
 
     return len;
 }
@@ -159,14 +133,16 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
 
 static int simplescim_scim_send(CURL* curl,
                                 const std::string &url, const std::string &resource,
-                                const std::string &method, char **response_data, long *response_code,
+                                const std::string &method, std::string& body, long *response_code,
                                 std::ofstream& http_log) {
 
     CURLcode errnum;
-    struct curl_slist *chunk;
-    struct http_response http_response{};
+    curl_slist *chunk;
+    std::vector<char> http_response;
     long http_code;
 
+    body = "";
+    
     /* Enable more elaborate error messages */
 
     errnum = curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, simplescim_scim_send_errbuf);
@@ -294,40 +270,22 @@ static int simplescim_scim_send(CURL* curl,
 
     /* Set write callback */
 
-    if (response_data != nullptr) {
-        errnum = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, simplescim_scim_send_write_func);
+    errnum = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, simplescim_scim_send_write_func);
 
-        if (errnum != CURLE_OK) {
-            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEFUNCTION)", errnum);
-            curl_slist_free_all(chunk);
-            return -1;
-        }
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEFUNCTION)", errnum);
+        curl_slist_free_all(chunk);
+        return -1;
     }
 
     /* Set data pointer */
 
-    if (response_data != nullptr) {
-        http_response.len = 0;
-        http_response.alloc = 1024;
-        http_response.data = static_cast<char *>(malloc(http_response.alloc));
-        *response_data = http_response.data;
-        if (http_response.data == nullptr) {
-            simplescim_error_string_set_errno("simplescim_scim_send:"
-                                              "malloc");
-            curl_slist_free_all(chunk);
-            return -1;
-        }
+    errnum = curl_easy_setopt(curl, CURLOPT_WRITEDATA, &http_response);
 
-        http_response.data[0] = '\0';
-
-        errnum = curl_easy_setopt(curl, CURLOPT_WRITEDATA, &http_response);
-
-        if (errnum != CURLE_OK) {
-            simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEDATA)", errnum);
-            free(http_response.data);
-            curl_slist_free_all(chunk);
-            return -1;
-        }
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEDATA)", errnum);
+        curl_slist_free_all(chunk);
+        return -1;
     }
 
     /* Perform request */
@@ -337,10 +295,6 @@ static int simplescim_scim_send(CURL* curl,
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_perform", errnum);
 
-//        if (response_data != nullptr) {
-//            free(http_response.data);
-//        }
-
         curl_slist_free_all(chunk);
         if (errnum == CURLE_COULDNT_CONNECT || errnum == CURLE_SSL_CERTPROBLEM ||
             errnum == CURLE_SSL_CACERT_BADFILE || errnum == CURLE_SSL_CACERT ||
@@ -348,6 +302,10 @@ static int simplescim_scim_send(CURL* curl,
             throw std::string();
         }
         return -1;
+    }
+
+    if (http_response.size() > 0) {
+        body = std::string(http_response.begin(), http_response.end());
     }
 
     if (http_log) {
@@ -367,27 +325,19 @@ static int simplescim_scim_send(CURL* curl,
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_getinfo", errnum);
 
-        if (response_data != nullptr) {
-            free(http_response.data);
-        }
-
         curl_slist_free_all(chunk);
         return -1;
     }
 
     /* Clean up */
 
-    if (response_data != nullptr) {
-        *response_data = http_response.data;
-    }
-
     *response_code = http_code;
 
     if (http_log) {
         http_log << "<<<<<<<<<<\n";
         http_log << "Got reply with HTTP code " << http_code;
-        if (response_data != nullptr) {
-            http_log << " and body:\n" << http_response.data;
+        if (!body.empty()) {
+            http_log << " and body:\n" << body;
         }
         http_log << "\n";
         http_log << "<<<<<<<<<<\n";       
@@ -474,20 +424,16 @@ void scim_sender::send_clear() {
  * message.
  */
 std::optional<std::string> scim_sender::send_create(const std::string &url, const std::string &body) {
-    char *response_data;
+    std::string response_data;
     long response_code;
     int err;
 
-    err = simplescim_scim_send(curl, url, body, "POST", &response_data, &response_code, http_log);
+    err = simplescim_scim_send(curl, url, body, "POST", response_data, &response_code, http_log);
 
-    std::string res;
     if (err == -1) {
-        free(response_data);
         return {};
-    } else if (response_code < 500) {
-        res = response_data;
     }
-
+    
     if (response_code != 201 && response_code != 200) {
         simplescim_error_string_set_prefix("simplescim_scim_send_create");
         std::string message;
@@ -506,7 +452,7 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
                                                 message.c_str());
             return {};
         } else {
-            std::cerr << res << std::endl;
+            std::cerr << response_data << std::endl;
             message = url;
             simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
                                                 message.c_str());
@@ -515,10 +461,8 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
         }
 
     }
-    std::string result(response_data);
-    free(response_data);
 
-    return result;
+    return response_data;
 }
 
 std::optional<std::string>
@@ -527,21 +471,19 @@ scim_sender::send_update(const std::string &url,
                          bool& non_existent) {
     non_existent = false;
     
-    char *response_data;
+    std::string response_data;
     long response_code;
     int err;
 
-    err = simplescim_scim_send(curl, url, body, "PUT", &response_data, &response_code, http_log);
+    err = simplescim_scim_send(curl, url, body, "PUT", response_data, &response_code, http_log);
 
     if (err == -1) {
-        free(response_data);
         return {};
     }
 
     if (response_code != 200) {
         simplescim_error_string_set_prefix("simplescim_scim_send_update");
         simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 200L);
-        free(response_data);
 
         if (response_code == 404) {
             non_existent = true;
@@ -549,9 +491,7 @@ scim_sender::send_update(const std::string &url,
         
         return {};
     }
-    std::string result{response_data};
-    free(response_data);
-    return result;
+    return response_data;
 }
 
 /**
@@ -569,9 +509,10 @@ scim_sender::send_update(const std::string &url,
  */
 long scim_sender::send_delete(const std::string &url) {
     long response_code;
+    std::string response_data;
     int err;
 
-    err = simplescim_scim_send(curl, url, "", "DELETE", nullptr, &response_code, http_log);
+    err = simplescim_scim_send(curl, url, "", "DELETE", response_data, &response_code, http_log);
 
     if (err == -1) {
         return -1;
@@ -600,7 +541,7 @@ long scim_sender::send_delete(const std::string &url) {
   * A function type for performing a GET.
   * Used in order to mock the http traffic in unit tests.
   */
-typedef std::function<int(const std::string& url, char **response_data, long *response_code)> GetFunc;
+typedef std::function<int(const std::string& url, std::string& response_data, long *response_code)> GetFunc;
 
 /**
  * This is the actual implementation for querying a SCIM server for
@@ -611,7 +552,7 @@ typedef std::function<int(const std::string& url, char **response_data, long *re
  * so it can recursively call itself to continue fetching.
  */
 void simplescim_query_impl(const std::string& url, std::vector<pt::ptree>& resources, GetFunc getter, int start_index = 1) {
-    char *response_data;
+    std::string response_data;
     long response_code;
 
     auto url_complete{url};
@@ -619,7 +560,7 @@ void simplescim_query_impl(const std::string& url, std::vector<pt::ptree>& resou
         url_complete += "?startIndex=" + std::to_string(start_index);
     }
     
-    int err = getter(url_complete, &response_data, &response_code);
+    int err = getter(url_complete, response_data, &response_code);
 
     if (err == -1) {
         throw std::runtime_error(simplescim_error_string_get());
@@ -629,8 +570,7 @@ void simplescim_query_impl(const std::string& url, std::vector<pt::ptree>& resou
         throw std::runtime_error("Failed to GET " + url + ", HTTP response code " + std::to_string(response_code) + " returned, expected 200");
     }
 
-    std::string response(response_data);
-    std::istringstream iss(response);
+    std::istringstream iss(response_data);
     pt::ptree root;
     pt::read_json(iss, root);
 
@@ -659,7 +599,7 @@ void simplescim_query_impl(const std::string& url, std::vector<pt::ptree>& resou
 
 void scim_sender::query(const std::string& url, std::vector<pt::ptree>& resources) {
     auto curl_getter =
-        [this](const std::string& url, char **response_data, long *response_code) -> int {
+        [this](const std::string& url, std::string& response_data, long *response_code) -> int {
         return simplescim_scim_send(curl, url, "", "GET", response_data, response_code, http_log);
     };
     
