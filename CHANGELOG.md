@@ -12,6 +12,7 @@
   - Failed updates (PUT) are handled better (#42)
   - Relations with method = "object" now handles multi-valued attributes (#50)
   - LDAP-parameters are no longer necessary when using method = "object" (#51)
+  - Fixed a bug that could lead to segmentation fault when a delete failed (#62)
 
 ### v2.1.0 (2019-07-02)
 #### Bugfixes

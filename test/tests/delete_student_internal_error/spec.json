@@ -1,0 +1,15 @@
+{
+    "description": "A student is deleted, SCIM server has internal error",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [ "scenarios/base/delete_student" ],
+	  "requests": "../delete_student/delete.txt",
+	  "failWith": 500
+	},
+	{ "requests": "../delete_student/delete.txt"
+	}
+    ]
+}

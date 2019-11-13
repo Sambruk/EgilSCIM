@@ -7,7 +7,7 @@
 
 namespace pt = boost::property_tree;
 
-typedef std::function<int(const std::string& url, char **response_data, long *response_code)> GetFunc;
+typedef std::function<int(const std::string& url, std::string& response_data, long *response_code)> GetFunc;
 
 void simplescim_query_impl(const std::string& url, std::vector<pt::ptree>& resources, GetFunc getter, int start_index = 1);
 
@@ -19,8 +19,8 @@ struct static_getter {
     }
 
 
-    int operator()(const std::string& url, char** response_data, long* response_code) {
-        *response_data = const_cast<char*>(static_result.c_str());
+    int operator()(const std::string& url, std::string& response_data, long* response_code) {
+        response_data = static_result;
         *response_code = static_response_code;
         return 0;
     }
@@ -65,11 +65,11 @@ struct paging_getter {
     }
 
 
-    int operator()(const std::string& url, char** response_data, long* response_code) {
+    int operator()(const std::string& url, std::string& response_data, long* response_code) {
         requested_urls.push_back(url);
 
         generate_response();
-        *response_data = const_cast<char*>(response.c_str());
+        response_data = response;
 
         *response_code = 200;
         return 0;
@@ -128,7 +128,7 @@ TEST_CASE("Pagination") {
         std::vector<pt::ptree> resources;
         paging_getter pg{11, 20};
         REQUIRE_NOTHROW(simplescim_query_impl("", resources,
-                                              [&pg](const std::string& url, char** response_data, long* response_code) -> int { return pg(url, response_data, response_code); }));
+                                              [&pg](const std::string& url, std::string& response_data, long* response_code) -> int { return pg(url, response_data, response_code); }));
         REQUIRE(resources.size() == 11);
         REQUIRE(pg.requested_urls.size() == 1);
     }
@@ -137,7 +137,7 @@ TEST_CASE("Pagination") {
         std::vector<pt::ptree> resources;
         paging_getter pg{11, 10};
         REQUIRE_NOTHROW(simplescim_query_impl("", resources,
-                                              [&pg](const std::string& url, char** response_data, long* response_code) -> int { return pg(url, response_data, response_code); }));
+                                              [&pg](const std::string& url, std::string& response_data, long* response_code) -> int { return pg(url, response_data, response_code); }));
         REQUIRE(resources.size() == 11);
         REQUIRE(pg.requested_urls.size() == 2);
     }
@@ -146,7 +146,7 @@ TEST_CASE("Pagination") {
         std::vector<pt::ptree> resources;
         paging_getter pg{15, 5};
         REQUIRE_NOTHROW(simplescim_query_impl("/Users", resources,
-                                              [&pg](const std::string& url, char** response_data, long* response_code) -> int { return pg(url, response_data, response_code); }));
+                                              [&pg](const std::string& url, std::string& response_data, long* response_code) -> int { return pg(url, response_data, response_code); }));
         REQUIRE(resources.size() == 15);
         REQUIRE(pg.requested_urls == std::vector<std::string>{ "/Users", "/Users?startIndex=6", "/Users?startIndex=11" });
     }
