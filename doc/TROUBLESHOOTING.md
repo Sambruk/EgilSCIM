@@ -24,4 +24,6 @@ the client runs. It will show you the order in which objects are loaded
 (regardless of whether they are loaded from LDAP or CSV), which LDAP queries
 are performed, what the base and filter is for each query, and show the
 recursive process by indenting the log file according to what is currently
-loaded.
+loaded. Generated objects (Activity and Employment) are also included
+with their UUIDs and information about which other objects they were generated
+from.

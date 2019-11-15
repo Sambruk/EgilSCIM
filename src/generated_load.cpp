@@ -147,7 +147,8 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
         auto p2 = string_to_pair(id_cred.at(1));
         std::string uuid = store_relation(generated_object, p1, p2);
         generated->add_object(uuid, std::make_shared<base_object>(generated_object));
-
+        load_logger.log(std::string("Generated ") + type + " with UUID " + uuid +
+                        " from " + master_type + " with UUID " + student_group.second->get_uid());
     }
     return generated;
 }
@@ -221,6 +222,8 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                 // create an id for the relation
                 std::string id = store_relation(generated_object, part_type, master_id);
                 generated->add_object(id, std::make_shared<base_object>(generated_object));
+                load_logger.log(std::string("Generated ") + type + " with UUID " + id +
+                                " from " + relational_key.first + " with UUID " + a_master.second->get_uid() + " and " + part_type.first + " with UUID " + related_object->get_uid());
             } else {
                 missing_ids.insert(relational_item);
             }
