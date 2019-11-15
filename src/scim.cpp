@@ -476,7 +476,7 @@ std::vector<ScimActions::scim_object_ref> ScimActions::get_all_objects_from_scim
         scim_sender::instance().query(url, resources);
 
         for (const auto& resource : resources) {
-            auto uuid = resource.get<std::string>("externalId");
+            auto uuid = resource.get<std::string>("id");
             results.push_back(scim_object_ref(uuid, endpoint));
         }
     }
