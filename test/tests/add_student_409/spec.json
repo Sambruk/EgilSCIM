@@ -1,0 +1,15 @@
+{
+    "description": "Add student, SCIM server says it already exists",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [ "scenarios/base/add_student" ],
+	  "requests": "../add_student/create.txt",
+	  "failWith": 409
+	},
+	{ "requests": "update.txt"
+	}	
+    ]
+}

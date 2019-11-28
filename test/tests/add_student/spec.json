@@ -1,0 +1,12 @@
+{
+    "description": "Add student",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [ "scenarios/base/add_student" ],
+	  "requests": "create.txt"
+	}
+    ]
+}

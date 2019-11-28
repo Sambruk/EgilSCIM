@@ -393,12 +393,20 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
     url += '/' + endpoint;
 
     /* Send SCIM create request */
-    std::optional<std::string> response_json = scim_sender::instance().send_create(url, parsed_json);
+    bool conflict = false;
+    std::optional<std::string> response_json =
+        scim_sender::instance().send_create(url, parsed_json, conflict);
     std::string uid = copied_user.get_uid();
     if (response_json)
         actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
-    else
+    else {
+        if (conflict) {
+            // Put it in cache, but make sure we update in the next run
+            copied_user.add_attribute("_failed_create", { std::to_string(time(NULL)) });
+            actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
+        }
         return -1;
+    }
 
     return 0;
 }

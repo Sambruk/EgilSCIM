@@ -67,16 +67,21 @@ public:
      * For example:
      * https://example.com/Users
      *
-     * 'resource' must be the string representation of a JSON
+     * 'body' must be the string representation of a JSON
      * object representing the SCIM resource.
      *
-     * On success, zero is returned and 'response' is set to
-     * the string representation of the JSON object returned by
-     * the server. On error, -1 is returned and
-     * simplescim_error_string is set to an appropriate error
-     * message.
+     * On success, the response from the server is returned,
+     * this should be the string representation of the JSON
+     * object returned by the server. On error, no string is
+     * returned and simplescim_error_string is set to an 
+     * appropriate error message.
+     *
+     * If the request failed due to the object already existing
+     * on the server (409), conflict will be set to true.
      */
-    std::optional<std::string> send_create(const std::string &url, const std::string &body);
+    std::optional<std::string> send_create(const std::string &url,
+                                           const std::string &body,
+                                           bool& conflict);
 
     /**
      * Sends a request to update a SCIM resource.
