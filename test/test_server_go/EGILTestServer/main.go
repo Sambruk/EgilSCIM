@@ -113,14 +113,14 @@ func runTest(testName, testPath string,
 
 	specRaw, err := ioutil.ReadFile(path.Join(testPath, "spec.json"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to read test spec for %s: %v", testPath, err)
 	}
 
 	var testSpec TestSpec
 	err = json.Unmarshal(specRaw, &testSpec)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to parse test spec json: %v", err)
 	}
 
 	// Reset LDAP contents
@@ -136,7 +136,7 @@ func runTest(testName, testPath string,
 	cacheFile, err := ioutil.TempFile("", "egiltest.cache")
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to create temporary cache file: %v", err)
 	}
 
 	// We don't actually want the file, just a unique name
@@ -161,7 +161,7 @@ func runTest(testName, testPath string,
 			err = cmd.Run()
 
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("Failed to apply scenario: %v", err)
 			}
 		}
 
@@ -190,10 +190,11 @@ func runTest(testName, testPath string,
 		requestsString := ""
 		if step.Requests != "" {
 			var requestsRaw []byte
-			requestsRaw, err = ioutil.ReadFile(path.Join(testPath, step.Requests))
+			requestsPath := path.Join(testPath, step.Requests)
+			requestsRaw, err = ioutil.ReadFile(requestsPath)
 
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("Failed to read requests file %s: %v", requestsPath, err)
 			}
 			requestsString = string(requestsRaw)
 		}
@@ -211,7 +212,7 @@ func runTest(testName, testPath string,
 func findSubDirectories(p string) []string {
 	files, err := ioutil.ReadDir(p)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to read directory: %v", err)
 	}
 
 	var result []string
@@ -231,7 +232,7 @@ func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, k
 	err := cmd.Run()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to start LDAP server: %v", err)
 	}
 
 	// Wait for LDAP to be properly initialized and ready to go
