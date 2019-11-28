@@ -405,28 +405,16 @@ void scim_sender::send_clear() {
     curl_easy_cleanup(curl);
 }
 
-/**
- * Sends a request to create a SCIM resource.
- *
- * 'url' must be of the format:
- * <protocol>://<host><endpoint>
- *
- * For example:
- * https://example.com/Users
- *
- * 'resource' must be the string representation of a JSON
- * object representing the SCIM resource.
- *
- * On success, zero is returned and 'response' is set to
- * the string representation of the JSON object returned by
- * the server. On error, -1 is returned and
- * simplescim_error_string is set to an appropriate error
- * message.
- */
-std::optional<std::string> scim_sender::send_create(const std::string &url, const std::string &body) {
+std::optional<std::string>
+scim_sender::send_create(const std::string &url,
+                         const std::string &body,
+                         bool& conflict) {
+    conflict = false;
+    
     std::string response_data;
     long response_code;
     int err;
+    
 
     err = simplescim_scim_send(curl, url, body, "POST", response_data, &response_code, http_log);
 
@@ -436,30 +424,14 @@ std::optional<std::string> scim_sender::send_create(const std::string &url, cons
     
     if (response_code != 201 && response_code != 200) {
         simplescim_error_string_set_prefix("simplescim_scim_send_create");
-        std::string message;
+        std::string extra;
         if (response_code == 409) {
-            message = " object already exists";
-            simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-                                                message.c_str());
-        } else if (response_code == 413) {
-            message = " data to " + url + " to large.";
-            simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-                                                message.c_str());
-            return {};
-        } else if (response_code == 403) {
-            message = " unathorized ";
-            simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-                                                message.c_str());
-            return {};
-        } else {
-            std::cerr << response_data << std::endl;
-            message = url;
-            simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-                                                message.c_str());
-            return {};
-
+            conflict = true;
+            extra = " (object already exists)";
         }
-
+        simplescim_error_string_set_message("HTTP response code %ld returned%s, expected 201",
+                                            response_code, extra.c_str());
+        return {};
     }
 
     return response_data;
