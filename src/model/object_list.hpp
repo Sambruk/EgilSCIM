@@ -28,100 +28,104 @@
 using object_map_t = std::map<std::string, std::shared_ptr<base_object>>;
 
 class object_list {
-	object_map_t objects{};
+    object_map_t objects{};
 public:
-	friend class cache_file;
+    friend class cache_file;
 
-	object_list() = default;
+    object_list() = default;
 
-	object_list(const object_list &other) {
-		objects = other.objects;
-	}
+    object_list(const object_list &other) {
+        objects = other.objects;
+    }
 
-	object_list(object_list &&other) noexcept {
-		objects = std::move(other.objects);
-	}
+    object_list(object_list &&other) noexcept {
+        objects = std::move(other.objects);
+    }
 
-	void clear() {
-		objects.clear();
-	}
+    void clear() {
+        objects.clear();
+    }
 
-	std::shared_ptr<base_object> get_object_for_attribute(const std::string &attribute, const std::string &id) {
-		for (const auto &object : objects) {
-			const string_vector &values = object.second->get_values(attribute);
-			if (!values.empty() && values.size() > 1) {
-				std::cerr << "Expected single value for "
-				          << object.second->getSS12000type()
-				          << " " << attribute << " " << id
-				          << " found: " << values.size() << std::endl;
-			}
-			for (auto && value: values) {
-				if (value == id)
-					return object.second;
-			}
-		}
-		return nullptr;
-	}
+    std::shared_ptr<base_object> get_object_for_attribute(const std::string &attribute, const std::string &id) {
+        for (const auto &object : objects) {
+            const string_vector &values = object.second->get_values(attribute);
+            if (!values.empty() && values.size() > 1) {
+                std::cerr << "Expected single value for "
+                          << object.second->getSS12000type()
+                          << " " << attribute << " " << id
+                          << " found: " << values.size() << std::endl;
+            }
+            for (auto && value: values) {
+                if (value == id)
+                    return object.second;
+            }
+        }
+        return nullptr;
+    }
 
-	std::shared_ptr<base_object> get_object(const std::string &uid) const {
-		auto record = objects.find(uid);
-		if (record != objects.end()) {
-			return record->second;
-		}
-		return nullptr;
-	}
+    std::shared_ptr<base_object> get_object(const std::string &uid) const {
+        auto record = objects.find(uid);
+        if (record != objects.end()) {
+            return record->second;
+        }
+        return nullptr;
+    }
 
-	void add_object(const std::string &uid, std::shared_ptr<base_object> object) {
-		auto record = objects.find(uid);
-		if (record != objects.end()) {
-			objects.erase(uid);
-		}
-		objects.emplace(std::make_pair(uid, object));
-	}
+    void add_object(const std::string &uid, std::shared_ptr<base_object> object) {
+        auto record = objects.find(uid);
+        if (record != objects.end()) {
+            objects.erase(uid);
+        }
+        objects.emplace(std::make_pair(uid, object));
+    }
 
-	object_list &operator+=(const object_list &other) {
-		for (auto &&object : other.objects) {
-			objects.emplace(object.first, object.second);
-		}
-		return *this;
-	}
+    void remove(const std::string& uuid) {
+        objects.erase(uuid);
+    }
 
-	object_list &operator+=(object_list &&other) {
-		for (auto &&object : other.objects) {
-			objects.emplace(object.first, std::move(object.second));
-		}
-		return *this;
-	}
+    object_list &operator+=(const object_list &other) {
+        for (auto &&object : other.objects) {
+            objects.emplace(object.first, object.second);
+        }
+        return *this;
+    }
 
-	object_list &operator=(const object_list &other) = default;
+    object_list &operator+=(object_list &&other) {
+        for (auto &&object : other.objects) {
+            objects.emplace(object.first, std::move(object.second));
+        }
+        return *this;
+    }
 
-	object_list &operator=(object_list &&other) noexcept {
-		objects = std::move(other.objects);
-		return *this;
-	}
+    object_list &operator=(const object_list &other) = default;
 
-	size_t size() const {
-		return objects.size();
-	}
+    object_list &operator=(object_list &&other) noexcept {
+        objects = std::move(other.objects);
+        return *this;
+    }
 
-	bool empty() const {
-		return objects.empty();
-	}
+    size_t size() const {
+        return objects.size();
+    }
 
-	object_map_t::const_iterator begin() const {
-		return objects.begin();
-	}
+    bool empty() const {
+        return objects.empty();
+    }
 
-	object_map_t::const_iterator end() const {
-		return objects.end();
-	}
+    object_map_t::const_iterator begin() const {
+        return objects.begin();
+    }
 
-	friend std::ostream &operator<<(std::ostream &os, const object_list &list) {
-		for (const auto &item : list.objects) {
-			os << *item.second;
-		}
-		return os;
-	}
+    object_map_t::const_iterator end() const {
+        return objects.end();
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const object_list &list) {
+        for (const auto &item : list.objects) {
+            os << *item.second;
+        }
+        return os;
+    }
 };
 
 #endif
