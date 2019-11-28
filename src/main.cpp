@@ -114,6 +114,20 @@ void parse_override(const std::string& override_str,
     value = override_str.substr(pos+1);
 }
 
+/**
+ * Modifies a set of objects so they will be considered different from what's in the data source,
+ * used by --force-update.
+ */
+void make_dirty(std::shared_ptr<object_list> objects, const std::vector<std::string>& uuids) {
+    for (auto uuid : uuids) {
+        auto obj = objects->get_object(uuid);
+
+        if (obj) {
+            obj->add_attribute("_force_update", { std::to_string(time(NULL)) });
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     try {
         po::options_description cmdline_options("All options");
@@ -148,8 +162,12 @@ int main(int argc, char *argv[]) {
         }
 
         generic.add_options()
-            ("D", po::value<std::vector<std::string>>(), "Generic config variable override " \
+            ("D", po::value<std::vector<std::string>>(), "generic config variable override " \
              "(e.g. --D ldap-passwd=secret)");
+
+        generic.add_options()
+            ("force-update", po::value<std::vector<std::string>>(), "update object even if it hasn't changed")
+            ("force-create", po::value<std::vector<std::string>>(), "create object even if it's already in the cache");
 
         hidden.add_options()
             ("config-file", po::value<std::vector<std::string>>(), "config file");
@@ -241,7 +259,7 @@ int main(int argc, char *argv[]) {
                     "Use only for testing locally" << std::endl;
             }
 
-            /** Get objects from LDAP catalogue */
+            /** Get objects from data source */
             data_server &server = data_server::instance();
             try {
                 server.load();
@@ -275,6 +293,24 @@ int main(int argc, char *argv[]) {
                 server.clear();
                 config.clear();
                 continue;
+            }
+
+            if (vm.count("force-update")) {
+                auto uuids = vm["force-update"].as<std::vector<std::string>>();
+                make_dirty(cache, uuids);
+            }
+
+            if (vm.count("force-create")) {
+                auto uuids = vm["force-create"].as<std::vector<std::string>>();
+                for (auto uuid : uuids) {
+                    if (server.has_object(uuid)) {
+                        cache->remove(uuid);
+                    }
+                    else {
+                        std::cerr << "Can't force create " << uuid
+                                  << " which isn't in data source" << std::endl;
+                    }
+                }
             }
 
             /** Perform SCIM operations */
