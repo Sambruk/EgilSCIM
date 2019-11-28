@@ -1,0 +1,15 @@
+{
+    "description": "Add student, SCIM server has internal error",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [ "scenarios/base/add_student" ],
+	  "requests": "../add_student/create.txt",
+	  "failWith": 500
+	},
+	{ "requests": "../add_student/create.txt"
+	}	
+    ]
+}
