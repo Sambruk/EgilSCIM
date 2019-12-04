@@ -9,6 +9,7 @@
   - Support for interpreting UUIDs from Active Directory properly (#59)
   - New command line arguments for forcing an object to be updated/created (#38)
   - Reduced need to specify hidden attributes (#64)
+  - Support for new metadata format with tags (#74)
 
 #### Bugfixes
   - Failed updates (PUT) are handled better (#42)
