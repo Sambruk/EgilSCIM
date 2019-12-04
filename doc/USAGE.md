@@ -98,11 +98,6 @@ set of variables need to be configured:
 
 * `metadata-path` is the full path to the metadata file
 * `metadata-entity` is service provider's entity id in the metadata
-* `metadata-server` is the name of the server to connect to
-
-The `metadata-server` can be skipped if the service provider only has one server,
-but it is recommended to supply it anyway since the service provider may add
-another server in the future.
 
 You can also manually specify the information which would otherwise be
 fetched from metadata. This can be useful for test purposes or if the
