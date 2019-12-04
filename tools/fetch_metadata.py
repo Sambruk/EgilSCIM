@@ -13,7 +13,7 @@ import sys
 from jose import jws
 from datetime import datetime, timedelta
 
-default_metadata_url = 'https://fedscim-poc.skolfederation.se/md/skolfederation-fedscim-0_1.json'
+default_metadata_url = 'https://md.swefed.se/kontosynk/kontosynk-prod-1.jws'
 
 def error_print(*args, **kwargs):
     """Print to stderr"""
