@@ -29,15 +29,23 @@ SCIMServerInfo::SCIMServerInfo(const config_file& config) {
         auto metadata_path = config.get_path("metadata-path");
         auto entity_id = config.get("metadata-entity");
         auto server_name = config.get("metadata-server", true);
+        auto tags = config.get_vector("metadata-tags", true);
+
+        if (tags.empty()) {
+            tags = {"egilv1"};
+        }
 
         try {
-            auto end_point =
-                federated_tls_auth::load_from_metadata(metadata_path, entity_id, server_name);
+            auto connection_info =
+                server_name.empty() ?
+                federated_tls_auth::get_server_by_tags(metadata_path, entity_id, tags) :
+                federated_tls_auth::get_server_by_name(metadata_path, entity_id, server_name);
 
+            auto end_point = connection_info.end_points.front();
             url = end_point.url;
             pinned_public_keys = federated_tls_auth::concatenate_keys(end_point.pins);
-            ca_bundle_path = end_point.castore->get_path();
-            castore_file = end_point.castore;
+            ca_bundle_path = connection_info.castore->get_path();
+            castore_file = connection_info.castore;
         }
         catch (const std::runtime_error&) {
             std::cerr << "Failed to load metadata from " << metadata_path << std::endl;
