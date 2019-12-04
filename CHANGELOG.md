@@ -8,6 +8,7 @@
   - It's now possible to build on Windows (with Visual C++) (#57)
   - Support for interpreting UUIDs from Active Directory properly (#59)
   - New command line arguments for forcing an object to be updated/created (#38)
+  - Reduced need to specify hidden attributes (#64)
 
 #### Bugfixes
   - Failed updates (PUT) are handled better (#42)
