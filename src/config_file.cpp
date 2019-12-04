@@ -31,6 +31,7 @@
 #include "utility/simplescim_error_string.hpp"
 #include "config_file_parser.hpp"
 #include "json_template_parser.hpp"
+#include "json_data_file.hpp"
 
 #include "utility/utils.hpp"
 
@@ -67,6 +68,19 @@ int config_file::load_template(const std::string &ss12000type, const std::string
         auto extra = get_vector(ss12000type + "-hidden-attributes", true);
         if (!extra.empty())
             var_set.insert(extra.begin(), extra.end());
+
+        relations_vector relations =
+            json_data_file::json_to_ldap_remote_relations(
+                get(ss12000type + "-remote-relations", true), ss12000type);
+
+        for (auto& relation : relations) {
+            if (!relation.local_attribute.empty()) {
+                var_set.insert(relation.local_attribute);
+            }
+            if (!relation.remote_attribute.empty()) {
+                add_variable(relation.type + "-scim-variables", relation.remote_attribute);
+            }
+        }
 
         std::string variables;
         for (const auto &var : var_set) {
