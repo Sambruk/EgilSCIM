@@ -1,6 +1,6 @@
 ## Releases
 
-### Unreleased
+### v2.2.0 (2019-12-10)
 #### New features
   - Functionality for rebuilding the cache file (e.g. if lost) (#10)
   - Support for limiting which objects to load with a list of values (#46)
