@@ -6,6 +6,8 @@ EgilSCIM currently depends on the following libraries:
 * `libcurl` to send the SCIM request.
 * `boost` (general purpose C++ libraries)
 
+The build tool CMake is used to build the program.
+
 See operating system specific documentation below for information
 on how to install these dependencies.
 
@@ -66,23 +68,16 @@ Run EgilSCIM with:
 
 # System specific instructions
 
-## Ubuntu 18.04
-    sudo apt-get update && sudo apt-get upgrade
-    sudo apt install git cmake pkg-config  libldap2-dev libcurl4-openssl-dev libboost-all-dev libsqlite3-dev uuid-dev
-    git clone git://github.com/Sambruk/EgilSCIM.git
-    cd EgilSCIM
-    mkdir build
-    cd build
+## Ubuntu Server 18.04 LTS
+    sudo apt install cmake libldap2-dev libcurl4-openssl-dev libboost-all-dev
+    cd EgilSCIM/build
     cmake ..
     make
     sudo make install
 
 ## Fedora 28
-    sudo dnf install git gcc-c++ cmake openldap-devel libcurl-devel boost-devel sqlite-devel libuuid-devel
-    git clone git://github.com/Sambruk/EgilSCIM.git
-    cd EgilSCIM
-    mkdir build
-    cd build
+    sudo dnf install gcc-c++ cmake openldap-devel libcurl-devel boost-devel libuuid-devel
+    cd EgilSCIM/build
     cmake ..
     make
     sudo make install
@@ -91,10 +86,7 @@ Run EgilSCIM with:
     Install Xcode (tool chain is installed with Xcode)
     Install HomeBrew
     brew install cmake openssl openldap
-    git clone git://github.com/Sambruk/EgilSCIM.git
-    cd EgilSCIM
-    mkdir build
-    cd build
+    cd EgilSCIM/build
     cmake ..
     make
 
