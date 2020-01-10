@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(EgilSCIMClient CXX)
 
 set(EgilSCIM_VERSION_MAJOR 2)
-set(EgilSCIM_VERSION_MINOR 1)
-set(EgilSCIM_VERSION_PATCH 0)
+set(EgilSCIM_VERSION_MINOR 2)
+set(EgilSCIM_VERSION_PATCH 1)
 
 configure_file(
         "${PROJECT_SOURCE_DIR}/src/utility/EgilSCIM_config.h.in"

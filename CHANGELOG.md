@@ -1,5 +1,9 @@
 ## Releases
 
+### v2.2.1 (2020-01-10)
+#### Bugfixes
+  - Fixes the version number printed when using the --version argument
+
 ### v2.2.0 (2019-12-10)
 #### New features
   - Functionality for rebuilding the cache file (e.g. if lost) (#10)
