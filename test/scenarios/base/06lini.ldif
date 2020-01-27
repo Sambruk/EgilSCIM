@@ -4,6 +4,7 @@ objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: person
 objectClass: top
+objectClass: extensibleObject
 cn: Lisa Nilsson
 sn: Nilsson
 displayName: Lisa Nilsson
@@ -13,3 +14,5 @@ mail: lini@skolan.kommunen.se
 ou: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
 uid: lini
 entryUUID: aeb9dfad-c824-49e2-89d6-84cf5e33feef
+uniqueIdentifier: 201006042905
+departmentNumber: 4

@@ -4,6 +4,7 @@ objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: person
 objectClass: top
+objectClass: extensibleObject
 cn: Greger Gregersson
 sn: Gregersson
 displayName: Greger Gregersson
@@ -13,6 +14,8 @@ mail: grgr@skolan.kommunen.se
 ou: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
 uid: grgr
 entryUUID: ed2ecfd6-4805-4302-9c32-f4cc1b58e471
+uniqueIdentifier: 201012037030
+departmentNumber: 4
 
 dn: cn=grupp1,dc=kommunen,dc=se
 changetype: modify
