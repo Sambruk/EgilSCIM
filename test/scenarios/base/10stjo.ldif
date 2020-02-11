@@ -1,0 +1,18 @@
+dn: uid=stjo,dc=kommunen,dc=se
+changetype: add
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+objectClass: extensibleObject
+cn: Stefan Johansson
+sn: Johansson
+displayName: Stefan Johansson
+employeeType: student
+givenName: Stefan
+mail: stjo@skolan.kommunen.se
+ou: ou=skolenhet2,ou=skolgruppen,dc=kommunen,dc=se
+uid: stjo
+entryUUID: 39732dea-e4a6-4d8f-96de-925a679c56ff
+uniqueIdentifier: 200406042903
+departmentNumber: 10

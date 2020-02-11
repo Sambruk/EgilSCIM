@@ -275,7 +275,7 @@ func main() {
 	egilBinaryPath = *binaryp
 
 	endpoints := []string{"Users", "StudentGroups", "Organisations",
-		"SchoolUnits", "SchoolUnitGroups", "Employments", "Activities"}
+		"SchoolUnits", "SchoolUnitGroups", "Employments", "Activities", "Subjects", "Courses"}
 
 	var testLogger TestLogger
 	for _, endpoint := range endpoints {

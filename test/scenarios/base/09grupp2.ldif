@@ -10,3 +10,4 @@ member: uid=lini,dc=kommunen,dc=se
 owner: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
 entryUUID: 645ebd9d-55b5-4e7a-900a-92b9369c8f6a
 l: Undervisning
+knowledgeInformation: MA

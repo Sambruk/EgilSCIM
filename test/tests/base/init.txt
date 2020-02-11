@@ -93,6 +93,39 @@ Users POST
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
 	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "39732dea-e4a6-4d8f-96de-925a679c56ff",
+	"userName": "stjo@skola.kommunen.se",
+	"displayName": "Stefan Johansson",
+	"name": {
+		"familyName": "Johansson",
+		"givenName": "Stefan"
+	},
+	"emails": [
+        
+        {
+          "value": "stjo@skolan.kommunen.se" 
+        } 
+        
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+        "enrolments": [
+            
+            {
+                "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+                "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+		"schoolYear": 10
+            } 
+            
+        ]
+    }
+}
+---
+---
+Users POST
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
 	"externalId": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
 	"userName": "lini@skola.kommunen.se",
 	"displayName": "Lisa Nilsson",
@@ -223,6 +256,32 @@ Activities POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
+    "externalId": "3df5c3cd-1194-574e-b107-6973f5695a66",
+    "displayName": "grupp3-Activity",
+    "owner": {
+        "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+        "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"  
+    },
+    "group": {
+        "value": "9e2b1131-aac4-4ba3-adc8-a232a2b553d8",
+        "$ref": "StudentGroups/9e2b1131-aac4-4ba3-adc8-a232a2b553d8"
+    },
+    "teachers": [
+        
+        {
+            "value": "163cbddb-9fd0-53df-81e4-e022c5dd5c71",
+            "$ref": "Employments/163cbddb-9fd0-53df-81e4-e022c5dd5c71"
+            
+        } 
+        
+    ]
+}
+---
+---
+Activities POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
     "externalId": "7f9f75d8-9c01-5c1d-83df-b0d47cf1e4c9",
     "displayName": "grupp2-Activity",
     "owner": {
@@ -323,6 +382,29 @@ StudentGroups POST
     {
       "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
       "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
+    } 
+    
+  ]
+}---
+---
+StudentGroups POST
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "9e2b1131-aac4-4ba3-adc8-a232a2b553d8",
+  "displayName": "grupp3",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+    "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "39732dea-e4a6-4d8f-96de-925a679c56ff",
+      "$ref": "Users/39732dea-e4a6-4d8f-96de-925a679c56ff"
     } 
     
   ]
