@@ -34,9 +34,17 @@ The script will download from Skolfederation with a default URL, which can be
 overridden with the `--url` argument.
 
 ## list_metadata
-A script for listing entities and server/client names from the metadata.
+A script for listing entities from the metadata.
 
-Before running the script you need to make sure that Python 3 is installed.
+Before running the script you need to make sure that Python 3 and the
+url-normalize package is installed.
+
+For instance, to install on Debian these commands can be used:
+
+```
+sudo apt-get install python3 python3-pip
+sudo pip3 install url-normalize
+```
 
 To list all entities:
 
@@ -44,16 +52,16 @@ To list all entities:
 ./list_metadata.py metadata.txt
 ```
 
-To list all server names:
+To list all server URIs:
 
 ```
 ./list_metadata.py --servers metadata.txt
 ```
 
-To list all server names for a specific entity:
+To list all server tag combinations for a specific entity:
 
 ```
-./list_metadata.py --servers --entity example.com metadata.txt
+./list_metadata.py --server-tags --entity https://example.com metadata.txt
 ```
 
 ## public_key_pin

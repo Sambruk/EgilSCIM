@@ -18,13 +18,13 @@ namespace federated_tls_auth {
 // A pinned public key
 struct pin {
     // The hash method, typically sha256
-    std::string name;
+    std::string alg;
 
     // Base64 encoded hash of key
-    std::string value;
+    std::string digest;
 
-    pin(const std::string& n, const std::string& v)
-            : name(n), value(v) {}
+    pin(const std::string& a, const std::string& d)
+            : alg(a), digest(d) {}
 };
 
 // A server_end_point contains connection information

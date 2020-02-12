@@ -217,10 +217,18 @@ server_connection_info get_server(const string& metadata_path,
         }
 
         for (const auto& cur : itr->second) {
-            auto name = cur.second.get<string>("name");
-            auto value = cur.second.get<string>("value");
+            std::string alg, digest;
+            try {
+                alg = cur.second.get<string>("alg");
+                digest = cur.second.get<string>("digest");
+            }
+            catch (const pt::ptree_error&) {
+                // Backwards compatibility with old metadata format
+                alg = cur.second.get<string>("name");
+                digest = cur.second.get<string>("value");
+            }
 
-            end_point.pins.push_back(pin(name, value));
+            end_point.pins.push_back(pin(alg, digest));
         }
 
         if (end_point.pins.empty()) {
@@ -278,7 +286,7 @@ string concatenate_keys(const vector<pin>& pins) {
         if (!result.empty()) {
             result += ";";
         }
-        result += cur.name + "//" + cur.value;
+        result += cur.alg + "//" + cur.digest;
     }
     return result;
 }
