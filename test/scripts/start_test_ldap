@@ -7,13 +7,16 @@ cat > ${bootstrap} <<EOF
 dn: cn=config
 changetype: modify
 replace: olcSizeLimit
-olcSizeLimit: 2000
+olcSizeLimit: 8000
 
 dn: olcDatabase={-1}frontend,cn=config
 changetype: modify
 replace: olcSizeLimit
-olcSizeLimit: 2000
+olcSizeLimit: 8000
+
 EOF
+
+cat "${BASH_SOURCE%/*}/"schema.ldif >> ${bootstrap}
 
 docker container stop $container > /dev/null 2>&1
 docker container rm $container > /dev/null 2>&1

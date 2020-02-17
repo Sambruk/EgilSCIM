@@ -5,6 +5,7 @@ objectClass: organizationalPerson
 objectClass: person
 objectClass: top
 objectClass: extensibleObject
+objectClass: studentExtra
 cn: Stefan Johansson
 sn: Johansson
 displayName: Stefan Johansson
@@ -16,3 +17,4 @@ uid: stjo
 entryUUID: 39732dea-e4a6-4d8f-96de-925a679c56ff
 uniqueIdentifier: 200406042903
 departmentNumber: 10
+programCode: NANAT
