@@ -23,7 +23,8 @@ Users POST
             
             {
                 "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
-                "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+                "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b",
+		"schoolYear": 4
             } 
             
         ]
@@ -39,7 +40,7 @@ StudentGroups PUT
   ],
   "externalId": "39074b36-e0ed-4443-a501-5148992014b9",
   "displayName": "grupp1",
-  "studentGroupType": "Undervisning",
+  "studentGroupType": "Klass",
   "owner": {
     "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
     "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"

@@ -1,0 +1,7 @@
+dn: cn=x-simpleschool,cn=schema,cn=config
+changetype: add
+objectClass: olcSchemaConfig
+olcAttributeTypes: ( 127.0.0.1.1 NAME 'programCode' DESC 'A program code' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcAttributeTypes: ( 127.0.0.1.2 NAME 'schoolType' DESC 'Type of school' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcObjectClasses: ( 127.0.0.1.3 NAME 'schoolUnitExtra' AUXILIARY DESC 'A school unit' MAY ( schoolType ) )
+olcObjectClasses: ( 127.0.0.1.4 NAME 'studentExtra' AUXILIARY DESC 'A student' MAY ( programCode ) )

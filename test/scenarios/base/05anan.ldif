@@ -4,6 +4,7 @@ objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: person
 objectClass: top
+objectClass: extensibleObject
 cn: Anders Andersson
 sn: Andersson
 displayName: Anders Andersson
@@ -13,3 +14,4 @@ mail: anan@skolan.kommunen.se
 ou: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
 uid: anan
 entryUUID: 88c0f298-8e33-4566-ace7-6e26228a9bc6
+uniqueIdentifier: 197508236556

@@ -32,6 +32,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -146,7 +147,7 @@ func runTest(testName, testPath string,
 	// Remove again after the test
 	defer os.Remove(cacheFile.Name())
 
-	for _, step := range testSpec.Steps {
+	for idx, step := range testSpec.Steps {
 
 		// Check if our listener has reported an error
 		select {
@@ -200,10 +201,11 @@ func runTest(testName, testPath string,
 		}
 
 		if strings.Trim(requestsString, " \n\t") != strings.Trim(testLogger.String(), " \n\t") {
-			log.Println("Received requests don't match expected requests. Expected:")
-			log.Printf("%s\n", requestsString)
-			log.Println("Received:")
-			log.Printf("%s\n", testLogger.String())
+			log.Printf("Received requests don't match expected requests (step %d).\n", idx)
+			expectedFilename := testName + "_" + strconv.Itoa(idx) + "_expected.txt"
+			receivedFilename := testName + "_" + strconv.Itoa(idx) + "_received.txt"
+			ioutil.WriteFile(expectedFilename, []byte(requestsString), 0644)
+			ioutil.WriteFile(receivedFilename, []byte(testLogger.String()), 0644)
 			break
 		}
 	}
@@ -273,7 +275,7 @@ func main() {
 	egilBinaryPath = *binaryp
 
 	endpoints := []string{"Users", "StudentGroups", "Organisations",
-		"SchoolUnits", "SchoolUnitGroups", "Employments", "Activities"}
+		"SchoolUnits", "SchoolUnitGroups", "Employments", "Activities", "Subjects", "Courses"}
 
 	var testLogger TestLogger
 	for _, endpoint := range endpoints {

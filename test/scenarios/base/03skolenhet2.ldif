@@ -2,9 +2,11 @@ dn: ou=skolenhet2,ou=skolgruppen,dc=kommunen,dc=se
 changetype: add
 objectClass: extensibleObject
 objectClass: organizationalUnit
+objectClass: schoolUnitExtra
 objectClass: top
 ou: skolenhet2
 o: o=Kommunen,dc=kommunen,dc=se
 owner: ou=skolgruppen,dc=kommunen,dc=se
 uniqueIdentifier: 11111111
 entryUUID: 7bbc6be0-5fa1-45d1-ba50-0736582190e2
+schoolType: GY
