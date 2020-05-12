@@ -5,6 +5,9 @@
   - Support for metadata which uses alg/digest instead of name/value for pins.
     Metadata which uses name/value is still supported.
 
+#### Bugfixes
+  - Removed broken support for multiple config files (#65)
+
 ### v2.2.0 (2019-12-10)
 #### New features
   - Functionality for rebuilding the cache file (e.g. if lost) (#10)
