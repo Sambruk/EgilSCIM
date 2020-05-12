@@ -82,4 +82,6 @@ public:
     std::string un_parse_ms_uuid(const void *val);
 };
 
+std::string format_log_path(const std::string& path);
+
 #endif //SIMPLESCIM_UTILS_HPP

@@ -6,6 +6,7 @@
     Metadata which uses name/value is still supported.
   - Umask is used (when available) to limit access to the cache file (#79)
   - Support for regular expressions in the switch construct (#78)
+  - Log file names can now contain date and time format specifiers (#80)
 
 #### Bugfixes
   - Removed broken support for multiple config files (#65)

@@ -37,7 +37,7 @@ bool data_server::load() {
         std::shared_ptr<object_list> all = std::make_shared<object_list>();
         string_vector types = config.get_vector("scim-type-load-order");
 
-        auto load_log_file = config_file::instance().get_path("load-log-file", true);
+        auto load_log_file = format_log_path(config_file::instance().get_path("load-log-file", true));
         if (load_log_file != "" && !load_logger.is_open()) {
             load_logger.open(load_log_file.c_str());
         }
