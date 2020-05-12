@@ -24,6 +24,33 @@
 #include "model/object_list.hpp"
 #include "config_file.hpp"
 
+// When possible, we use umask to limit access to the cache file.
+#ifdef __unix__
+#include <sys/types.h>
+#include <sys/stat.h>
+
+class temporary_umask {
+public:
+    temporary_umask(mode_t new_mask) {
+        old_mask = umask(new_mask);
+    }
+    
+    ~temporary_umask() {
+        umask(old_mask);
+    }
+
+private:
+    mode_t old_mask;
+};
+
+#else // Non-unix systems have a no-op as temporary_umask
+
+class temporary_umask {
+    temporary_umask(int) {}
+    ~temporary_umask() {}
+};
+#endif
+
 cache_file::~cache_file() {
 }
 
@@ -498,8 +525,11 @@ int cache_file::save(std::shared_ptr<object_list> objects) {
         return -1;
     }
 
-    /* Open cache file for writing */
-    ofs.open(cache_file_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+    {
+        temporary_umask umask(0077);
+        /* Open cache file for writing */
+        ofs.open(cache_file_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+    }
 
     if (!ofs) {
         simplescim_error_string_set_errno("cache_file::save:%s", cache_file_filename.c_str());

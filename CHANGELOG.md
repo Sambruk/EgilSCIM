@@ -4,6 +4,7 @@
 #### New features
   - Support for metadata which uses alg/digest instead of name/value for pins.
     Metadata which uses name/value is still supported.
+  - Umask is used (when available) to limit access to the cache file (#79)
 
 #### Bugfixes
   - Removed broken support for multiple config files (#65)
