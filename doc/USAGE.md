@@ -299,20 +299,24 @@ If you want to match against UUID the `limit-by` variable should be omitted.
 
 ## Execution
 
-EgilSCIM is executed by typing `EgilSCIM file...` where `file...`
-is a list of zero or more EgilSCIM configuration files. An example
-of using this in a system is to add the command as a task to `cron`.
+EgilSCIM is executed by typing `EgilSCIMClient [OPTIONS] <file>` where `file`
+is an EgilSCIM configuration file. Most options can be set either
+as a command line argument or in the configuration file. For a list
+of options, run the program without arguments.
 
 ### Example
 
 ```
-EgilSCIM /etc/EgilSCIM/conf/service{1,2}.conf
+EgilSCIMClient /etc/EgilSCIM/conf/service1.conf
 ```
 
-`/etc/EgilSCIM/conf/service{1,2}.conf` expands to the path of both
-`service1.conf` and `service2.conf`. First, the configuration file
-for *service1* is executed to completion and then the configuration
-file for *service2* is executed to completion.
+If an option is set in both the configuration file and on the command line,
+the command line argument takes precedence. This way you can reuse the same
+configuration file for different service providers.
+
+```
+EgilSCIMClient --metadata-entity https://service1.com --cache-file /etc/EgilSCIM/cache/service1 /etc/EgilSCIM/conf/standard.conf
+```
 
 ## Cache file
 
