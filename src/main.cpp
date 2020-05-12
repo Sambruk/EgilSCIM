@@ -41,7 +41,7 @@ namespace filesystem = std::experimental::filesystem;
 
 void print_usage(const std::string& program_name,
                  const po::options_description& options) {
-    std::cout << "Usage: " << program_name << " [OPTIONS] <config-file1> [config-file2...]\n\n";
+    std::cout << "Usage: " << program_name << " [OPTIONS] <config-file>\n\n";
     std::cout << options << "\n";
 }    
 
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
         cmdline_options.add(generic).add(hidden);
 
         po::positional_options_description p;
-        p.add("config-file", -1);
+        p.add("config-file", 1);
 
         po::variables_map vm;
         po::store(po::command_line_parser(argc, argv).
@@ -205,145 +205,143 @@ int main(int argc, char *argv[]) {
         
         config_file &config = config_file::instance();
 
-        std::vector<std::string> files;
+        std::string config_file;
 
         if (vm.count("config-file")) {
-            files = vm["config-file"].as<std::vector<std::string>>();
+            config_file = vm["config-file"].as<std::vector<std::string>>().at(0);
         }
         else {
             print_usage(argv[0], generic);
             return EXIT_FAILURE;
         }
 
-        for (const auto& file : files) {
-            /** Load configuration file */
-            std::cout << "processing: " << file << std::endl;
+        /** Load configuration file */
+        std::cout << "processing: " << config_file << std::endl;
 
-            time_t start_time = time(nullptr);
+        time_t start_time = time(nullptr);
             
-            int err = 0;
-            try {
-                err = config.load(file);
-            } catch (std::string& msg) {
-                std::cerr << msg << std::endl;
-                return EXIT_FAILURE;
-            }
+        int err = 0;
+        try {
+            err = config.load(config_file);
+        } catch (std::string& msg) {
+            std::cerr << msg << std::endl;
+            return EXIT_FAILURE;
+        }
             
-            if (err == -1) {
-                print_error();
-                continue;
-            }
-
-            for (auto& var : common_vars) {
-                if (vm.count(var.name)) {
-                    auto value{vm[var.name].as<std::string>()};
-                    if (var.path) {
-                        value = filesystem::absolute(value).u8string();
-                    }
-                    config.replace_variable(var.name, value);
-                }
-            }
-
-            if (vm.count("D")) {
-                auto overrides = vm["D"].as<std::vector<std::string>>();
-
-                for (auto override_str : overrides) {
-                    std::string variable, value;
-                    parse_override(override_str, variable, value);
-                    config.replace_variable(variable, value);
-                }
-            }
-
-            if (config.get_bool("scim-auth-WEAK")) {
-                std::cout << "WARNING, running without authentication, this "
-                    "will either fail or the server might not be who you think it is. "
-                    "Use only for testing locally" << std::endl;
-            }
-
-            /** Get objects from data source */
-            data_server &server = data_server::instance();
-            try {
-                server.load();
-            } catch (std::string& msg) {
-                std::cerr << msg << std::endl;
-                return EXIT_FAILURE;
-            }
-            if (server.empty()) {
-                print_error();
-                config.clear();
-                server.clear();
-                continue;
-            }
-
-            SCIMServerInfo server_info{config};
-            ScimActions scim_actions{server_info};
-
-            /** Get objects from cache file */
-            std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
-            std::vector<ScimActions::scim_object_ref> all_scim_objects;
-            if (vm.count("rebuild-cache")) {
-                try {
-                    all_scim_objects = scim_actions.get_all_objects_from_scim_server();
-                } catch (const std::runtime_error& e) {
-                    std::cerr << "Failed to get objects from SCIM server (" << e.what() << ")" << std::endl;
-                }
-            }
-            
-            if (cache == nullptr) {
-                print_error();
-                server.clear();
-                config.clear();
-                continue;
-            }
-
-            if (vm.count("force-update")) {
-                auto uuids = vm["force-update"].as<std::vector<std::string>>();
-                make_dirty(cache, uuids);
-            }
-
-            if (vm.count("force-create")) {
-                auto uuids = vm["force-create"].as<std::vector<std::string>>();
-                for (auto uuid : uuids) {
-                    if (server.has_object(uuid)) {
-                        cache->remove(uuid);
-                    }
-                    else {
-                        std::cerr << "Can't force create " << uuid
-                                  << " which isn't in data source" << std::endl;
-                    }
-                }
-            }
-
-            /** Perform SCIM operations */
-            try {
-                err = scim_actions.perform(server, *cache, vm.count("rebuild-cache"), all_scim_objects);
-            } catch (const std::string& err_msg) {
-                std::cerr << err_msg << std::endl;
-            }
-
-            if (err == -1) {
-                server.clear();
-                print_error();
-                config.clear();
-                continue;
-            }
-
-            time_t end_time = time(nullptr);
-
-            if (config.has("status-file")) {
-                write_status(config.get("status-file"),
-                             start_time,
-                             int(end_time-start_time),
-                             scim_actions.get_new_cache());
-            }
-
-            print_status(file.c_str());
+        if (err == -1) {
             print_error();
+            return EXIT_FAILURE;
+        }
 
-            /* Clean up */
+        for (auto& var : common_vars) {
+            if (vm.count(var.name)) {
+                auto value{vm[var.name].as<std::string>()};
+                if (var.path) {
+                    value = filesystem::absolute(value).u8string();
+                }
+                config.replace_variable(var.name, value);
+            }
+        }
+
+        if (vm.count("D")) {
+            auto overrides = vm["D"].as<std::vector<std::string>>();
+
+            for (auto override_str : overrides) {
+                std::string variable, value;
+                parse_override(override_str, variable, value);
+                config.replace_variable(variable, value);
+            }
+        }
+
+        if (config.get_bool("scim-auth-WEAK")) {
+            std::cout << "WARNING, running without authentication, this "
+                "will either fail or the server might not be who you think it is. "
+                "Use only for testing locally" << std::endl;
+        }
+
+        /** Get objects from data source */
+        data_server &server = data_server::instance();
+        try {
+            server.load();
+        } catch (std::string& msg) {
+            std::cerr << msg << std::endl;
+            return EXIT_FAILURE;
+        }
+        if (server.empty()) {
+            print_error();
             config.clear();
             server.clear();
+            return EXIT_SUCCESS;
         }
+
+        SCIMServerInfo server_info{config};
+        ScimActions scim_actions{server_info};
+
+        /** Get objects from cache file */
+        std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
+        std::vector<ScimActions::scim_object_ref> all_scim_objects;
+        if (vm.count("rebuild-cache")) {
+            try {
+                all_scim_objects = scim_actions.get_all_objects_from_scim_server();
+            } catch (const std::runtime_error& e) {
+                std::cerr << "Failed to get objects from SCIM server (" << e.what() << ")" << std::endl;
+            }
+        }
+            
+        if (cache == nullptr) {
+            print_error();
+            server.clear();
+            config.clear();
+            return EXIT_FAILURE;
+        }
+
+        if (vm.count("force-update")) {
+            auto uuids = vm["force-update"].as<std::vector<std::string>>();
+            make_dirty(cache, uuids);
+        }
+
+        if (vm.count("force-create")) {
+            auto uuids = vm["force-create"].as<std::vector<std::string>>();
+            for (auto uuid : uuids) {
+                if (server.has_object(uuid)) {
+                    cache->remove(uuid);
+                }
+                else {
+                    std::cerr << "Can't force create " << uuid
+                              << " which isn't in data source" << std::endl;
+                }
+            }
+        }
+
+        /** Perform SCIM operations */
+        try {
+            err = scim_actions.perform(server, *cache, vm.count("rebuild-cache"), all_scim_objects);
+        } catch (const std::string& err_msg) {
+            std::cerr << err_msg << std::endl;
+        }
+
+        if (err == -1) {
+            server.clear();
+            print_error();
+            config.clear();
+            return EXIT_FAILURE;
+        }
+
+        time_t end_time = time(nullptr);
+
+        if (config.has("status-file")) {
+            write_status(config.get("status-file"),
+                         start_time,
+                         int(end_time-start_time),
+                         scim_actions.get_new_cache());
+        }
+
+        print_status(config_file.c_str());
+        print_error();
+
+        /* Clean up */
+        config.clear();
+        server.clear();
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
