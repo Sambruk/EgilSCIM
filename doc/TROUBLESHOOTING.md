@@ -16,6 +16,11 @@ You can get all HTTP traffic to and from the client logged to a text file
 by setting the variable `http-log-file` to a file path. If the file exists
 it will be overwritten when the client runs.
 
+The log file path can contain date and time format specifiers, in order
+to include a timestamp in the log's filename. The format specifiers work
+roughly the same as in the unix `date` command, for a complete specification
+see the documentation for the C function strftime.
+
 # Load log file
 
 You can log the load process to a text file by setting the variable
@@ -27,6 +32,9 @@ recursive process by indenting the log file according to what is currently
 loaded. Generated objects (Activity and Employment) are also included
 with their UUIDs and information about which other objects they were generated
 from.
+
+The load log file path can contain date and time format specifiers, it works
+in the same way as for the HTTP log file.
 
 # Forcing an object to be sent to the SCIM server
 

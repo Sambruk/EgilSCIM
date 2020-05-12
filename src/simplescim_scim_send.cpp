@@ -388,7 +388,7 @@ int scim_sender::send_init(std::string cert,
     simplescim_scim_send_pinnedpubkey = pinnedpubkey;
     simplescim_scim_send_ca_bundle_path = ca_bundle_path;
 
-    auto http_log_file = config_file::instance().get_path("http-log-file", true);
+    auto http_log_file = format_log_path(config_file::instance().get_path("http-log-file", true));
     if (http_log_file != "" && !http_log.is_open()) {
         http_log.open(http_log_file, std::ios_base::out | std::ios_base::trunc);
     }

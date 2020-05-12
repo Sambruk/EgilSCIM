@@ -20,6 +20,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <ctime>
 
 #include "utils.hpp"
 #include "simplescim_error_string.hpp"
@@ -191,4 +192,18 @@ std::string uuid_util::un_parse_ms_uuid(const void *val) {
     std::reverse(buf.begin()+6, buf.begin()+8);
 
     return un_parse_uuid(&buf[0]);
+}
+
+std::string format_log_path(const std::string& path) {
+    time_t rawtime;
+    struct tm *timeinfo;
+    
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    
+    const size_t MAXSIZE = 1024;
+    char dest[MAXSIZE];
+    
+    strftime(dest, MAXSIZE, path.c_str(), timeinfo);
+    return dest;
 }
