@@ -33,6 +33,10 @@ would expand to `{"userType": "Student"}` if the value of `type` is
 `EmpType1` and to `{"userType": "Unknown"}` if the value of `type` is
 anything else.
 
+If the case value is enclosed within two `/` characters it is interpreted
+as a regular expression. Regular expressions follow the grammar defined in
+ECMA-262 (as used in JavaScript).
+
 ## Relational data
 Some objects have relations to other objects, such as group has members.
 The other objects fields can be referred to with it's type and it's attribute.
