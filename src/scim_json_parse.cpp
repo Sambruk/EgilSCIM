@@ -25,6 +25,7 @@
 #include <optional>
 #include <algorithm>
 #include <iterator>
+#include <regex>
 
 #include "utility/simplescim_error_string.hpp"
 #include "model/base_object.hpp"
@@ -199,6 +200,17 @@ public:
      * is set to an appropriate error message.
      */
     std::string parse_string();
+
+    /**
+     * Parses a regular expression.
+     * <regex> ::= '/' [^/]* '/'
+     * 
+     * On success, a pointer to the parsed regular expression
+     * is returned. On error, nullptr is returned and
+     * simplescim_error_string is set to an appropriate error
+     * message.
+     */
+    std::shared_ptr<std::regex> parse_regex();
 
     /**
      * Parses a case statement.
@@ -655,13 +667,25 @@ int scim_json_parser::parse_default(int matched) {
 
 int scim_json_parser::parse_case(const std::string &inval, int *matched) {
     std::string match, value;
+    std::shared_ptr<std::regex> re_match;
+    bool use_regex = false;
     int err;
 
     skip_ws();
-    match = parse_string();
 
-    if (match.empty()) {
-        return -1;
+    if (*j_iter == '/') {
+        re_match = parse_regex();
+        if (re_match == nullptr) {
+            syntax_error();
+            return -1;
+        }
+        use_regex = true;
+    }
+    else {
+        match = parse_string();
+        if (match.empty()) {
+            return -1;
+        }
     }
 
     skip_ws();
@@ -675,14 +699,17 @@ int scim_json_parser::parse_case(const std::string &inval, int *matched) {
     skip_ws();
     value = parse_string();
 
-    if (*matched == 0 && match == inval) {
-        err = replace(value);
+    if (*matched == 0) {
+        if ((use_regex && std::regex_match(inval, *re_match)) ||
+            (!use_regex && match == inval)) {
+            err = replace(value);
 
-        if (err == -1) {
-            return -1;
+            if (err == -1) {
+                return -1;
+            }
+
+            *matched = 1;
         }
-
-        *matched = 1;
     }
 
     return 0;
@@ -732,6 +759,48 @@ std::string scim_json_parser::parse_string() {
     }
 
     return str;
+}
+
+std::shared_ptr<std::regex> scim_json_parser::parse_regex() {
+    progress();
+
+    int len = 0;
+    while (*(j_iter + len) != '/' && *(j_iter + len) != '\0') {
+        ++len;
+    }
+
+    if (*(j_iter + len) == '\0') {
+        syntax_error();
+        simplescim_error_string_set_message("unexpected end-of-string");
+        return nullptr;
+    }
+
+    std::string pattern(j_iter, j_iter + len);
+
+    /* Progress parser */
+    for (int i = 0; i <= len; ++i) {
+        progress();
+    }
+
+    static std::map<std::string, std::shared_ptr<std::regex>> regex_cache;
+
+    auto itr = regex_cache.find(pattern);
+
+    if (itr != regex_cache.end()) {
+        return itr->second;
+    }
+    else {
+        try {
+            auto regex = std::make_shared<std::regex>(std::regex(pattern));
+            regex_cache[pattern] = regex;
+            return regex;
+        } catch (const std::regex_error&) {
+            syntax_error();
+            simplescim_error_string_set_message("malformed regular expression: %s",
+                                                pattern.c_str());
+            return nullptr;
+        }
+    }
 }
 
 optional_string scim_json_parser::get_value(const std::string &variable) {
