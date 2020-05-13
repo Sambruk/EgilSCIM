@@ -1,6 +1,6 @@
 ## Releases
 
-### Unreleased
+### v2.3.0 (2020-05-13)
 #### New features
   - Support for metadata which uses alg/digest instead of name/value for pins.
     Metadata which uses name/value is still supported.
