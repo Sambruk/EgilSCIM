@@ -46,6 +46,7 @@ private:
 #else // Non-unix systems have a no-op as temporary_umask
 
 class temporary_umask {
+public:
     temporary_umask(int) {}
     ~temporary_umask() {}
 };

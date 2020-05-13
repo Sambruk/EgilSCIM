@@ -63,7 +63,7 @@ bool url_equals(const std::string& url1, const std::string& url2) {
     try {
         return url_normalize(url1) == url_normalize(url2);
     }
-    catch (const std::runtime_error& e) {
+    catch (const std::runtime_error&) {
         return false;
     }
 }
