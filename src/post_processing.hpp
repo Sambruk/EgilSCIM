@@ -22,6 +22,9 @@
 
 #include <vector>
 #include <memory>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "pp_interface.h"
 
 namespace post_processing {
@@ -51,8 +54,12 @@ public:
 
 private:
     void* find_func(std::string symbol_name);
-        
+
+#ifdef _WIN32
+    HINSTANCE lib_handle;
+#else
     void* lib_handle = nullptr;
+#endif
     std::string plugin_name;
 
     pp_plugin_include_func include_func;
