@@ -86,6 +86,7 @@ void ScimActions::simplescim_scim_clear() const {
  */
 void ScimActions::process_changes(const object_list& current,
                                   const object_list &cache,
+                                  const post_processing::plugins& ppp,
                                   statistics& stats,
                                   bool rebuild_cache,
                                   const std::set<std::string>& all_scim_uuids) const {
@@ -110,7 +111,7 @@ void ScimActions::process_changes(const object_list& current,
         if (create) {
             ++stats.n_create;
             auto create_functor = ScimActions::create_func(*object);
-            err = create_functor(*this);
+            err = create_functor(*this, ppp);
 
             if (err == -1) {
                 ++stats.n_create_fail;
@@ -138,7 +139,7 @@ void ScimActions::process_changes(const object_list& current,
                 ++stats.n_update;
                 ScimActions::update_func update_f(*object);
 
-                if (update_f(*this) == -1) {
+                if (update_f(*this, ppp) == -1) {
                     ++stats.n_update_fail;
                     std::cerr << simplescim_error_string_get() << std::endl;
                 }
@@ -244,10 +245,12 @@ std::string endpoint_to_SS12000_type(const std::string& endpoint,
 
 int ScimActions::perform(const data_server &current,
                          const object_list &cached,
+                         const post_processing::plugins& ppp,
                          bool rebuild_cache,
                          const std::vector<ScimActions::scim_object_ref>& all_scim_objects) const {
     std::string types_string = config_file::instance().get("scim-type-send-order");
-    string_vector types = string_to_vector(types_string);
+    string_vector types = post_processing::filter_types(string_to_vector(types_string), ppp);
+
     std::map<std::string, statistics> stats;
 
     std::set<std::string> all_scim_uuids;
@@ -262,7 +265,7 @@ int ScimActions::perform(const data_server &current,
         if (!allOfType) {
             allOfType = std::make_shared<object_list>();
         }
-        process_changes(*allOfType, cached, stats[type], rebuild_cache, all_scim_uuids);
+        process_changes(*allOfType, cached, ppp, stats[type], rebuild_cache, all_scim_uuids);
     }
 
     auto types_reversed(types);
@@ -367,7 +370,8 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
     return err;
 }
 
-int ScimActions::create_func::operator()(const ScimActions &actions) {
+int ScimActions::create_func::operator()(const ScimActions &actions,
+                                         const post_processing::plugins& ppp) {
 
     base_object copied_user(create);
 
@@ -387,6 +391,8 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
 
     if (!actions.verify_json(parsed_json, type))
         return -1;
+
+    parsed_json = post_processing::process(ppp, type, parsed_json);
 
     std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
@@ -411,7 +417,8 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
     return 0;
 }
 
-int ScimActions::update_func::operator()(const ScimActions &actions) {
+int ScimActions::update_func::operator()(const ScimActions &actions,
+                                         const post_processing::plugins& ppp) {
 
     /* Copy object */
     base_object copied_user(object);
@@ -439,6 +446,8 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
     if (!actions.verify_json(parsed_json, type)) {
         return -1;
     }
+
+    parsed_json = post_processing::process(ppp, type, parsed_json);    
 
     std::string unified = unifyurl(object.get_uid());
     std::string url = actions.scim_server_info.get_url();

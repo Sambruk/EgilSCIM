@@ -35,6 +35,7 @@
 #include "utility/utils.hpp"
 #include "data_server.hpp"
 #include "scim_server_info.hpp"
+#include "post_processing.hpp"
 
 namespace po = boost::program_options;
 namespace filesystem = std::experimental::filesystem;
@@ -259,6 +260,17 @@ int main(int argc, char *argv[]) {
                 "Use only for testing locally" << std::endl;
         }
 
+        post_processing::plugins ppp;
+        if (config.has("post-process-plugin-path")) {
+            try {
+                ppp = post_processing::load_plugins(config.get_path("post-process-plugin-path"),
+                                                    config.get_vector("post-process-plugins", true));
+            } catch (std::runtime_error& e) {
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
+        }
+
         /** Get objects from data source */
         data_server &server = data_server::instance();
         try {
@@ -315,7 +327,7 @@ int main(int argc, char *argv[]) {
 
         /** Perform SCIM operations */
         try {
-            err = scim_actions.perform(server, *cache, vm.count("rebuild-cache"), all_scim_objects);
+            err = scim_actions.perform(server, *cache, ppp, vm.count("rebuild-cache"), all_scim_objects);
         } catch (const std::string& err_msg) {
             std::cerr << err_msg << std::endl;
         }

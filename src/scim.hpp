@@ -24,6 +24,7 @@
 #include "config_file.hpp"
 #include "data_server.hpp"
 #include "scim_server_info.hpp"
+#include "post_processing.hpp"
 #include <memory>
 
 class base_object;
@@ -90,6 +91,7 @@ private:
     
     void process_changes(const object_list& current,
                          const object_list& cache,
+                         const post_processing::plugins& ppp,
                          statistics& stats,
                          bool rebuild_cache,
                          const std::set<std::string>& all_scim_uuids) const;
@@ -141,6 +143,7 @@ public:
      */
     int perform(const data_server &current,
                 const object_list &cached,
+                const post_processing::plugins& ppp,
                 bool rebuild_cache,
                 const std::vector<scim_object_ref>& all_scim_objects) const;
     bool verify_json(const std::string &json, const std::string &type) const ;
@@ -158,7 +161,7 @@ public:
     public:
         explicit create_func(const base_object &c) : create(c) {}
 
-        int operator()(const ScimActions &);
+        int operator()(const ScimActions &, const post_processing::plugins& ppp);
     };
 
     class update_func {
@@ -167,7 +170,7 @@ public:
         update_func(const base_object &o) : object(o)
             {}
 
-        int operator()(const ScimActions &);
+        int operator()(const ScimActions &, const post_processing::plugins& ppp);
     };
 
     class delete_func {
