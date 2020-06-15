@@ -29,8 +29,9 @@ extern int echo_include(const char *type) {
     return PP_PROCESS_TYPE;
 }
 
-extern char *echo_process(const char *type, const char *input) {
-    return strdup(input);
+extern int echo_process(const char *type, const char *input, char **output) {
+    *output = strdup(input);
+    return 0;
 }
 
 extern void echo_free(void *ptr) {

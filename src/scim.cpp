@@ -392,7 +392,13 @@ int ScimActions::create_func::operator()(const ScimActions &actions,
     if (!actions.verify_json(parsed_json, type))
         return -1;
 
-    parsed_json = post_processing::process(ppp, type, parsed_json);
+    try {
+        parsed_json = post_processing::process(ppp, type, parsed_json);
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Post processing error when creating object "
+                  << copied_user.get_uid() << ": " << e.what();
+        return -1;
+    }
 
     std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
@@ -447,7 +453,14 @@ int ScimActions::update_func::operator()(const ScimActions &actions,
         return -1;
     }
 
-    parsed_json = post_processing::process(ppp, type, parsed_json);    
+    try {
+        parsed_json = post_processing::process(ppp, type, parsed_json);
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << "Post processing error when updating object "
+                  << copied_user.get_uid() << ": " << e.what();
+        return -1;
+    }
 
     std::string unified = unifyurl(object.get_uid());
     std::string url = actions.scim_server_info.get_url();

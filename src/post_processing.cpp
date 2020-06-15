@@ -139,9 +139,18 @@ int plugin::include(const std::string& type) {
 }
 
 std::string plugin::process(const std::string& type, const std::string& input) {
-    char* output = process_func(type.c_str(), input.c_str());
+    char* output;
+    int result = process_func(type.c_str(), input.c_str(), &output);
     std::string str(output);
     free_func(output);
+
+    if (result != 0) {
+        std::string error{"failed to process object of type "};
+        error += type + " in plugin " + plugin_name;
+        error += " (error code: " + std::to_string(result) + ")";
+        throw std::runtime_error(error);
+    }
+    
     return str;
 }
 

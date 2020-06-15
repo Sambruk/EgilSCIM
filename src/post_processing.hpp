@@ -43,7 +43,10 @@ public:
     // Checks if and how to process a type
     int include(const std::string& type);
 
-    // Does post processing of one object of a given type
+    /*
+     * Does post processing of one object of a given type.
+     * Throws runtime_error if the plugin returns an error.
+     */
     std::string process(const std::string& type, const std::string& input);
 
 private:
@@ -70,6 +73,10 @@ std::vector<std::string> filter_types(const std::vector<std::string>& types, con
 /*
  * Does the post processing for one object according to plugins, in the order
  * the plugins appear in the sequence.
+ *
+ * Only plugins that want to process the type in question will be called.
+ *
+ * If one plugin fails the whole function will throw runtime_error.
  */
 std::string process(const plugins& ppp, const std::string& type, const std::string& input);
 

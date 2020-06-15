@@ -54,8 +54,14 @@ typedef int (*pp_plugin_include_func)(const char* type);
 /*
  * The process function does the actual post processing. Each call
  * is for one object.
+ *
+ * The plugin shall return 0 on success. On failure, it shall return
+ * non-zero and send an error message through output. The error message 
+ * will be free'd with the free function just like regular output.
  */
-typedef char* (*pp_plugin_process_func)(const char* type, const char* input);
+typedef int (*pp_plugin_process_func)(const char* type,
+                                      const char* input,
+                                      char** output);
 
 /*
  * Once the EGIL client is done with the output from the process function
