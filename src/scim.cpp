@@ -33,6 +33,40 @@
 #include "scim_json_parse.hpp"
 #include "simplescim_scim_send.hpp"
 
+namespace {
+
+/*
+ * This function converts from the type names used in the EGIL
+ * client configuration to SS12000 types.
+ *
+ * Typically the type names are the same, except for Student and Teacher
+ * which both map to User in SS12000.
+ *
+ * If the type has a config variable named `type`-SS12000-type, for instance:
+ * 
+ * Student-SS12000-type = User
+ *
+ * then that will be used. Otherwise type will be returned unchanged for 
+ * everything except Student and Teacher.
+ */
+std::string actualSS12000type(const std::string& type) {
+    auto config_var = type + "-SS12000-type";
+
+    if (config_file::instance().has(config_var)) {
+        return config_file::instance().get(config_var);
+    }
+    else {
+        if (type == "Teacher" ||
+            type == "Student") {
+            return "User";
+        }
+        else {
+            return type;
+        }
+    }
+}
+
+}
 
 variables::variables() {
     const config_file &config = config_file::instance();
@@ -381,6 +415,8 @@ int ScimActions::create_func::operator()(const ScimActions &actions,
         type = "User";
     }
 
+    std::string standard_type = actualSS12000type(type);
+
     std::string template_json = actions.conf.get(type + "-scim-json-template");
     std::string parsed_json = scim_json_parse(template_json, copied_user);
     
@@ -393,7 +429,7 @@ int ScimActions::create_func::operator()(const ScimActions &actions,
         return -1;
 
     try {
-        parsed_json = post_processing::process(ppp, type, parsed_json);
+        parsed_json = post_processing::process(ppp, standard_type, parsed_json);
     } catch (const std::runtime_error& e) {
         std::cerr << "Post processing error when creating object "
                   << copied_user.get_uid() << ": " << e.what();
@@ -440,6 +476,9 @@ int ScimActions::update_func::operator()(const ScimActions &actions,
     if (type == "base") {
         type = "User";
     }
+    
+    std::string standard_type = actualSS12000type(type);
+    
     std::string create_var = type + "-scim-json-template";
     std::string template_json = config_file::instance().get(create_var);
     std::string parsed_json = scim_json_parse(template_json, copied_user);
@@ -454,7 +493,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions,
     }
 
     try {
-        parsed_json = post_processing::process(ppp, type, parsed_json);
+        parsed_json = post_processing::process(ppp, standard_type, parsed_json);
     }
     catch (const std::runtime_error& e) {
         std::cerr << "Post processing error when updating object "
