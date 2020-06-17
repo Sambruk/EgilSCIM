@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern int echo_init(int count, char **vars, char **values) {
+extern int echo_init(int count, char **vars, char **values, char **error) {
     return 0;
 }
 
@@ -38,5 +38,5 @@ extern void echo_free(void *ptr) {
     free(ptr);
 }
 
-void echo_exit() {
+extern void echo_exit() {
 }

@@ -130,7 +130,7 @@ std::string library_path(const std::string& path, const std::string& plugin_name
 #ifdef _WIN32
     result.append(plugin_name + ".dll");
 #else
-    result.append(plugin_name + ".so");
+    result.append(std::string("lib") + plugin_name + ".so");
 #endif
     return result.string();
 }
@@ -157,10 +157,16 @@ plugin::plugin(const std::string& path, const std::string& p_name)
     exit_func         = (pp_plugin_exit_func)   find_func(plugin_name + "_exit");
 
     auto args = get_init_args(plugin_name);
-    int err = init_func(args.count, args.vars, args.values);
+    char* error = nullptr;
+    int err = init_func(args.count, args.vars, args.values, &error);
+    std::string strerr;
+    if (error != nullptr) {
+        strerr = error;
+        free_func(error);
+    }
 
     if (err != 0) {
-        throw std::runtime_error(std::string("Failed to initialize plugin + ") + plugin_name + " (code: " + std::to_string(err) + ")");
+        throw std::runtime_error(std::string("Failed to initialize plugin + ") + plugin_name + " (code: " + std::to_string(err) + ", message: " + strerr + ")");
     }
 
     free_init_args(args);

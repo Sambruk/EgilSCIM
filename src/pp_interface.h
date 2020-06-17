@@ -41,8 +41,15 @@
  * The init function gets all configuration variables for the plugin.
  * In other words, if the plugin is named foo, all config variables
  * starting with pp-foo- will be included.
+ *
+ * If the initialization failed, the plugin shall return non-zero
+ * and set an error message in the error parameter. The error message
+ * will be free'd with the plugin's free function.
  */
-typedef int (*pp_plugin_init_func)(int count, char** vars, char** values);
+typedef int (*pp_plugin_init_func)(int count,
+                                   char** vars,
+                                   char** values,
+                                   char** error);
 
 /*
  * The include function lets the plugin decide how to deal with each
@@ -57,7 +64,7 @@ typedef int (*pp_plugin_include_func)(const char* type);
  *
  * The plugin shall return 0 on success. On failure, it shall return
  * non-zero and send an error message through output. The error message 
- * will be free'd with the free function just like regular output.
+ * will be free'd with the plugin's free function just like regular output.
  */
 typedef int (*pp_plugin_process_func)(const char* type,
                                       const char* input,
