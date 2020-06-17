@@ -166,7 +166,7 @@ plugin::plugin(const std::string& path, const std::string& p_name)
     }
 
     if (err != 0) {
-        throw std::runtime_error(std::string("Failed to initialize plugin + ") + plugin_name + " (code: " + std::to_string(err) + ", message: " + strerr + ")");
+        throw std::runtime_error(std::string("Failed to initialize plugin ") + plugin_name + " (code: " + std::to_string(err) + ", message: " + strerr + ")");
     }
 
     free_init_args(args);
