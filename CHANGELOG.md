@@ -1,5 +1,9 @@
 ## Releases
 
+### Unreleased
+#### New features
+  - Plugin system for post processing JSON (#86)
+
 ### v2.3.0 (2020-05-13)
 #### New features
   - Support for metadata which uses alg/digest instead of name/value for pins.
