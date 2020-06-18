@@ -33,6 +33,40 @@
 #include "scim_json_parse.hpp"
 #include "simplescim_scim_send.hpp"
 
+namespace {
+
+/*
+ * This function converts from the type names used in the EGIL
+ * client configuration to SS12000 types.
+ *
+ * Typically the type names are the same, except for Student and Teacher
+ * which both map to User in SS12000.
+ *
+ * If the type has a config variable named `type`-SS12000-type, for instance:
+ * 
+ * Student-SS12000-type = User
+ *
+ * then that will be used. Otherwise type will be returned unchanged for 
+ * everything except Student and Teacher.
+ */
+std::string actualSS12000type(const std::string& type) {
+    auto config_var = type + "-SS12000-type";
+
+    if (config_file::instance().has(config_var)) {
+        return config_file::instance().get(config_var);
+    }
+    else {
+        if (type == "Teacher" ||
+            type == "Student") {
+            return "User";
+        }
+        else {
+            return type;
+        }
+    }
+}
+
+}
 
 variables::variables() {
     const config_file &config = config_file::instance();
@@ -86,6 +120,7 @@ void ScimActions::simplescim_scim_clear() const {
  */
 void ScimActions::process_changes(const object_list& current,
                                   const object_list &cache,
+                                  const post_processing::plugins& ppp,
                                   statistics& stats,
                                   bool rebuild_cache,
                                   const std::set<std::string>& all_scim_uuids) const {
@@ -110,7 +145,7 @@ void ScimActions::process_changes(const object_list& current,
         if (create) {
             ++stats.n_create;
             auto create_functor = ScimActions::create_func(*object);
-            err = create_functor(*this);
+            err = create_functor(*this, ppp);
 
             if (err == -1) {
                 ++stats.n_create_fail;
@@ -138,7 +173,7 @@ void ScimActions::process_changes(const object_list& current,
                 ++stats.n_update;
                 ScimActions::update_func update_f(*object);
 
-                if (update_f(*this) == -1) {
+                if (update_f(*this, ppp) == -1) {
                     ++stats.n_update_fail;
                     std::cerr << simplescim_error_string_get() << std::endl;
                 }
@@ -244,10 +279,12 @@ std::string endpoint_to_SS12000_type(const std::string& endpoint,
 
 int ScimActions::perform(const data_server &current,
                          const object_list &cached,
+                         const post_processing::plugins& ppp,
                          bool rebuild_cache,
                          const std::vector<ScimActions::scim_object_ref>& all_scim_objects) const {
     std::string types_string = config_file::instance().get("scim-type-send-order");
-    string_vector types = string_to_vector(types_string);
+    string_vector types = post_processing::filter_types(string_to_vector(types_string), ppp);
+
     std::map<std::string, statistics> stats;
 
     std::set<std::string> all_scim_uuids;
@@ -262,7 +299,7 @@ int ScimActions::perform(const data_server &current,
         if (!allOfType) {
             allOfType = std::make_shared<object_list>();
         }
-        process_changes(*allOfType, cached, stats[type], rebuild_cache, all_scim_uuids);
+        process_changes(*allOfType, cached, ppp, stats[type], rebuild_cache, all_scim_uuids);
     }
 
     auto types_reversed(types);
@@ -367,7 +404,8 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
     return err;
 }
 
-int ScimActions::create_func::operator()(const ScimActions &actions) {
+int ScimActions::create_func::operator()(const ScimActions &actions,
+                                         const post_processing::plugins& ppp) {
 
     base_object copied_user(create);
 
@@ -376,6 +414,8 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
     if (type == "base") {
         type = "User";
     }
+
+    std::string standard_type = actualSS12000type(type);
 
     std::string template_json = actions.conf.get(type + "-scim-json-template");
     std::string parsed_json = scim_json_parse(template_json, copied_user);
@@ -387,6 +427,14 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
 
     if (!actions.verify_json(parsed_json, type))
         return -1;
+
+    try {
+        parsed_json = post_processing::process(ppp, standard_type, parsed_json);
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Post processing error when creating object "
+                  << copied_user.get_uid() << ": " << e.what();
+        return -1;
+    }
 
     std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
@@ -411,7 +459,8 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
     return 0;
 }
 
-int ScimActions::update_func::operator()(const ScimActions &actions) {
+int ScimActions::update_func::operator()(const ScimActions &actions,
+                                         const post_processing::plugins& ppp) {
 
     /* Copy object */
     base_object copied_user(object);
@@ -427,6 +476,9 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
     if (type == "base") {
         type = "User";
     }
+    
+    std::string standard_type = actualSS12000type(type);
+    
     std::string create_var = type + "-scim-json-template";
     std::string template_json = config_file::instance().get(create_var);
     std::string parsed_json = scim_json_parse(template_json, copied_user);
@@ -437,6 +489,15 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
     }
     
     if (!actions.verify_json(parsed_json, type)) {
+        return -1;
+    }
+
+    try {
+        parsed_json = post_processing::process(ppp, standard_type, parsed_json);
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << "Post processing error when updating object "
+                  << copied_user.get_uid() << ": " << e.what();
         return -1;
     }
 

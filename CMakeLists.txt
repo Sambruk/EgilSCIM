@@ -45,13 +45,13 @@ endif ()
 if (WIN32)
     set(LDFLAGS wldap32.lib ${CURL_LIBRARY_RELEASE})
 else()
-    set(LDFLAGS -lldap -llber -lcurl -lstdc++fs)
+    set(LDFLAGS -lldap -llber -lcurl -lstdc++fs -ldl)
 endif()
 
 link_libraries(${LDFLAGS})
 
 set(srcroot src)
-set(SOURCES ${srcroot}/scim_json_parse.cpp ${srcroot}/utility/simplescim_error_string.cpp ${srcroot}/simplescim_scim_send.cpp ${srcroot}/cache_file.cpp ${srcroot}/model/base_object.cpp ${srcroot}/simplescim_ldap_attrs_parser.cpp ${srcroot}/config_file.cpp ${srcroot}/config_file_parser.cpp ${srcroot}/scim.cpp ${srcroot}/utility/utils.cpp ${srcroot}/utility/utils.hpp ${srcroot}/utility/utils.cpp ${srcroot}/ldap_wrapper.cpp ${srcroot}/ldap_wrapper.hpp ${srcroot}/data_server.cpp ${srcroot}/data_server.hpp ${srcroot}/json_data_file.cpp ${srcroot}/json_data_file.hpp ${srcroot}/json_template_parser.cpp ${srcroot}/json_template_parser.hpp ${srcroot}/simplescim_ldap.cpp ${srcroot}/generated_load.cpp ${srcroot}/generated_load.hpp ${srcroot}/csv_load.cpp ${srcroot}/csv_load.hpp ${srcroot}/csv_store.cpp ${srcroot}/csv_store.hpp ${srcroot}/csv_file.cpp ${srcroot}/csv_file.hpp ${srcroot}/scim_server_info.cpp ${srcroot}/scim_server_info.hpp ${srcroot}/load_limiter.hpp ${srcroot}/load_limiter.cpp ${srcroot}/fedtlsauth/castore_file.hpp ${srcroot}/fedtlsauth/castore_file.cpp ${srcroot}/fedtlsauth/metadata_parser.hpp ${srcroot}/fedtlsauth/metadata_parser.cpp ${srcroot}/utility/indented_logger.hpp ${srcroot}/utility/indented_logger.cpp)
+set(SOURCES ${srcroot}/scim_json_parse.cpp ${srcroot}/utility/simplescim_error_string.cpp ${srcroot}/simplescim_scim_send.cpp ${srcroot}/cache_file.cpp ${srcroot}/model/base_object.cpp ${srcroot}/simplescim_ldap_attrs_parser.cpp ${srcroot}/config_file.cpp ${srcroot}/config_file_parser.cpp ${srcroot}/scim.cpp ${srcroot}/utility/utils.cpp ${srcroot}/utility/utils.hpp ${srcroot}/utility/utils.cpp ${srcroot}/ldap_wrapper.cpp ${srcroot}/ldap_wrapper.hpp ${srcroot}/data_server.cpp ${srcroot}/data_server.hpp ${srcroot}/json_data_file.cpp ${srcroot}/json_data_file.hpp ${srcroot}/json_template_parser.cpp ${srcroot}/json_template_parser.hpp ${srcroot}/simplescim_ldap.cpp ${srcroot}/generated_load.cpp ${srcroot}/generated_load.hpp ${srcroot}/csv_load.cpp ${srcroot}/csv_load.hpp ${srcroot}/csv_store.cpp ${srcroot}/csv_store.hpp ${srcroot}/csv_file.cpp ${srcroot}/csv_file.hpp ${srcroot}/scim_server_info.cpp ${srcroot}/scim_server_info.hpp ${srcroot}/load_limiter.hpp ${srcroot}/load_limiter.cpp ${srcroot}/fedtlsauth/castore_file.hpp ${srcroot}/fedtlsauth/castore_file.cpp ${srcroot}/fedtlsauth/metadata_parser.hpp ${srcroot}/fedtlsauth/metadata_parser.cpp ${srcroot}/utility/indented_logger.hpp ${srcroot}/utility/indented_logger.cpp ${srcroot}/post_processing.hpp ${srcroot}/post_processing.cpp)
 
 set(TEST_SOURCES ${srcroot}/tests/main.cpp ${srcroot}/tests/json_template_parser_tests.cpp ${srcroot}/tests/scim_query_tests.cpp ${srcroot}/tests/csv_tests.cpp ${srcroot}/tests/uuid_tests.cpp ${srcroot}/tests/scim_json_parse_tests.cpp)
 
