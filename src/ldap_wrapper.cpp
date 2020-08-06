@@ -285,6 +285,11 @@ struct ldap_wrapper::Impl {
             err = ldap_create_page_control(conn.simplescim_ldap_ld,
                                            page_size,
                                            ss.cookie, 'T', &serverctrls[0]);
+            
+            if (err != LDAP_SUCCESS) {
+                std::cerr << "error creating paging control for LDAP search" << std::endl;
+                return false;
+            }
         }
         
         if (ss.result != nullptr) {
@@ -317,6 +322,11 @@ struct ldap_wrapper::Impl {
             // Parse the results to retrieve the contols being returned.
             err = ldap_parse_result(conn.simplescim_ldap_ld, ss.result, &errcode, NULL, NULL, NULL, &returned_controls, 0);
 
+            if (err != LDAP_SUCCESS) {
+                std::cerr << "error retrieving LDAP server controls for paging" << std::endl;
+                return false;
+            }
+
             if (ss.cookie != nullptr) {
                 ber_bvfree(ss.cookie);
                 ss.cookie = nullptr;
@@ -324,6 +334,11 @@ struct ldap_wrapper::Impl {
 
             // Parse the page control returned to get the cookie
             err = ldap_parse_page_control(conn.simplescim_ldap_ld, returned_controls, &total_count, &ss.cookie);
+
+            if (err != LDAP_SUCCESS) {
+                std::cerr << "failed to get LDAP paging cookie" << std::endl;
+                return false;
+            }
 
             /* Cleanup the controls used. */
             if (returned_controls != nullptr) {
