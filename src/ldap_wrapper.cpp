@@ -43,6 +43,23 @@ void ldap_print_error(int err, const char *func) {
     simplescim_error_string_set_message("%s", ldap_err2string(err));
 }
 
+// TODO: Should probably define LDAP_UNICODE before including Winldap.h instead
+#ifdef _WIN32
+#define MyLDAPControl LDAPControlW
+#define my_ldap_create_page_control ldap_create_page_controlW
+#define my_ldap_parse_result ldap_parse_resultW
+#define my_ldap_parse_page_control ldap_parse_page_controlW
+#define my_ldap_controls_free ldap_controls_freeW
+#define my_ldap_control_free ldap_control_freeW
+#else
+#define MyLDAPControl LDAPControl
+#define my_ldap_create_page_control ldap_create_page_control
+#define my_ldap_parse_result ldap_parse_result
+#define my_ldap_parse_page_control ldap_parse_page_control
+#define my_ldap_controls_free ldap_controls_free
+#define my_ldap_control_free ldap_control_free
+#endif
+
 int ldap_search_ext_s_utf8(
     LDAP *ld,
     std::string base,
@@ -50,8 +67,8 @@ int ldap_search_ext_s_utf8(
     std::string filter,
     char *attrs[],
     int attrsonly,
-    LDAPControl **serverctrls,
-    LDAPControl **clientctrls,    
+    MyLDAPControl **serverctrls,
+    MyLDAPControl **clientctrls,    
     int sizeLimit,
     LDAPMessage **msg
 ) {
@@ -278,11 +295,11 @@ struct ldap_wrapper::Impl {
 
     bool re_search() {
         int err = 0;
-        LDAPControl *serverctrls[2] = { nullptr, nullptr };
-        LDAPControl **clientctrls = nullptr;
+        MyLDAPControl *serverctrls[2] = { nullptr, nullptr };
+        MyLDAPControl **clientctrls = nullptr;
         
         if (paged_search) {
-            err = ldap_create_page_control(conn.simplescim_ldap_ld,
+            err = my_ldap_create_page_control(conn.simplescim_ldap_ld,
                                            page_size,
                                            ss.cookie, 'T', &serverctrls[0]);
             
@@ -315,12 +332,17 @@ struct ldap_wrapper::Impl {
         }
 
         if (paged_search) {
+#ifdef _WIN32
+            ULONG errcode;
+            ULONG total_count;
+#else
             int errcode;
-            LDAPControl **returned_controls = nullptr;
             ber_int_t total_count;
+#endif
+            MyLDAPControl **returned_controls = nullptr;
 
             // Parse the results to retrieve the contols being returned.
-            err = ldap_parse_result(conn.simplescim_ldap_ld, ss.result, &errcode, NULL, NULL, NULL, &returned_controls, 0);
+            err = my_ldap_parse_result(conn.simplescim_ldap_ld, ss.result, &errcode, NULL, NULL, NULL, &returned_controls, 0);
 
             if (err != LDAP_SUCCESS) {
                 std::cerr << "error retrieving LDAP server controls for paging" << std::endl;
@@ -333,7 +355,7 @@ struct ldap_wrapper::Impl {
             }
 
             // Parse the page control returned to get the cookie
-            err = ldap_parse_page_control(conn.simplescim_ldap_ld, returned_controls, &total_count, &ss.cookie);
+            err = my_ldap_parse_page_control(conn.simplescim_ldap_ld, returned_controls, &total_count, &ss.cookie);
 
             if (err != LDAP_SUCCESS) {
                 std::cerr << "failed to get LDAP paging cookie" << std::endl;
@@ -342,9 +364,9 @@ struct ldap_wrapper::Impl {
 
             /* Cleanup the controls used. */
             if (returned_controls != nullptr) {
-                ldap_controls_free(returned_controls);
+                my_ldap_controls_free(returned_controls);
             }
-            ldap_control_free(serverctrls[0]);
+            my_ldap_control_free(serverctrls[0]);
         }
 
         return true;        
