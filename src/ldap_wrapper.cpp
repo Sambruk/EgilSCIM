@@ -19,11 +19,13 @@
 
 #include "ldap_wrapper.hpp"
 #include <set>
+#include <string>
 #ifdef _WIN32
 #include <Windows.h>
 #include <Winldap.h>
 #include <Winber.h>
 #else
+#define LDAP_DEPRECATED 1
 #include <ldap.h>
 #endif
 #include "json_data_file.hpp"
@@ -41,6 +43,23 @@ void ldap_print_error(int err, const char *func) {
     simplescim_error_string_set_message("%s", ldap_err2string(err));
 }
 
+// TODO: Should probably define LDAP_UNICODE before including Winldap.h instead
+#ifdef _WIN32
+#define MyLDAPControl LDAPControlW
+#define my_ldap_create_page_control ldap_create_page_controlW
+#define my_ldap_parse_result ldap_parse_resultW
+#define my_ldap_parse_page_control ldap_parse_page_controlW
+#define my_ldap_controls_free ldap_controls_freeW
+#define my_ldap_control_free ldap_control_freeW
+#else
+#define MyLDAPControl LDAPControl
+#define my_ldap_create_page_control ldap_create_page_control
+#define my_ldap_parse_result ldap_parse_result
+#define my_ldap_parse_page_control ldap_parse_page_control
+#define my_ldap_controls_free ldap_controls_free
+#define my_ldap_control_free ldap_control_free
+#endif
+
 int ldap_search_ext_s_utf8(
     LDAP *ld,
     std::string base,
@@ -48,6 +67,8 @@ int ldap_search_ext_s_utf8(
     std::string filter,
     char *attrs[],
     int attrsonly,
+    MyLDAPControl **serverctrls,
+    MyLDAPControl **clientctrls,    
     int sizeLimit,
     LDAPMessage **msg
 ) {
@@ -81,7 +102,8 @@ int ldap_search_ext_s_utf8(
         filter_buffer,
         &wattrs[0],
         attrsonly,
-        nullptr, nullptr, nullptr, LDAP_NO_LIMIT, msg);
+        serverctrls, clientctrls, nullptr,
+        LDAP_NO_LIMIT, msg);
 #else
     // For some reason, ldap_search_ext_s expects char *, not const char *,
     // so we'll copy...
@@ -94,7 +116,7 @@ int ldap_search_ext_s_utf8(
         &filter_copy[0],
         attrs,
         attrsonly,
-        nullptr, nullptr, nullptr,
+        serverctrls, clientctrls, nullptr,
         sizeLimit,
         msg);
 #endif
@@ -142,8 +164,15 @@ int ldap_initialize(LDAP** ldp, const char* uri) {
 struct ldap_wrapper::Impl {
     const config_file &config = config_file::instance();
 
-    LDAPMessage* simplescim_ldap_res = nullptr;
-    LDAPMessage* current_entry = nullptr;
+    struct search_state {
+        std::string base;
+        std::string filter;
+        int scope_val;
+        char **attrs_val = nullptr;
+        LDAPMessage* result = nullptr;
+        LDAPMessage* current_entry = nullptr;
+        berval *cookie = nullptr;
+    } ss;
 
     /**
      * Configuration file variables
@@ -154,7 +183,8 @@ struct ldap_wrapper::Impl {
     std::string ldap_filter{};
     std::string ldap_attrs{};
     std::string ldap_UUID{};
-    std::string ldap_attrsonly{};
+    bool paged_search;
+    int page_size;
 
     std::string type{};
     pair_map multi_queries{};
@@ -216,11 +246,7 @@ struct ldap_wrapper::Impl {
     }
 
     ~Impl() {
-        if (simplescim_ldap_res != nullptr) {
-            /* Disregard the return value. */
-            ldap_msgfree(simplescim_ldap_res);
-            simplescim_ldap_res = nullptr;
-        }
+        cleanup_search_state();
     }
   
     /**
@@ -233,7 +259,24 @@ struct ldap_wrapper::Impl {
         ldap_filter = config.get("ldap-filter", true);
         ldap_attrs = config.get("ldap-attrs", true);
         ldap_UUID = config.get("ldap-UUID", true);
-        ldap_attrsonly = config.get("ldap-attrsonly");
+
+        std::string ldap_page_size = config.get("ldap-page-size", true);
+        paged_search = false;
+        if (!ldap_page_size.empty()) {
+            try {
+                page_size = std::stoi(ldap_page_size);
+            } catch (const std::exception&) {
+                page_size  = 0;
+            }
+
+            if (page_size > 0) {
+                paged_search = true;
+            }
+            else {
+                std::cerr << "Invalid ldap-page-size: " << ldap_page_size << std::endl;
+                std::cerr << "Running without paging" << std::endl;
+            }
+        }
 
         if (!ldap_attrs.empty())
             std::cout
@@ -248,6 +291,85 @@ struct ldap_wrapper::Impl {
         multi_queries = json_data_file::json_to_ldap_query(type);
         //	}
         return true;
+    }
+
+    bool re_search() {
+        int err = 0;
+        MyLDAPControl *serverctrls[2] = { nullptr, nullptr };
+        MyLDAPControl **clientctrls = nullptr;
+        
+        if (paged_search) {
+            err = my_ldap_create_page_control(conn.simplescim_ldap_ld,
+                                           page_size,
+                                           ss.cookie, 'T', &serverctrls[0]);
+            
+            if (err != LDAP_SUCCESS) {
+                std::cerr << "error creating paging control for LDAP search" << std::endl;
+                return false;
+            }
+        }
+        
+        if (ss.result != nullptr) {
+            ldap_msgfree(ss.result);
+            ss.result = nullptr;
+        }
+
+        /** Search */
+        err = ldap_search_ext_s_utf8(conn.simplescim_ldap_ld, ss.base, ss.scope_val,
+                                ss.filter,
+                                ss.attrs_val,
+                                0,
+                                serverctrls,
+                                clientctrls,
+                                LDAP_NO_LIMIT, 
+                                &ss.result);
+
+        if (err != LDAP_SUCCESS) {
+            std::cerr << "error creating ldap search: " << ldap_err2string(err) << std::endl;
+            std::cerr << "\ttype: " << type << ", base: " << ss.base << ", filter: " << ss.filter << std::endl;
+            ldap_print_error(err, "ldap_search_ext_s");
+            return false;
+        }
+
+        if (paged_search) {
+#ifdef _WIN32
+            ULONG errcode;
+            ULONG total_count;
+#else
+            int errcode;
+            ber_int_t total_count;
+#endif
+            MyLDAPControl **returned_controls = nullptr;
+
+            // Parse the results to retrieve the contols being returned.
+            err = my_ldap_parse_result(conn.simplescim_ldap_ld, ss.result, &errcode, NULL, NULL, NULL, &returned_controls, 0);
+
+            if (err != LDAP_SUCCESS) {
+                std::cerr << "error retrieving LDAP server controls for paging" << std::endl;
+                return false;
+            }
+
+            if (ss.cookie != nullptr) {
+                ber_bvfree(ss.cookie);
+                ss.cookie = nullptr;
+            }
+
+            // Parse the page control returned to get the cookie
+            err = my_ldap_parse_page_control(conn.simplescim_ldap_ld, returned_controls, &total_count, &ss.cookie);
+
+            if (err != LDAP_SUCCESS) {
+                std::cerr << "failed to get LDAP paging cookie" << std::endl;
+                return false;
+            }
+
+            /* Cleanup the controls used. */
+            if (returned_controls != nullptr) {
+                my_ldap_controls_free(returned_controls);
+            }
+            my_ldap_control_free(serverctrls[0]);
+        }
+
+        return true;        
     }
 
     bool search(const std::string &intype,
@@ -275,9 +397,9 @@ struct ldap_wrapper::Impl {
             {"CHILDREN", LDAP_SCOPE_CHILDREN},
 #endif
         };
-        int scope_val;
+        
         if (scopes.find(ldap_scope) != scopes.end()) {
-            scope_val = scopes[ldap_scope];
+            ss.scope_val = scopes[ldap_scope];
         }
         else {
             std::string possible_scopes;
@@ -306,55 +428,27 @@ struct ldap_wrapper::Impl {
 
         }
 
+        ss.base = filter_val.first;
+        ss.filter = filter_val.second;
+
         /** Parse attrs */
-        char **attrs_val;
-        int err = simplescim_ldap_attrs_parser(ldap_attrs.c_str(), &attrs_val);
+        int err = simplescim_ldap_attrs_parser(ldap_attrs.c_str(), &ss.attrs_val);
 
         if (err == -1) {
             return false;
         }
 
-        /** Set attrsonly */
-        int attrsonly_val;
-        if (ldap_attrsonly == "TRUE") {
-            attrsonly_val = 1;
-        } else if (ldap_attrsonly == "FALSE") {
-            attrsonly_val = 0;
-        } else {
-            simplescim_error_string_set_prefix("simplescim_ldap_search");
-            simplescim_error_string_set_message("variable \"ldap-attrsonly\" has invalid value \"%s\"\n"
-                                                "variable \"ldap-attrsonly\" must have one of the following values:\n"
-                                                " TRUE FALSE", ldap_attrsonly.c_str());
-            return false;
+        if (ss.cookie != nullptr) {
+            ber_bvfree(ss.cookie);
+            ss.cookie = nullptr;
         }
 
         load_logger.log("Searching for " + type +
-                        ", base: " + filter_val.first +
-                        ", filter: " + filter_val.second);
-        
-        /** Search */
-        err = ldap_search_ext_s_utf8(conn.simplescim_ldap_ld, filter_val.first, scope_val,
-                                filter_val.second,
-                                attrs_val,
-                                attrsonly_val,
-                                LDAP_NO_LIMIT, 
-                                &simplescim_ldap_res);
+                        ", base: " + ss.base +
+                        ", filter: " + ss.filter);
 
-        /** Free attrs_val if it is not nullptr. */
-        if (attrs_val != nullptr) {
-            for (size_t i = 0; attrs_val[i] != nullptr; ++i) {
-                free(attrs_val[i]);
-            }
-            free(attrs_val);
-        }
-
-        /** Check if the search operation returned an error. */
-        if (err != LDAP_SUCCESS) {
-            std::cerr << "error creating ldap search: " << ldap_err2string(err) << std::endl;
-            std::cerr << "\ttype: " << intype << ", base: " << filter_val.first.c_str() << ", filter: " << filter_val.second.c_str() << std::endl;
-            ldap_print_error(err, "ldap_search_ext_s");
+        if (!re_search()) {
             throw std::string("exiting");
-            //		return false;
         }
 
         return true;
@@ -431,23 +525,55 @@ struct ldap_wrapper::Impl {
     }
 
     std::shared_ptr<base_object> first_object() {
-        current_entry = ldap_first_entry(conn.simplescim_ldap_ld, simplescim_ldap_res);
+        ss.current_entry = ldap_first_entry(conn.simplescim_ldap_ld, ss.result);
 
-        if (current_entry == nullptr) {
+        if (ss.current_entry == nullptr) {
+            cleanup_search_state();
             return nullptr;
         }
 
-        return entry_to_base_object(current_entry);
+        return entry_to_base_object(ss.current_entry);
     }
   
     std::shared_ptr<base_object> next_object() {
-        current_entry = ldap_next_entry(conn.simplescim_ldap_ld, current_entry);
+        ss.current_entry = ldap_next_entry(conn.simplescim_ldap_ld, ss.current_entry);
 
-        if (current_entry == nullptr) {
-            return nullptr;
+        if (ss.current_entry == nullptr) {
+            if (paged_search && ss.cookie != nullptr && ss.cookie->bv_val != nullptr && (strlen(ss.cookie->bv_val) > 0)) {
+                if (!re_search()) {
+                    std::cerr << "failed when getting next page" << std::endl;
+                    cleanup_search_state();
+                    return nullptr;
+                }
+                return first_object();
+            }
+            else {
+                cleanup_search_state();
+                return nullptr;
+            }
         }
 
-        return entry_to_base_object(current_entry);
+        return entry_to_base_object(ss.current_entry);
+    }
+
+    void cleanup_search_state() {
+        if (ss.result != nullptr) {
+            ldap_msgfree(ss.result);
+            ss.result = nullptr;
+        }
+
+        if (ss.attrs_val != nullptr) {
+            for (size_t i = 0; ss.attrs_val[i] != nullptr; ++i) {
+                free(ss.attrs_val[i]);
+            }
+            free(ss.attrs_val);
+            ss.attrs_val = nullptr;
+        }
+
+        if (ss.cookie != nullptr) {
+            ber_bvfree(ss.cookie);
+            ss.cookie = nullptr;
+        }
     }
 };
 
