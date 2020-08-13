@@ -1,6 +1,6 @@
 ## Releases
 
-### Unreleased
+### v2.4.0 (2020-08-13)
 #### New features
   - Plugin system for post processing JSON (#86)
   - Optional support for paged LDAP queries (#88)
