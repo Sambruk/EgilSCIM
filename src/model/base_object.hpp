@@ -189,4 +189,13 @@ public:
 
 };
 
+/**
+ * Constructs a base_object from a vector of values.
+ * 
+ * Used by the CSV and SQL load processes.
+ */
+std::shared_ptr<base_object> vector_to_base_object(const string_vector& values,
+                                                      const string_vector& attribute_names,
+                                                      const std::string& type);
+
 #endif

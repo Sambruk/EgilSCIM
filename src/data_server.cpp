@@ -22,13 +22,14 @@
 #include "generated_load.hpp"
 #include "simplescim_ldap.hpp"
 #include "csv_load.hpp"
+#include "sql_load.hpp"
 #include "json_data_file.hpp"
 
 /**
  * load all data from
  * store each type in the data map with the type as key
  */
-bool data_server::load() {
+bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
     try {
         config_file &config = config_file::instance();
         static_types = string_to_vector(config.get("scim-static-types"));
@@ -59,6 +60,9 @@ bool data_server::load() {
             }
             else if (config.has(type + "-csv-files")) {
                 l = csv_get(type, load_logger);
+            }
+            else if (config.has(type + "-sql")) {
+                l = sql_get(sql_plugin, type, load_logger);
             }
             if (l) {
                 add(type, l);
