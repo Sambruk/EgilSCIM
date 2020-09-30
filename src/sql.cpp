@@ -68,11 +68,11 @@ bool plugin::iterator::next(std::vector<std::string>& row) {
 
 plugin::plugin(const std::string &path, const std::string &p_name)
     : plugin_name(p_name) {
-    lib_handle = dl_load(path, plugin_name);
-
-    if (lib_handle == DL_NULL) {
-        std::string err(get_dl_error());
-        throw std::runtime_error(std::string("Failed to load plugin " + plugin_name + " : " + err));
+    try {
+        lib_handle = dl_load(path, plugin_name);
+    }
+    catch (const std::runtime_error& e) {
+        throw std::runtime_error(std::string("Failed to load plugin " + plugin_name + " : " + e.what()));
     }
 
     sql_plugin_init_func init_func;

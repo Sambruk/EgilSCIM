@@ -27,6 +27,18 @@
 #endif
 #include <experimental/filesystem>
 
+namespace {
+
+// Returns the expected full path to a plugin.
+std::string library_path(const std::string& path, const std::string& plugin_name) {
+    auto result = std::experimental::filesystem::path(path);
+#ifdef _WIN32
+    result.append(plugin_name + ".dll");
+#else
+    result.append(std::string("lib") + plugin_name + ".so");
+#endif
+    return result.string();
+}
 
 std::string get_dl_error() {
 #ifdef _WIN32
@@ -49,6 +61,8 @@ std::string get_dl_error() {
 #endif
 }
 
+}
+
 void* find_func(dl_handle lib_handle, std::string symbol_name) {
 #ifdef _WIN32
     auto func = GetProcAddress(lib_handle, symbol_name.c_str());
@@ -62,29 +76,19 @@ void* find_func(dl_handle lib_handle, std::string symbol_name) {
     return func;
 }
 
-namespace {
-
-// Returns the expected full path to a plugin.
-std::string library_path(const std::string& path, const std::string& plugin_name) {
-    auto result = std::experimental::filesystem::path(path);
-#ifdef _WIN32
-    result.append(plugin_name + ".dll");
-#else
-    result.append(std::string("lib") + plugin_name + ".so");
-#endif
-    return result.string();
-}
-
-}
-
 dl_handle dl_load(const std::string& path, const std::string& plugin_name) {
     const auto full_path = library_path(path, plugin_name);
 
+    dl_handle res = 
 #ifdef _WIN32
-    return LoadLibrary(full_path.c_str());
+        LoadLibrary(full_path.c_str());
 #else
-    return dlopen(full_path.c_str(), RTLD_NOW);
+        dlopen(full_path.c_str(), RTLD_NOW);
 #endif
+    if (res == DL_NULL) {
+        throw std::runtime_error(get_dl_error());
+    }
+    return res;
 }
 
 void dl_free(dl_handle lib_handle) {

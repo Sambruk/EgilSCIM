@@ -55,10 +55,6 @@ dl_handle dl_load(const std::string& path, const std::string& plugin_name);
 // Releases a dynamically loaded library
 void dl_free(dl_handle lib_handle);
 
-// Returns an error string after a failed operation.
-// TODO: This shouldn't be exposed, dl_load should throw like find_func instead.
-std::string get_dl_error();
-
 /*
  * Finds a symbol from a shared library.
  * Throws runtime_error on failure.
