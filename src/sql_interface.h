@@ -62,6 +62,8 @@ typedef void* SQL_PLUGIN_CURSOR;
  *
  * The error string should be released with the free_error
  * function.
+ * 
+ * sql_statement is in UTF-8.
  */
 typedef int (*sql_plugin_execute_func)(const char *sql_statement,
                                        SQL_PLUGIN_CURSOR *cursor,
@@ -74,6 +76,8 @@ typedef int (*sql_plugin_execute_func)(const char *sql_statement,
  * 
  * The column names need not be free'd, but should not be used
  * after the cursor is released.
+ * 
+ * The column_names are returned in UTF-8.
  */
 typedef int (*sql_plugin_header_func)(SQL_PLUGIN_CURSOR cursor,
                                       int *column_count,
@@ -84,6 +88,8 @@ typedef int (*sql_plugin_header_func)(SQL_PLUGIN_CURSOR cursor,
  * 
  * The values need not be free'd, but should not be used
  * after next is called again for this cursor.
+ * 
+ * The values are returned in UTF-8.
  * 
  * If the function is called after the last row has been returned,
  * the function returns SQL_PLUGIN_END (and does not modify values).
