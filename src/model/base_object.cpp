@@ -108,3 +108,18 @@ std::shared_ptr<base_object> vector_to_base_object(const string_vector& values,
     attributes["ss12000type"] = string_vector({type});
     return std::make_shared<base_object>(std::move(attributes));
 }
+
+void generate_uuid(std::shared_ptr<base_object> object,
+                   const std::string& generator,
+                   const std::string& uuid_attribute) {
+    
+    auto values = object->get_values(generator);
+
+    if (values.size() != 1) {
+        throw std::runtime_error("UUID generator must have exactly one value for each object");
+    }
+
+    auto generator_value = values[0];
+    auto uuid = uuid_util::instance().generate(generator_value);
+    object->add_attribute(uuid_attribute, {uuid});
+}

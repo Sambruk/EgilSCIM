@@ -23,22 +23,6 @@
 #include "data_server.hpp"
 #include "utility/utils.hpp"
 
-// Generates a UUID attribute for an object, based on some other attribute
-void generate_uuid(std::shared_ptr<base_object> object,
-                   const std::string& generator,
-                   const std::string& uuid_attribute) {
-    
-    auto values = object->get_values(generator);
-
-    if (values.size() != 1) {
-        throw std::runtime_error("UUID generator must have exactly one value for each object");
-    }
-
-    auto generator_value = values[0];
-    auto uuid = uuid_util::instance().generate(generator_value);
-    object->add_attribute(uuid_attribute, {uuid});
-}
-
 // Goes through all records in a CSV file and creates base_objects 
 std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
                                                 const std::string& type,

@@ -76,12 +76,12 @@ std::shared_ptr<object_list> sql_to_object_list(std::shared_ptr<sql::plugin::ite
     while (itr->next(row)) {
         auto object = vector_to_base_object(row, attribute_names, type);
 
-/*        if (config_file::instance().has(type + "-UUID-generator")) {
+        if (config_file::instance().has(type + "-UUID-generator")) {
             generate_uuid(object,
                           config_file::instance().get(type + "-UUID-generator"),
                           config_file::instance().get(type + "-unique-identifier"));
         }
-*/
+
         auto uid = object->get_uid();
         if (!uid.empty() && limiter->include(object.get())) {
             objects->add_object(uid, object);

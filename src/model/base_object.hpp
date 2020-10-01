@@ -198,4 +198,11 @@ std::shared_ptr<base_object> vector_to_base_object(const string_vector& values,
                                                       const string_vector& attribute_names,
                                                       const std::string& type);
 
+/**
+ * Generates a UUID attribute for an object, based on some other attribute
+ */
+void generate_uuid(std::shared_ptr<base_object> object,
+				   const std::string &generator,
+				   const std::string &uuid_attribute);
+
 #endif
