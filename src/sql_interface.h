@@ -91,6 +91,8 @@ typedef int (*sql_plugin_header_func)(SQL_PLUGIN_CURSOR cursor,
  * 
  * The values are returned in UTF-8.
  * 
+ * NULL database values are returned as null pointers (0/nullptr).
+ * 
  * If the function is called after the last row has been returned,
  * the function returns SQL_PLUGIN_END (and does not modify values).
  */

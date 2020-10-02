@@ -194,9 +194,9 @@ public:
  * 
  * Used by the CSV and SQL load processes.
  */
-std::shared_ptr<base_object> vector_to_base_object(const string_vector& values,
-                                                      const string_vector& attribute_names,
-                                                      const std::string& type);
+std::shared_ptr<base_object> vector_to_base_object(const std::vector<std::optional<std::string>> &values,
+												   const string_vector& attribute_names,
+												   const std::string& type);
 
 /**
  * Generates a UUID attribute for an object, based on some other attribute

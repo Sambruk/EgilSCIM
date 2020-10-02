@@ -96,13 +96,15 @@ std::ostream &operator<<(std::ostream &os, const base_object &object) {
 	return os;
 }
 
-std::shared_ptr<base_object> vector_to_base_object(const string_vector& values,
+std::shared_ptr<base_object> vector_to_base_object(const std::vector<std::optional<std::string>>& values,
                                                       const string_vector& attribute_names,
                                                       const std::string& type) {
     attrib_map attributes;
 
     for (size_t i = 0; i < values.size(); ++i) {
-        attributes[attribute_names[i]] = string_vector({values[i]});
+		if (values[i]) {
+        	attributes[attribute_names[i]] = string_vector({values[i].value()});
+		}
     }
 
     attributes["ss12000type"] = string_vector({type});

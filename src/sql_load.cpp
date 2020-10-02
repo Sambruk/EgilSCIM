@@ -72,7 +72,7 @@ std::shared_ptr<object_list> sql_to_object_list(std::shared_ptr<sql::plugin::ite
     auto objects =  std::make_shared<object_list>();
     const auto attribute_names = itr->get_header();
     
-    std::vector<std::string> row;
+    std::vector<std::optional<std::string>> row;
     while (itr->next(row)) {
         auto object = vector_to_base_object(row, attribute_names, type);
 
@@ -120,15 +120,17 @@ void add_multi_valued(std::shared_ptr<sql::plugin::iterator> itr,
         index[iter.second->get_values(key)[0]] = iter.second;
     }
 
-    std::vector<std::string> row;
+    std::vector<std::optional<std::string>> row;
     while (itr->next(row)) {
 
-        if (index.find(row[0]) == index.end()) {
+        if (!row[0] || index.find(row[0].value()) == index.end()) {
             // TODO: Should we give a warning or something?
             continue;
         }
 
-        index[row[0]]->append_values(attribute, {row[1]});
+        if (row[1]) {
+            index[row[0].value()]->append_values(attribute, {row[1].value()});
+        }
     }
 }
 

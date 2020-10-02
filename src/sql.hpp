@@ -23,6 +23,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <optional>
 #include "dl.hpp"
 #include "sql_interface.h"
 
@@ -53,7 +54,7 @@ public:
          * 
          * Throws std::runtime_error on a failure from the SQL plugin.
          */
-        bool next(std::vector<std::string>& row);
+        bool next(std::vector<std::optional<std::string>>& row);
 
         // Gets the list of column names for the current result        
         std::vector<std::string> get_header() { return header; }

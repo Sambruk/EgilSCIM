@@ -23,6 +23,18 @@
 #include "data_server.hpp"
 #include "utility/utils.hpp"
 
+namespace {
+std::vector<std::optional<std::string>> to_optionals(const std::vector<std::string>& strings) {
+    std::vector<std::optional<std::string>> result;
+    result.reserve(strings.size());
+
+    for (auto& s : strings) {
+        result.push_back(s);
+    }
+    return result;
+}
+}
+
 // Goes through all records in a CSV file and creates base_objects 
 std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
                                                 const std::string& type,
@@ -32,7 +44,7 @@ std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
     const auto attribute_names = file->get_header();
     
     for (size_t i = 0; i < file->size(); ++i) {
-        auto object = vector_to_base_object((*file)[i], attribute_names, type);
+        auto object = vector_to_base_object(to_optionals((*file)[i]), attribute_names, type);
 
         if (config_file::instance().has(type + "-UUID-generator")) {
             generate_uuid(object,

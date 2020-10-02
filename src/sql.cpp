@@ -43,7 +43,7 @@ void plugin::iterator::save_header(sql_plugin_header_func header_func) {
     }
 }
 
-bool plugin::iterator::next(std::vector<std::string>& row) {
+bool plugin::iterator::next(std::vector<std::optional<std::string>>& row) {
     if (cursor == nullptr) {
         return false;
     }
@@ -56,9 +56,12 @@ bool plugin::iterator::next(std::vector<std::string>& row) {
         cursor = nullptr;
         return false;
     } else if (res == SQL_PLUGIN_SUCCESS) {
+        row.clear(); // make sure it's all null when we resize
         row.resize(header.size());
         for (size_t i = 0; i < header.size(); ++i) {
-            row[i] = values[i];
+            if (values[i] != nullptr) {
+                row[i] = values[i];
+            }
         }
         return true;
     } else {
