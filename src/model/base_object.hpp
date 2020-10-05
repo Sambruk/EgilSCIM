@@ -28,6 +28,7 @@
 #include <ostream>
 #include <iostream>
 #include <algorithm>
+#include <optional>
 
 using string_pair = std::pair<std::string, std::string>;
 using attrib_name = std::string;
