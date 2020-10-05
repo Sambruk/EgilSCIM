@@ -51,8 +51,8 @@ value, it is a part of the value and is not interpreted as a comment.
 
 EgilSCIM has a set of required variable names that must be assigned
 meaningful values. The set of required variable names may change in
-future versions of EgilSCIM and depends on whether LDAP and/or CSV
-is used as data source.
+future versions of EgilSCIM and depends on whether LDAP, CSV and/or
+SQL is used as data source.
 
 The following variables should be configured regardless of data source:
 
@@ -195,6 +195,90 @@ the following additions:
  * The separator character can be configured (with the `csv-separator` variable)
  * The quote character can be configured (with the `csv-quote` variable)
  * UTF-8 encoded text is allowed
+
+## Loading objects from SQL
+
+If your source data is in a relational database, loading directly from SQL instead
+of exporting to CSV first offers some advantages:
+
+ * There's no need to automate CSV exports and syncronize that with EGIL jobs
+ * You can easily filter what data to include in the EGIL configuration files
+ * Attributes can be optional (by using NULL values in the database)
+
+In order to use SQL as a data source, a plugin suitable for your database needs to be
+available. There are no plugins included in the open source version of the EGIL client.
+If you wish to develop your own plugin, see the required C interface of the plugin in
+`src/sql_interface.h`.
+
+To specify a plugin to use, assuming you have the `odbc` plugin installed in the directory
+`/usr/lib/egil/sql`, add the following variables to your master configuration file:
+
+```
+sql-plugin-path = /usr/lib/egil/sql
+sql-plugin-name = odbc
+```
+
+The plugin may also have its own configuration variables, starting with `sql` and the name of
+the plugin, for instance to specify a connection string to the `odbc` plugin:
+
+```
+sql-odbc-connection-string = Driver={PostgreSQL Unicode};Database=egil;
+```
+
+Loading objects from SQL is similar to loading from CSV files. Instead of specifying
+filenames, SQL queries are used to fetch tables from the database. For each object
+type there's a main SQL query that is used to fetch attributes for the objects. If
+there are multi-valued attributes auxilliary queries can be specified, where each
+such query should return a table with two columns. Just like for CSV files, the first
+column works as a foreign key to the main table and should have the same name as an
+attribute that acts as a primary key in that table. The second column contains the
+values.
+
+### Simple example
+
+Like the LDAP queries, SQL queries are specified in the configuration file in JSON format.
+The easiest example, for just loading single-valued attributes, looks like this:
+
+```
+Organisation-sql = <?
+{
+  "query": "SELECT * FROM organisation"
+}
+?>
+```
+
+### Multi-valued example
+
+Here's an example for loading teachers, where each teacher can have several employments:
+
+```
+Teacher-sql = <?
+{
+  "query": "SELECT * FROM teachers",
+  "aux": [
+  	{ "query" : "SELECT uid, schoolunitcode FROM employments" }
+  ]
+}
+?>
+
+In this case, the employments table in the database has a uid column which is used
+as a foreign key in order to link the data to the teachers table. The loaded
+teacher objects will get attributes named `schoolunitcode` which may have multiple
+values.
+
+Note that just like for CSV files, the EGIL client will join the tables in memory.
+However it might still be a good idea to include an SQL JOIN in your queries for
+the auxilliary tables so as to not include attributes for objects not included in
+the main table. It should be more efficient to let the database reduce the number
+of rows as much as possible before handing them over to the EGIL client.
+
+If the foreign key in the table with multi-valued attributes isn't named exactly
+like the primary key in the main table, you can use "AS" in your SQL query to
+return a table with the proper column name. For instance:
+
+```
+SELECT id AS uid, email FROM emails
+```
 
 ## Defining relations between objects
 

@@ -18,145 +18,33 @@
  */
 
 #include "post_processing.hpp"
-#include <experimental/filesystem>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif
-
-#include "config_file.hpp"
+#include "plugin_config.hpp"
 
 namespace post_processing {
 
-// Config parameters for a plugin
-struct init_args {
-    int count;
-    char** vars;
-    char** values;
-};
-
-// Gets all config parameters for a plugin from the config file.
-init_args get_init_args(const std::string& plugin_name) {
-    init_args result;
-
-    auto prefix = std::string("pp-" + plugin_name);
-
-    std::vector<std::string> vars, values;
-    
-    for (auto itr = config_file::instance().begin();
-         itr != config_file::instance().end();
-         ++itr) {
-        auto var = itr->first;
-        auto value = itr->second;
-
-        if (startsWith(var, prefix)) {
-            vars.push_back(var);
-            values.push_back(value);
-        }
-    }
-
-    result.count = static_cast<int>(vars.size());
-    result.vars = new char*[vars.size()];
-    result.values = new char*[vars.size()];
-
-    for (size_t i = 0; i < vars.size(); ++i) {
-        auto var = vars[i];
-        auto value = values[i];
-
-        result.vars[i] = new char[var.size()+1];
-        strncpy(result.vars[i], var.c_str(), var.size()+1);
-
-        result.values[i] = new char[value.size()+1];
-        strncpy(result.values[i], value.c_str(), value.size()+1);
-    }
-    
-    return result;
-}
-
-// Releases resources for init_args
-void free_init_args(const init_args& args) {
-    for (int i = 0; i < args.count; ++i) {
-        delete[] args.vars[i];
-        delete[] args.values[i];
-    }
-    delete[] args.vars;
-    delete[] args.values;
-}
-
-std::string get_dl_error() {
-#ifdef _WIN32
-    LPVOID lpMsgBuf;
-    DWORD dw = GetLastError();
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        dw,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR)&lpMsgBuf,
-        0, NULL);
-    std::string result((LPSTR)lpMsgBuf);
-    LocalFree(lpMsgBuf);
-    return result;
-#else
-    return dlerror();
-#endif
-}
-
-/*
- * Convenience function for finding a symbol from a shared library.
- * Throws runtime_error on failure.
- */
-void* plugin::find_func(std::string symbol_name) {
-#ifdef _WIN32
-    auto func = GetProcAddress(lib_handle, symbol_name.c_str());
-#else
-    auto func = dlsym(lib_handle, symbol_name.c_str());
-#endif
-
-    if (func == nullptr) {
-        std::string err(get_dl_error());
-        throw std::runtime_error(std::string("Plugin ") + plugin_name + " is missing a function (" + symbol_name + ")");
-    }
-    return func;
-}
-
-// Returns the expected full path to a plugin.
-std::string library_path(const std::string& path, const std::string& plugin_name) {
-    auto result = std::experimental::filesystem::path(path);
-#ifdef _WIN32
-    result.append(plugin_name + ".dll");
-#else
-    result.append(std::string("lib") + plugin_name + ".so");
-#endif
-    return result.string();
-}
-
 plugin::plugin(const std::string& path, const std::string& p_name)
         : plugin_name(p_name) {
-    const auto full_path = library_path(path, plugin_name);
-
-#ifdef _WIN32
-    lib_handle = LoadLibrary(full_path.c_str());
-#else
-    lib_handle = dlopen(full_path.c_str(), RTLD_NOW);
-#endif
-
-    if (lib_handle == nullptr) {
-        std::string err(get_dl_error());
-        throw std::runtime_error(std::string("Failed to load plugin " + plugin_name + " : " + err));
+    try {
+        lib_handle = dl_load(path, plugin_name);
+    }
+    catch (const std::runtime_error& e) {
+        throw std::runtime_error(std::string("Failed to load plugin " + plugin_name + " : " + e.what()));
     }
 
-    auto init_func    = (pp_plugin_init_func)   find_func(plugin_name + "_init");
-    include_func      = (pp_plugin_include_func)find_func(plugin_name + "_include");
-    process_func      = (pp_plugin_process_func)find_func(plugin_name + "_process");
-    free_func         = (pp_plugin_free_func)   find_func(plugin_name + "_free");
-    exit_func         = (pp_plugin_exit_func)   find_func(plugin_name + "_exit");
+    pp_plugin_init_func init_func;
+    try {
+        init_func = (pp_plugin_init_func)find_func(lib_handle, plugin_name + "_init");
+        include_func = (pp_plugin_include_func)find_func(lib_handle, plugin_name + "_include");
+        process_func = (pp_plugin_process_func)find_func(lib_handle, plugin_name + "_process");
+        free_func = (pp_plugin_free_func)find_func(lib_handle, plugin_name + "_free");
+        exit_func = (pp_plugin_exit_func)find_func(lib_handle, plugin_name + "_exit");
+    }
+    catch (const std::runtime_error &e) {
+        throw std::runtime_error(std::string("Failed to load function from plugin " + plugin_name + "(" + e.what() + ")"));
+    }
 
-    auto args = get_init_args(plugin_name);
+    auto args = get_init_args("pp-", plugin_name);
     char* error = nullptr;
     int err = init_func(args.count, args.vars, args.values, &error);
     std::string strerr;
@@ -175,11 +63,7 @@ plugin::plugin(const std::string& path, const std::string& p_name)
 plugin::~plugin() {
     if (lib_handle != nullptr) {
         exit_func();
-#ifdef _WIN32
-        FreeLibrary(lib_handle);
-#else
-        dlclose(lib_handle);
-#endif
+        dl_free(lib_handle);
     }
 }
 

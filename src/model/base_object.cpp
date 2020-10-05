@@ -95,3 +95,33 @@ std::ostream &operator<<(std::ostream &os, const base_object &object) {
 	os << "}";
 	return os;
 }
+
+std::shared_ptr<base_object> vector_to_base_object(const std::vector<std::optional<std::string>>& values,
+                                                      const string_vector& attribute_names,
+                                                      const std::string& type) {
+    attrib_map attributes;
+
+    for (size_t i = 0; i < values.size(); ++i) {
+		if (values[i]) {
+        	attributes[attribute_names[i]] = string_vector({values[i].value()});
+		}
+    }
+
+    attributes["ss12000type"] = string_vector({type});
+    return std::make_shared<base_object>(std::move(attributes));
+}
+
+void generate_uuid(std::shared_ptr<base_object> object,
+                   const std::string& generator,
+                   const std::string& uuid_attribute) {
+    
+    auto values = object->get_values(generator);
+
+    if (values.size() != 1) {
+        throw std::runtime_error("UUID generator must have exactly one value for each object");
+    }
+
+    auto generator_value = values[0];
+    auto uuid = uuid_util::instance().generate(generator_value);
+    object->add_attribute(uuid_attribute, {uuid});
+}

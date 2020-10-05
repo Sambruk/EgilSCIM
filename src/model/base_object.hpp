@@ -189,4 +189,20 @@ public:
 
 };
 
+/**
+ * Constructs a base_object from a vector of values.
+ * 
+ * Used by the CSV and SQL load processes.
+ */
+std::shared_ptr<base_object> vector_to_base_object(const std::vector<std::optional<std::string>> &values,
+												   const string_vector& attribute_names,
+												   const std::string& type);
+
+/**
+ * Generates a UUID attribute for an object, based on some other attribute
+ */
+void generate_uuid(std::shared_ptr<base_object> object,
+				   const std::string &generator,
+				   const std::string &uuid_attribute);
+
 #endif

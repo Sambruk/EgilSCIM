@@ -23,34 +23,16 @@
 #include "data_server.hpp"
 #include "utility/utils.hpp"
 
-// Constructs a base_object from a CSV record
-std::shared_ptr<base_object> csv_entry_to_base_object(const string_vector& values,
-                                                      const string_vector& attribute_names,
-                                                      const std::string& type) {
-    attrib_map attributes;
+namespace {
+std::vector<std::optional<std::string>> to_optionals(const std::vector<std::string>& strings) {
+    std::vector<std::optional<std::string>> result;
+    result.reserve(strings.size());
 
-    for (size_t i = 0; i < values.size(); ++i) {
-        attributes[attribute_names[i]] = string_vector({values[i]});
+    for (auto& s : strings) {
+        result.push_back(s);
     }
-
-    attributes["ss12000type"] = string_vector({type});
-    return std::make_shared<base_object>(std::move(attributes));
+    return result;
 }
-
-// Generates a UUID attribute for an object, based on some other attribute
-void generate_uuid(std::shared_ptr<base_object> object,
-                   const std::string& generator,
-                   const std::string& uuid_attribute) {
-    
-    auto values = object->get_values(generator);
-
-    if (values.size() != 1) {
-        throw std::runtime_error("UUID generator must have exactly one value for each object");
-    }
-
-    auto generator_value = values[0];
-    auto uuid = uuid_util::instance().generate(generator_value);
-    object->add_attribute(uuid_attribute, {uuid});
 }
 
 // Goes through all records in a CSV file and creates base_objects 
@@ -62,7 +44,7 @@ std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
     const auto attribute_names = file->get_header();
     
     for (size_t i = 0; i < file->size(); ++i) {
-        auto object = csv_entry_to_base_object((*file)[i], attribute_names, type);
+        auto object = vector_to_base_object(to_optionals((*file)[i]), attribute_names, type);
 
         if (config_file::instance().has(type + "-UUID-generator")) {
             generate_uuid(object,

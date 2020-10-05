@@ -27,6 +27,7 @@
 #include "utility/indented_logger.hpp"
 #include "ldap_wrapper.hpp"
 #include "csv_store.hpp"
+#include "sql.hpp"
 
 class data_server {
     // static data is loaded once. They are known full sets like SchoolUnit
@@ -99,7 +100,7 @@ public:
     std::shared_ptr<object_list> get_static_by_type(const std::string &type);
 
 
-    bool load();
+    bool load(std::shared_ptr<sql::plugin> sql_plugin);
 
     void preload();
 

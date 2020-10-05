@@ -36,6 +36,7 @@
 #include "data_server.hpp"
 #include "scim_server_info.hpp"
 #include "post_processing.hpp"
+#include "sql.hpp"
 
 namespace po = boost::program_options;
 namespace filesystem = std::experimental::filesystem;
@@ -271,10 +272,23 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        std::shared_ptr<sql::plugin> sqlp;
+        if (config.has("sql-plugin-path") && config.has("sql-plugin-name")) {
+            try {
+                sqlp = std::make_shared<sql::plugin>(config.get_path("sql-plugin-path"),
+                                                     config.get("sql-plugin-name"));
+            }
+            catch (std::runtime_error &e)
+            {
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
+        }
+
         /** Get objects from data source */
         data_server &server = data_server::instance();
         try {
-            server.load();
+            server.load(sqlp);
         } catch (std::string& msg) {
             std::cerr << msg << std::endl;
             return EXIT_FAILURE;
