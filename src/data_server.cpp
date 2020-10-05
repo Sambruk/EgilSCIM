@@ -61,7 +61,7 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
             else if (config.has(type + "-csv-files")) {
                 l = csv_get(type, load_logger);
             }
-            else if (config.has(type + "-sql")) {
+            else if (sql_plugin && config.has(type + "-sql")) {
                 l = sql_get(sql_plugin, type, load_logger);
             }
             if (l) {
