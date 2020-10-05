@@ -1,7 +1,6 @@
 ## Releases
 
-### Unreleased
-
+### v2.5.0 (2020-10-05)
 #### New features
   - Support for relational databases as data source (through SQL) (#76)
 
