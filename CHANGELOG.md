@@ -1,5 +1,10 @@
 ## Releases
 
+### Unreleased
+
+#### New features
+  - Support for relational databases as data source (through SQL) (#76)
+
 ### v2.4.0 (2020-08-13)
 #### New features
   - Plugin system for post processing JSON (#86)
