@@ -260,6 +260,7 @@ Teacher-sql = <?
   ]
 }
 ?>
+```
 
 In this case, the employments table in the database has a uid column which is used
 as a foreign key in order to link the data to the teachers table. The loaded
