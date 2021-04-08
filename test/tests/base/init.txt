@@ -8,6 +8,15 @@ Organisations POST
 }
 ---
 ---
+SchoolUnitGroups POST
+
+{
+	"schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnitGroup"],
+	"externalId": "b7cbd8b7-96a6-425f-b14c-d4564d989d84",
+	"displayName": "skolgruppen"
+}
+---
+---
 SchoolUnits POST
 
 {
@@ -43,15 +52,6 @@ SchoolUnits POST
         "$ref": "Organisations/d80428c4-8788-47d7-aca7-761681fbe66a"
     },
     "municipalityCode": "9999"
-}
----
----
-SchoolUnitGroups POST
-
-{
-	"schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnitGroup"],
-	"externalId": "b7cbd8b7-96a6-425f-b14c-d4564d989d84",
-	"displayName": "skolgruppen"
 }
 ---
 ---
@@ -252,6 +252,80 @@ Employments POST
 }
 ---
 ---
+StudentGroups POST
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "39074b36-e0ed-4443-a501-5148992014b9",
+  "displayName": "grupp1",
+  "studentGroupType": "Klass",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
+      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
+    },
+    
+    {
+      "value": "2b3a480f-d0b9-4c09-bbac-70f915964b02",
+      "$ref": "Users/2b3a480f-d0b9-4c09-bbac-70f915964b02"
+    } 
+    
+  ]
+}---
+---
+StudentGroups POST
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "645ebd9d-55b5-4e7a-900a-92b9369c8f6a",
+  "displayName": "grupp2",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
+      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
+    } 
+    
+  ]
+}---
+---
+StudentGroups POST
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "9e2b1131-aac4-4ba3-adc8-a232a2b553d8",
+  "displayName": "grupp3",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+    "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "39732dea-e4a6-4d8f-96de-925a679c56ff",
+      "$ref": "Users/39732dea-e4a6-4d8f-96de-925a679c56ff"
+    } 
+    
+  ]
+}---
+---
 Activities POST
 
 {
@@ -335,77 +409,3 @@ Activities POST
     ]
 }
 ---
----
-StudentGroups POST
-
-{
-  "schemas": [
-    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
-  ],
-  "externalId": "39074b36-e0ed-4443-a501-5148992014b9",
-  "displayName": "grupp1",
-  "studentGroupType": "Klass",
-  "owner": {
-    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
-    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
-  },
-  "studentMemberships": [
-    
-    {
-      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
-      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
-    },
-    
-    {
-      "value": "2b3a480f-d0b9-4c09-bbac-70f915964b02",
-      "$ref": "Users/2b3a480f-d0b9-4c09-bbac-70f915964b02"
-    } 
-    
-  ]
-}---
----
-StudentGroups POST
-
-{
-  "schemas": [
-    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
-  ],
-  "externalId": "645ebd9d-55b5-4e7a-900a-92b9369c8f6a",
-  "displayName": "grupp2",
-  "studentGroupType": "Undervisning",
-  "owner": {
-    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
-    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
-  },
-  "studentMemberships": [
-    
-    {
-      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
-      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
-    } 
-    
-  ]
-}---
----
-StudentGroups POST
-
-{
-  "schemas": [
-    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
-  ],
-  "externalId": "9e2b1131-aac4-4ba3-adc8-a232a2b553d8",
-  "displayName": "grupp3",
-  "studentGroupType": "Undervisning",
-  "owner": {
-    "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
-    "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
-  },
-  "studentMemberships": [
-    
-    {
-      "value": "39732dea-e4a6-4d8f-96de-925a679c56ff",
-      "$ref": "Users/39732dea-e4a6-4d8f-96de-925a679c56ff"
-    } 
-    
-  ]
-}---
