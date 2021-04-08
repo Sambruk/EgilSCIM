@@ -336,10 +336,10 @@ Activities POST
         "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
         "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"  
     },
-    "group": {
+    "groups": [{
         "value": "9e2b1131-aac4-4ba3-adc8-a232a2b553d8",
         "$ref": "StudentGroups/9e2b1131-aac4-4ba3-adc8-a232a2b553d8"
-    },
+    }],
     "teachers": [
         
         {
@@ -362,10 +362,10 @@ Activities POST
         "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
         "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"  
     },
-    "group": {
+    "groups": [{
         "value": "645ebd9d-55b5-4e7a-900a-92b9369c8f6a",
         "$ref": "StudentGroups/645ebd9d-55b5-4e7a-900a-92b9369c8f6a"
-    },
+    }],
     "teachers": [
         
         {
@@ -394,10 +394,10 @@ Activities POST
         "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
         "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"  
     },
-    "group": {
+    "groups": [{
         "value": "39074b36-e0ed-4443-a501-5148992014b9",
         "$ref": "StudentGroups/39074b36-e0ed-4443-a501-5148992014b9"
-    },
+    }],
     "teachers": [
         
         {
