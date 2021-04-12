@@ -80,6 +80,28 @@ static std::string http_header(const std::string& header, const std::string& val
     return header + ": " + value;
 }
 
+// Converts a minimum tls version requirement from the format used
+// in the configuration file to CURL options.
+static long to_curl_ssl_version(const std::string& min_tls_version) {
+    auto version = toUpper(min_tls_version);
+
+    std::map<std::string, long> mapping = {
+        {"TLSV1.0", CURL_SSLVERSION_TLSv1_0},
+        {"TLSV1.1", CURL_SSLVERSION_TLSv1_1},
+        {"TLSV1.2", CURL_SSLVERSION_TLSv1_2},
+        {"TLSV1.3", CURL_SSLVERSION_TLSv1_3},
+        };
+
+    auto itr = mapping.find(version);
+
+    if (itr == mapping.end()) {
+        return CURL_SSLVERSION_DEFAULT;
+    }
+    else {
+        return itr->second;
+    }
+}
+
 static struct curl_slist *simplescim_scim_send_create_slist(const std::string &method) {
     struct curl_slist *chunk, *tmp_chunk;
 
@@ -381,7 +403,17 @@ int scim_sender::send_init(std::string cert,
     if (curl == nullptr) {
         simplescim_error_string_set("curl_easy_init", "curl_easy_init() returned nullptr");
         return -1;
-    }    
+    }
+
+    curl_easy_setopt(curl, CURLOPT_SSLVERSION,
+                     to_curl_ssl_version(config_file::instance().get("min-tls-version", true)));
+
+    auto cipher_list(config_file::instance().get("tls-cipher-list", true));
+
+    if (cipher_list != "") {
+        curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST,
+                         cipher_list.c_str());
+    }
 
     simplescim_scim_send_cert = cert;
     simplescim_scim_send_key = key;
