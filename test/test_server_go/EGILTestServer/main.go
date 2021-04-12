@@ -88,8 +88,12 @@ func (tl *TestLogger) String() string {
 	return tl.buffer.String()
 }
 
-func listenAndServe(cert, key string, ch chan error) {
-	ch <- http.ListenAndServeTLS(":8000", cert, key, nil)
+func listenAndServe(handler http.Handler, cert, key string, ch chan error) {
+	srv := &http.Server{
+		Addr:    ":8000",
+		Handler: handler,
+	}
+	ch <- srv.ListenAndServeTLS(cert, key)
 }
 
 // TestStep represents one test step (a scenario and expected requests)
@@ -278,6 +282,7 @@ func main() {
 		"SchoolUnits", "SchoolUnitGroups", "Employments", "Activities", "Subjects", "Courses"}
 
 	var testLogger TestLogger
+	mux := http.NewServeMux()
 	for _, endpoint := range endpoints {
 		var logger io.Writer
 		if *testrootp == "" {
@@ -286,14 +291,14 @@ func main() {
 			logger = &testLogger
 		}
 		ep := endpoint
-		http.HandleFunc("/"+endpoint,
+		mux.HandleFunc("/"+endpoint,
 			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, ep, logger) })
-		http.HandleFunc("/"+endpoint+"/",
+		mux.HandleFunc("/"+endpoint+"/",
 			func(w http.ResponseWriter, r *http.Request) { genericSCIMHandler(w, r, ep, logger) })
 	}
 
 	ch := make(chan error)
-	go listenAndServe(*certp, *keyp, ch)
+	go listenAndServe(mux, *certp, *keyp, ch)
 
 	if *testrootp == "" {
 		err := <-ch
