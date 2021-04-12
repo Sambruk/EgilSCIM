@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - Minimum TLS version and cipher suites are now configurable (#97)
+
 ### v2.5.0 (2020-10-05)
 #### New features
   - Support for relational databases as data source (through SQL) (#76)
