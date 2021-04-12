@@ -439,3 +439,26 @@ To rebuild the cache, run the client with the `--rebuild-cache` argument.
 You should still specify a path to a cache file (either on the command line
 or in the config file), so a new cache file can be created. Next time you
 run the client there shouldn't be a need for `--rebuild-cache` anymore.
+
+## TLS settings
+
+For communication with the SCIM server, the minimum TLS version can be
+configured with the setting `min-tls-version`, e.g.:
+
+```
+min-tls-version = TLSV1.2
+```
+
+Valid values are currently `TLSV1.2` and `TLSV1.3` (older versions can be set
+but please note that TLS v1.1 and earlier is considered deprecated).
+
+By not specifying a minimum version, you are relying on the defaults in your
+installed version of OpenSSL and libcurl.
+
+For TLS v1.2 and earlier you can specify a list of ciphers to consider when
+negotiating TLS connections. This is configured with the setting
+`tls-cipher-list`. For information about available ciphers and how to specify
+them, see
+[libcurl's documentation about ciphers](https://curl.se/docs/ssl-ciphers.html)
+
+The default list of ciphers depends on your version of OpenSSL.
