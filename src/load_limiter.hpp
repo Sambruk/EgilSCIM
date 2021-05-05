@@ -31,6 +31,7 @@
  */
 class load_limiter {
 public:
+    virtual ~load_limiter() {}
     virtual bool include(const base_object* obj) const = 0;
 };
 
