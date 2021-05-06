@@ -98,10 +98,6 @@ void add_multi_valued(std::shared_ptr<csv_file> file,
     }
 }
 
-void load_related(const std::string &type,
-                  const std::shared_ptr<object_list> &objects,
-                  indented_logger& load_logger);
-
 std::shared_ptr<object_list> csv_get(const std::string &type,
                                      indented_logger& load_logger) {
     load_logger.log(std::string("Loading entries for type ") + type + " from CSV");

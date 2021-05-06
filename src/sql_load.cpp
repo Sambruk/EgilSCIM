@@ -24,11 +24,6 @@
 #include "load_common.hpp"
 #include <boost/property_tree/json_parser.hpp>
 
-
-void load_related(const std::string &type,
-                  const std::shared_ptr<object_list> &objects,
-                  indented_logger& load_logger);
-
 struct sql_aux_settings {
     std::string query;
 };

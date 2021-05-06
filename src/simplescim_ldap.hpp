@@ -23,6 +23,7 @@
 #include <memory>
 #include "ldap_wrapper.hpp"
 #include "utility/indented_logger.hpp"
+#include "load_limiter.hpp"
 
 class object_list;
 
@@ -37,8 +38,9 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap,
                                       const std::string &type,
                                       indented_logger& load_logger);
 
-void load_related(const std::string &type,
-                  const std::shared_ptr<object_list> &objects,
-                  indented_logger& load_logger);
 
+std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
+                                                 const std::string& type,
+                                                 std::shared_ptr<load_limiter> limiter,
+                                                 indented_logger& load_logger);
 #endif

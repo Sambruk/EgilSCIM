@@ -25,6 +25,10 @@
 #include "load_limiter.hpp"
 #include "utility/indented_logger.hpp"
 
+void load_related(const std::string &type,
+                  const std::shared_ptr<object_list> &objects,
+                  indented_logger& load_logger);
+
 /**
  * Filters out only the objects which the load limiter thinks should be included.
  * The included objects are added to a new list which is returned. For each
