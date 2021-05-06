@@ -23,12 +23,9 @@
 #include "utility/simplescim_error_string.hpp"
 #include "model/base_object.hpp"
 #include "model/object_list.hpp"
-#include "config_file.hpp"
-#include "json_data_file.hpp"
 #include "utility/utils.hpp"
 #include "data_server.hpp"
 #include "ldap_wrapper.hpp"
-#include "load_limiter.hpp"
 #include "load_common.hpp"
 
 
