@@ -3,6 +3,8 @@
 ## Unreleased
 #### New features
   - Minimum TLS version and cipher suites are now configurable (#97)
+  - The warning about missing school units when generating employments
+    can now be disabled (#100)
 
 ####
   - Load limiting now also applies to auxilliary attributes (#99)

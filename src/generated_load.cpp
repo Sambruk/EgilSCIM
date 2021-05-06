@@ -174,6 +174,8 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
 
     string_pair related_id = conf.get_pair(type + "-remote-relation-id");
 
+    auto ignore_missing_schoolunit = conf.get_bool(type + "-ignore-missing-schoolunit");
+
     auto generated = std::make_shared<object_list>();
     if (!master_list)
         return generated;
@@ -231,7 +233,7 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
 
     }
 
-    if (!missing_ids.empty()) {
+    if (!missing_ids.empty() && !ignore_missing_schoolunit) {
         std::cerr << "Missing SchoolUnits found:" << std::endl;
         for (const auto &missing_id : missing_ids) {
             std::cerr << missing_id << ", ";
