@@ -5,8 +5,10 @@
   - Minimum TLS version and cipher suites are now configurable (#97)
   - The warning about missing school units when generating employments
     can now be disabled (#100)
+  - As a security best practice, allowed algorithms for JWS verification
+    is now limited to only ES256 (which is what Kontosynk uses). (#103)
 
-####
+#### Bugfixes
   - Load limiting now also applies to auxilliary attributes (#99)
 
 ### v2.5.0 (2020-10-05)
