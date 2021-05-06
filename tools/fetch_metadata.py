@@ -49,7 +49,7 @@ def get_and_verify(url, keys, output: str) -> bool:
                 error_print("Signature expired at: " + str(exp))
                 continue
             
-            verified_payload = jws.verify(compact, keyset_str, None)
+            verified_payload = jws.verify(compact, keyset_str, algorithms=['ES256'])
             with open(output, 'wb') as outfile:
                 outfile.write(verified_payload)
                 return True
