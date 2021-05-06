@@ -1,0 +1,1 @@
+ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se

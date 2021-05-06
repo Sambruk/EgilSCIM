@@ -4,6 +4,9 @@
 #### New features
   - Minimum TLS version and cipher suites are now configurable (#97)
 
+####
+  - Load limiting now also applies to auxilliary attributes (#99)
+
 ### v2.5.0 (2020-10-05)
 #### New features
   - Support for relational databases as data source (through SQL) (#76)

@@ -21,6 +21,7 @@
 #include "config_file.hpp"
 #include "load_limiter.hpp"
 #include "data_server.hpp"
+#include "load_common.hpp"
 #include "utility/utils.hpp"
 
 namespace {
@@ -37,9 +38,7 @@ std::vector<std::optional<std::string>> to_optionals(const std::vector<std::stri
 
 // Goes through all records in a CSV file and creates base_objects 
 std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
-                                                const std::string& type,
-                                                std::shared_ptr<load_limiter> limiter,
-                                                indented_logger& load_logger) {
+                                                const std::string& type) {
     auto objects =  std::make_shared<object_list>();
     const auto attribute_names = file->get_header();
     
@@ -53,10 +52,8 @@ std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
         }
 
         auto uid = object->get_uid();
-        if (!uid.empty() && limiter->include(object.get())) {
+        if (!uid.empty()) {
             objects->add_object(uid, object);
-
-            load_logger.log("Found " + type + " " + uid);
         }
     }
 
@@ -101,10 +98,6 @@ void add_multi_valued(std::shared_ptr<csv_file> file,
     }
 }
 
-void load_related(const std::string &type,
-                  const std::shared_ptr<object_list> &objects,
-                  indented_logger& load_logger);
-
 std::shared_ptr<object_list> csv_get(const std::string &type,
                                      indented_logger& load_logger) {
     load_logger.log(std::string("Loading entries for type ") + type + " from CSV");
@@ -124,7 +117,7 @@ std::shared_ptr<object_list> csv_get(const std::string &type,
     auto limiter = get_limiter(type);
     auto csv_store = data_server::instance().get_csv_store();
     objects = csv_to_object_list(csv_store->get_file(main_file),
-                                 type, limiter, load_logger);
+                                 type);
 
     // Get the multi-valued attributes
     for (size_t i = 1; i < csv_files.size(); ++i) {
@@ -134,6 +127,8 @@ std::shared_ptr<object_list> csv_get(const std::string &type,
             throw std::runtime_error(type + " : " + e.what());
         }
     }
+
+    objects = filter_objects(objects, limiter, load_logger, type);
 
     load_related(type, objects, load_logger);
     

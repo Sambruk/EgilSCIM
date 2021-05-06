@@ -21,12 +21,8 @@
 #include "sql.hpp"
 #include "config_file.hpp"
 #include "load_limiter.hpp"
+#include "load_common.hpp"
 #include <boost/property_tree/json_parser.hpp>
-
-
-void load_related(const std::string &type,
-                  const std::shared_ptr<object_list> &objects,
-                  indented_logger& load_logger);
 
 struct sql_aux_settings {
     std::string query;
@@ -66,9 +62,7 @@ sql_settings parse_sql_settings(const std::string &json) {
 
 // Goes through all records in an SQL result table and creates base_objects 
 std::shared_ptr<object_list> sql_to_object_list(std::shared_ptr<sql::plugin::iterator> itr,
-                                                const std::string& type,
-                                                std::shared_ptr<load_limiter> limiter,
-                                                indented_logger& load_logger) {
+                                                const std::string& type) {
     auto objects =  std::make_shared<object_list>();
     const auto attribute_names = itr->get_header();
     
@@ -83,10 +77,8 @@ std::shared_ptr<object_list> sql_to_object_list(std::shared_ptr<sql::plugin::ite
         }
 
         auto uid = object->get_uid();
-        if (!uid.empty() && limiter->include(object.get())) {
+        if (!uid.empty()) {
             objects->add_object(uid, object);
-
-            load_logger.log("Found " + type + " " + uid);
         }
     }
 
@@ -155,8 +147,7 @@ std::shared_ptr<object_list> sql_get(std::shared_ptr<sql::plugin> plugin,
     try {
         {
             std::shared_ptr<sql::plugin::iterator> iterator(plugin->execute(settings.query));
-            auto limiter = get_limiter(type);
-            objects = sql_to_object_list(iterator, type, limiter, load_logger);
+            objects = sql_to_object_list(iterator, type);
         }
 
         // Get the multi-valued attributes
@@ -173,6 +164,9 @@ std::shared_ptr<object_list> sql_get(std::shared_ptr<sql::plugin> plugin,
     } catch (const std::runtime_error& e) {
         throw std::runtime_error("Failed to load " + type + " from SQL: " + e.what());
     }
+
+    auto limiter = get_limiter(type);
+    objects = filter_objects(objects, limiter, load_logger, type);
 
     load_related(type, objects, load_logger);
 
