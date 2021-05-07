@@ -79,6 +79,17 @@ std::string base_object::get_uid(bool search) const {
 	return identity;
 }
 
+bool base_object::has_attribute_or_relation(const std::string& attr) {
+	const auto relationPrefix = attr + ".";
+	for (auto &iter : attributes) {
+		if (iter.first == attr ||
+			startsWith(iter.first, relationPrefix)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 std::ostream &operator<<(std::ostream &os, const base_object &object) {
 	static std::string quote("\"");
 	static std::string tab("\t");

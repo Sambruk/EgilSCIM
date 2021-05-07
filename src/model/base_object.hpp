@@ -85,6 +85,8 @@ public:
 		return false;
 	}
 
+	bool has_attribute_or_relation(const std::string& attr);
+
 	attrib_map::const_iterator begin() const {
 		return attributes.begin();
 	}
