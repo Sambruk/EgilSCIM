@@ -382,6 +382,24 @@ Only those objects which match one of the values in the file will be included in
 
 If you want to match against UUID the `limit-by` variable should be omitted.
 
+### Filtering out orphans
+
+If you wish to remove objects that were loaded but didn't have necessary relations to other
+objects you can use the `orphan-if-missing` variable for that data type in question. For instance,
+to filter out Teachers without SchoolUnits you can specify:
+
+```
+Teacher-orphan-if-missing = SchoolUnit
+```
+
+To filter out StudentGroups without members:
+
+```
+StudentGroup-orphan-if-missing = Student Teacher
+```
+
+Only groups that are missing _both_ Student and Teacher relations will then be filtered out.
+
 ## Execution
 
 EgilSCIM is executed by typing `EgilSCIMClient [OPTIONS] <file>` where `file`
