@@ -43,9 +43,14 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
             load_logger.open(load_log_file.c_str());
         }
         
+        bool filtered_orphans = false;
         for (const auto &type : types) {
             std::shared_ptr<object_list> l;
             if (config.get_bool(type + "-is-generated")) {
+                if (!filtered_orphans) {
+                    filter_orphans();
+                    filtered_orphans = true;
+                }
                 l = get_generated(type, load_logger);
             }
             else if (config.has(type + "-ldap-filter")) {
@@ -71,6 +76,9 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
                 std::cerr << "load for " << type << " returned nothing" << std::endl;
             }
         }
+        if (!filtered_orphans) {
+            filter_orphans();
+        }
     } catch (std::string msg) {
         return false;
     }
@@ -78,6 +86,46 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
     return true;
 }
 
+/**
+ * An object is considered an orphan if it's missing all the
+ * attributes given. For instance, a Student might be considered
+ * an orphan if it's missing a StudentGroup attribute, or a
+ * StudentGroup might be considered an orphan if it's missing
+ * both Student and Teacher attributes.
+ */
+bool data_server::is_orphan(const std::shared_ptr<base_object> object,
+                            const std::vector<std::string> &attributes) {
+    for (const auto& attr : attributes) {
+        if (object->has_attribute_or_relation(attr)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Removes all objects considered orphans.
+ */
+void data_server::filter_orphans() {
+    config_file &config = config_file::instance();
+    string_vector types = config.get_vector("scim-type-load-order");
+
+    for (const auto &type : types) {
+        auto attributes = config.get_vector(type + "-orphan-if-missing", true);
+        if (!attributes.empty()) {
+            auto object_list = get_by_type(type);
+            std::vector<std::string> to_remove;
+            for (const auto &iter : *object_list) {
+                if (is_orphan(iter.second, attributes)) {
+                    to_remove.push_back(iter.second->get_uid());
+                }
+            }
+            for (const auto &uid : to_remove) {
+                object_list->remove(uid);
+            }
+        }
+    }
+}
 
 void data_server::preload() {
     data_cache_vector caches = json_data_file::json_to_ldap_cache_requests(

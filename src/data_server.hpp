@@ -139,6 +139,11 @@ private:
      */
     void add_dynamic(const std::string &type, std::shared_ptr<object_list> list);
 
+    void filter_orphans();
+
+    bool is_orphan(const std::shared_ptr<base_object> object,
+                   const std::vector<std::string> &attributes);
+
     indented_logger load_logger;
 };
 
