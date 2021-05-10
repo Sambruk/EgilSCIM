@@ -21,6 +21,7 @@
 #include "config_file.hpp"
 #include <set>
 #include <fstream>
+#include <regex>
 
 // The null limiter includes everything
 class null_limiter : public load_limiter {
@@ -73,6 +74,34 @@ private:
     const std::string attribute;
 };
 
+/**
+ * The regex limiter includes only those objects with values
+ * matching a regular expression.
+ */
+class regex_limiter : public load_limiter {
+public:
+    regex_limiter(const std::string& re,
+                 const std::string& attrib)
+            : attribute(attrib),
+              expression(re) {
+    }
+
+    virtual bool include(const base_object* obj) const {
+        auto values(obj->get_values(attribute));
+
+        for (const auto& value : values) {
+            if (std::regex_match(value, expression)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+private:
+    const std::string attribute;
+    const std::regex expression;
+};
+
 std::shared_ptr<load_limiter> create_limiter(const std::string& type) {
     config_file &conf = config_file::instance();
 
@@ -83,6 +112,11 @@ std::shared_ptr<load_limiter> create_limiter(const std::string& type) {
             auto filename = conf.get_path(type + "-limit-list");
             auto attribute = conf.get(type + "-limit-by", true);
             return std::make_shared<list_limiter>(filename, attribute);
+        }
+        else if (toUpper(limit_type) == "REGEX") {
+            auto regex = conf.get(type + "-limit-regex");
+            auto attribute = conf.get(type + "-limit-by");
+            return std::make_shared<regex_limiter>(regex, attribute);
         }
         else {
             throw std::runtime_error("No such limit type: " + limit_type);
