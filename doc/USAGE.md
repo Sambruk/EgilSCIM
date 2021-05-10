@@ -356,7 +356,8 @@ so that the SchoolUnit objects are already loaded in memory when we load the Stu
 
 ## Limiting the load process
 
-Which objects to load from LDAP is typically specified with an LDAP filter as described above.
+Which objects to load from the source is typically specified with an LDAP filter
+or SQL query as described above.
 However, this can be further restricted in other ways. This can be helpful if you want to
 specify a long list of specific objects, or if you have one shared configuration file which loads
 everything from LDAP but which needs to be restricted in different ways depending on the recipient
@@ -375,12 +376,25 @@ StudentGroup-limit-by = cn
 ```
 
 The first variable specifies that we want to use a file with a list of values. The second variable
-gives the path to that file. The third variable specifies which LDAP attribute to match against
+gives the path to that file. The third variable specifies which attribute to match against
 the values in the list.
 
 Only those objects which match one of the values in the file will be included in the load process.
 
 If you want to match against UUID the `limit-by` variable should be omitted.
+
+### Regular expressions
+
+You can also limit the objects to load to those matching a regular expression. For instance,
+if you'd like to only load StudentGroups where the cn attribute includes the text "-klass-":
+
+```
+StudentGroup-limit-with = regex
+StudentGroup-limit-regex = .*-klass-.*
+StudentGroup-limit-by = cn
+```
+
+Regular expressions follow the grammar defined in ECMA-262 (as used in JavaScript).
 
 ### Filtering out orphans
 
