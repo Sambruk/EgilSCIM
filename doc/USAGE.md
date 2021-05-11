@@ -396,6 +396,66 @@ StudentGroup-limit-by = cn
 
 Regular expressions follow the grammar defined in ECMA-262 (as used in JavaScript).
 
+### Combining load limiters
+
+It's possible to combine several load limiters for a type. For instance to limit
+groups by matching their names against regular expressions and also by matching
+their owning school units against a list.
+
+To use combined load limiters a JSON format is used, the regular expression
+example from above would be configured with:
+
+```
+StudentGroup-limit = <?
+{
+  "with": "regex",
+  "regex": ".*-klass-.*",
+  "by": "cn"
+}
+?>
+```
+
+Limiters can be combined with the logical operators AND, OR and NOT.
+
+For example to load all groups NOT included in a list:
+
+```
+StudentGroup-limit = <?
+{
+  "with": "not",
+  "child": {
+    "with": "list",
+    "list": "groups.txt"
+  }
+}
+?>
+```
+
+To load all groups where the group name matches a regular expression
+AND their owning school unit is included in a list:
+
+```
+StudentGroup-limit = <?
+{
+  "with": "and",
+  "children": [
+   {
+     "with": "list",
+     "list": "schoolunits.txt",
+     "by": "owner"
+   },
+   {
+     "with": "regex",
+     "regex": ".*-klass-8?$",
+     "by": "groupName"
+   }
+  ]
+}
+?>
+```
+
+OR works like above except "and" is replaced by "or".
+
 ### Filtering out orphans
 
 If you wish to remove objects that were loaded but didn't have necessary relations to other

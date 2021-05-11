@@ -19,101 +19,73 @@
 
 #include "load_limiter.hpp"
 #include "config_file.hpp"
-#include <set>
-#include <fstream>
-#include <regex>
+#include "load_limiter_impl.hpp"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
-// The null limiter includes everything
-class null_limiter : public load_limiter {
-public:
-    virtual bool include(const base_object* obj) const {
-        return true;
+namespace pt = boost::property_tree;
+
+std::shared_ptr<load_limiter> create_limiter_from_json(const pt::ptree& root);
+
+std::vector<std::shared_ptr<load_limiter>> create_limiters_from_json_array(const pt::ptree& root) {
+    std::vector<std::shared_ptr<load_limiter>> result;
+    for (const auto& child : root) {
+        result.push_back(create_limiter_from_json(child.second));
     }
-};
+    return result;
+}
 
-/**
- * The list limiter includes only those objects with values
- * included in a text file.
- */
-class list_limiter : public load_limiter {
-public:
-    list_limiter(const std::string& filename,
-                 const std::string& attrib)
-            : attribute(attrib) {
-        load(filename);
+std::shared_ptr<load_limiter> create_limiter_from_json(const pt::ptree& root) {
+    auto limit_type = toUpper(root.get<std::string>("with"));
+
+    if (limit_type == "LIST") {
+        auto filename = config_file::instance().interpret_config_path(root.get<std::string>("list"));
+        auto attribute = root.get<std::string>("by", "");
+        return std::make_shared<list_limiter>(filename, attribute);
     }
-
-    virtual bool include(const base_object* obj) const {
-        std::vector<std::string> values;
-        if (attribute == "") {
-            values.push_back(obj->get_uid());
-        }
-        else {
-            values = obj->get_values(attribute);
-        }
-
-        for (const auto& value : values) {
-            if (list.count(value) > 0) {
-                return true;
-            }
-        }
-        return false;
+    else if (limit_type == "REGEX") {
+        auto regex = root.get<std::string>("regex");
+        auto attribute = root.get<std::string>("by");
+        return std::make_shared<regex_limiter>(regex, attribute);
     }
-
-    void load(const std::string filename) {
-        std::ifstream ifs(filename);
-
-        std::string value;
-        while (ifs >> value) {
-            list.insert(value);
-        }
+    else if (limit_type == "NOT") {
+        return std::make_shared<not_limiter>(create_limiter_from_json(root.get_child("child")));
     }
-    
-private:
-    std::set<std::string> list;
-    const std::string attribute;
-};
-
-/**
- * The regex limiter includes only those objects with values
- * matching a regular expression.
- */
-class regex_limiter : public load_limiter {
-public:
-    regex_limiter(const std::string& re,
-                 const std::string& attrib)
-            : attribute(attrib),
-              expression(re) {
+    else if (limit_type == "AND") {
+        return std::make_shared<and_limiter>(create_limiters_from_json_array(root.get_child("children")));
     }
-
-    virtual bool include(const base_object* obj) const {
-        auto values(obj->get_values(attribute));
-
-        for (const auto& value : values) {
-            if (std::regex_match(value, expression)) {
-                return true;
-            }
-        }
-        return false;
+    else if (limit_type == "OR") {
+        return std::make_shared<or_limiter>(create_limiters_from_json_array(root.get_child("children")));
     }
-
-private:
-    const std::string attribute;
-    const std::regex expression;
-};
+    else {
+        throw std::runtime_error("No such limit type: " + limit_type);
+    }
+}
 
 std::shared_ptr<load_limiter> create_limiter(const std::string& type) {
     config_file &conf = config_file::instance();
 
-    if (conf.has(type + "-limit-with")) {
-        auto limit_type = conf.get(type + "-limit-with");
+    if (conf.has(type + "-limit")) {
+        std::stringstream json_stream;
+        json_stream << conf.get(type + "-limit");
+        
+        pt::ptree root;
+        try {
+            pt::read_json(json_stream, root);
+        } catch (const boost::exception &ex) {
+            throw std::runtime_error("Failed to parse limiter: " + type);
+        }
+        return create_limiter_from_json(root);
+    }
+    else if (conf.has(type + "-limit-with")) {
+        auto limit_type = toUpper(conf.get(type + "-limit-with"));
 
-        if (toUpper(limit_type) == "LIST") {
+        if (limit_type == "LIST") {
             auto filename = conf.get_path(type + "-limit-list");
             auto attribute = conf.get(type + "-limit-by", true);
             return std::make_shared<list_limiter>(filename, attribute);
         }
-        else if (toUpper(limit_type) == "REGEX") {
+        else if (limit_type == "REGEX") {
             auto regex = conf.get(type + "-limit-regex");
             auto attribute = conf.get(type + "-limit-by");
             return std::make_shared<regex_limiter>(regex, attribute);
