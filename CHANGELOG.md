@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.6.0 (2021-05-11)
 #### New features
   - Minimum TLS version and cipher suites are now configurable (#97)
   - The warning about missing school units when generating employments
