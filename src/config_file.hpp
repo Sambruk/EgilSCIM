@@ -61,6 +61,16 @@ public:
         return filename.u8string().c_str();
     }
 
+    /**
+     * Relative path names given in the config file should be considered
+     * relative to the config file's directory. This function converts
+     * a path to an absolute path relative to the config file's directory.
+     * 
+     * Normally this shouldn't be used from outside of the config_file
+     * class, see for instange get_path() instead.
+     */
+    std::string interpret_config_path(const std::string& path) const;
+
     int load(const std::string &file_name);
 
     bool test_run() const {
