@@ -112,6 +112,32 @@ void ScimActions::simplescim_scim_clear() const {
 }
 
 /**
+ *  Render object to JSON format and do post processing.
+ */
+std::string ScimActions::render(const post_processing::plugins& ppp, const base_object& obj) const {
+    std::string type = obj.getSS12000type();
+    std::string standard_type = actualSS12000type(type);
+
+    std::string template_json = config_file::instance().get(type + "-scim-json-template");
+    std::string parsed_json = scim_json_parse(template_json, obj);
+    
+    if (parsed_json == "") {
+        throw std::runtime_error("failed to parse JSON template for " + type);
+    }
+
+    if (!verify_json(parsed_json, type)) {
+        throw std::runtime_error("failed to parse JSON template for " + type);
+    }
+
+    try {
+        parsed_json = post_processing::process(ppp, standard_type, parsed_json);
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error("post processing error when creating object " + obj.get_uid() + ": " + e.what());
+    }
+    return parsed_json;
+}
+
+/**
  * Compares 'current' to 'cache' and performs 'copy_func'
  * on objects in both 'current' and cache if they are equal,
  * 'create_func' on objects in 'current' but not in
@@ -299,6 +325,7 @@ int ScimActions::perform(const data_server &current,
         if (!allOfType) {
             allOfType = std::make_shared<object_list>();
         }
+
         process_changes(*allOfType, cached, ppp, stats[type], rebuild_cache, all_scim_uuids);
     }
 
@@ -406,52 +433,31 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
 
 int ScimActions::create_func::operator()(const ScimActions &actions,
                                          const post_processing::plugins& ppp) {
-
-    base_object copied_user(create);
-
-    /* Create JSON object for object */
-    std::string type = copied_user.getSS12000type();
-    if (type == "base") {
-        type = "User";
-    }
-
-    std::string standard_type = actualSS12000type(type);
-
-    std::string template_json = actions.conf.get(type + "-scim-json-template");
-    std::string parsed_json = scim_json_parse(template_json, copied_user);
-    
-    if (parsed_json == "") {
-        std::cerr << "Failed to parse JSON template for " << type << std::endl;
-        return -1;
-    }
-
-    if (!actions.verify_json(parsed_json, type))
-        return -1;
-
+    std::string parsed_json;
     try {
-        parsed_json = post_processing::process(ppp, standard_type, parsed_json);
+        parsed_json = actions.render(ppp, create);
     } catch (const std::runtime_error& e) {
-        std::cerr << "Post processing error when creating object "
-                  << copied_user.get_uid() << ": " << e.what();
+        std::cerr << "Failed to render object to JSON: " << e.what() << std::endl;
         return -1;
     }
 
     std::string url = actions.scim_server_info.get_url();
-    std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
+    std::string endpoint = config_file::instance().get(create.getSS12000type() + "-scim-url-endpoint");
     url += '/' + endpoint;
 
     /* Send SCIM create request */
     bool conflict = false;
     std::optional<std::string> response_json =
         scim_sender::instance().send_create(url, parsed_json, conflict);
-    std::string uid = copied_user.get_uid();
+    std::string uid = create.get_uid();
     if (response_json)
-        actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
+        actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(create));
     else {
         if (conflict) {
             // Put it in cache, but make sure we update in the next run
-            copied_user.add_attribute("_failed_create", { std::to_string(time(NULL)) });
-            actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
+            auto copied_user = std::make_shared<base_object>(create);
+            copied_user->add_attribute("_failed_create", { std::to_string(time(NULL)) });
+            actions.scim_new_cache->add_object(uid, copied_user);
         }
         return -1;
     }
@@ -461,49 +467,23 @@ int ScimActions::create_func::operator()(const ScimActions &actions,
 
 int ScimActions::update_func::operator()(const ScimActions &actions,
                                          const post_processing::plugins& ppp) {
-
-    /* Copy object */
-    base_object copied_user(object);
-
-    std::string uid = copied_user.get_uid();
+    std::string uid = object.get_uid();
 
     if (uid.empty()) {
         return -1;
     }
 
-    /* Create JSON object for object */
-    std::string type = object.getSS12000type();
-    if (type == "base") {
-        type = "User";
-    }
-    
-    std::string standard_type = actualSS12000type(type);
-    
-    std::string create_var = type + "-scim-json-template";
-    std::string template_json = config_file::instance().get(create_var);
-    std::string parsed_json = scim_json_parse(template_json, copied_user);
-
-    if (parsed_json == "") {
-        std::cerr << "Failed to parse JSON template for " << type << std::endl;
-        return -1;
-    }
-    
-    if (!actions.verify_json(parsed_json, type)) {
-        return -1;
-    }
-
+    std::string parsed_json;
     try {
-        parsed_json = post_processing::process(ppp, standard_type, parsed_json);
-    }
-    catch (const std::runtime_error& e) {
-        std::cerr << "Post processing error when updating object "
-                  << copied_user.get_uid() << ": " << e.what();
+        parsed_json = actions.render(ppp, object);
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Failed to render object to JSON: " << e.what() << std::endl;
         return -1;
     }
 
     std::string unified = unifyurl(object.get_uid());
     std::string url = actions.scim_server_info.get_url();
-    std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
+    std::string endpoint = config_file::instance().get(object.getSS12000type() + "-scim-url-endpoint");
     url += '/' + endpoint + '/' + unified;
 
     bool non_existent = false;
@@ -514,16 +494,16 @@ int ScimActions::update_func::operator()(const ScimActions &actions,
     if (!response_json) {
         if (!non_existent) {
             // Keep it in cache, but make sure we retry the update next run
-            copied_user.add_attribute("_failed_put", { std::to_string(time(NULL)) });
-            actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
+            auto copied_user = std::make_shared<base_object>(object);
+            copied_user->add_attribute("_failed_put", { std::to_string(time(NULL)) });
+            actions.scim_new_cache->add_object(uid, copied_user);
         }
         return -1;
     } else {
-        actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(copied_user));
+        actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(object));
     }
 
     return 0;
-
 }
 
 std::vector<ScimActions::scim_object_ref> ScimActions::get_all_objects_from_scim_server() {

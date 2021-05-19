@@ -43,12 +43,10 @@ class base_object {
 
 	string_vector empty{};
 
-	base_object() {
-		attributes.emplace(std::make_pair("ss12000type", string_vector({"base"})));
-	}
-
 public:
 	friend class cache_file;
+
+	base_object() = delete;
 
 	explicit base_object(const std::string &type) : ss12000type(type) {
 		attributes.emplace(std::make_pair("ss12000type", string_vector({type})));

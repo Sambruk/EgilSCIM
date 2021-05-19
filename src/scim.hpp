@@ -72,6 +72,9 @@ public:
     };    
 
 private:
+
+    std::string render(const post_processing::plugins& ppp, const base_object& obj) const;
+
     std::shared_ptr<object_list> scim_new_cache;
     variables vars = variables();
     mutable string_vector verified_types;
