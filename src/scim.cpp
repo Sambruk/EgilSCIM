@@ -68,31 +68,25 @@ std::string actualSS12000type(const std::string& type) {
 
 }
 
-variables::variables() {
-    const config_file &config = config_file::instance();
-    variable_entries.emplace(std::make_pair("cert", config.require_path("cert")));
-    variable_entries.emplace(std::make_pair("key", config.require_path("key")));
-}
-
-
 int ScimActions::simplescim_scim_init() const {
     int err;
 
     /* Fetch variables from configuration file */
+    const config_file &config = config_file::instance();
+    auto cert = config.require_path("cert");
+    auto key = config.require_path("key");
 
-    if (!vars.valid()) {
+    if (cert.empty() || key.empty()) {
         return -1;
     }
-
-    /* Allocate new cache */
 
     if (scim_new_cache == nullptr) {
         return -1;
     }
 
     /* Initialise simplescim_scim_send */
-    err = scim_sender::instance().send_init(vars.get("cert"),
-                                           vars.get("key"),
+    err = scim_sender::instance().send_init(cert,
+                                           key,
                                            scim_server_info.get_pinned_public_keys(),
                                            scim_server_info.get_ca_bundle_path());
 

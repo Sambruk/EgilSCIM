@@ -31,24 +31,6 @@ class base_object;
 
 class object_list;
 
-struct variables {
-    std::map<std::string, std::string> variable_entries;
-
-    variables();
-
-    bool valid() const {
-        for (const auto &entry : variable_entries) {
-            if (entry.second.empty())
-                return false;
-        }
-        return true;
-    }
-
-    std::string get(const std::string &key) const {
-        return variable_entries.find(key)->second;
-    }
-};
-
 class ScimActions {
 public:
         /** A reference to an object in the SCIM server.
@@ -76,7 +58,6 @@ private:
     std::string render(const post_processing::plugins& ppp, const base_object& obj) const;
 
     std::shared_ptr<object_list> scim_new_cache;
-    variables vars = variables();
     mutable string_vector verified_types;
     const config_file &conf = config_file::instance();
     const SCIMServerInfo& scim_server_info;
