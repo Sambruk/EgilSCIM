@@ -24,7 +24,7 @@
 #include "config_file.hpp"
 #include "data_server.hpp"
 #include "scim_server_info.hpp"
-#include "post_processing.hpp"
+#include "renderer.hpp"
 #include <memory>
 
 class base_object;
@@ -55,10 +55,9 @@ public:
 
 private:
 
-    std::string render(const post_processing::plugins& ppp, const base_object& obj) const;
+    mutable renderer rend;
 
     std::shared_ptr<object_list> scim_new_cache;
-    mutable string_vector verified_types;
     const config_file &conf = config_file::instance();
     const SCIMServerInfo& scim_server_info;
 
@@ -130,7 +129,6 @@ public:
                 const post_processing::plugins& ppp,
                 bool rebuild_cache,
                 const std::vector<scim_object_ref>& all_scim_objects) const;
-    bool verify_json(const std::string &json, const std::string &type) const ;
 
     class copy_func {
         const base_object &cached;

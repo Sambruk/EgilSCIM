@@ -18,7 +18,6 @@
  */
 
 #include <iostream>
-#include <algorithm>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <assert.h>
@@ -30,43 +29,7 @@
 #include "model/object_list.hpp"
 #include "config_file.hpp"
 #include "cache_file.hpp"
-#include "scim_json_parse.hpp"
 #include "simplescim_scim_send.hpp"
-
-namespace {
-
-/*
- * This function converts from the type names used in the EGIL
- * client configuration to SS12000 types.
- *
- * Typically the type names are the same, except for Student and Teacher
- * which both map to User in SS12000.
- *
- * If the type has a config variable named `type`-SS12000-type, for instance:
- * 
- * Student-SS12000-type = User
- *
- * then that will be used. Otherwise type will be returned unchanged for 
- * everything except Student and Teacher.
- */
-std::string actualSS12000type(const std::string& type) {
-    auto config_var = type + "-SS12000-type";
-
-    if (config_file::instance().has(config_var)) {
-        return config_file::instance().get(config_var);
-    }
-    else {
-        if (type == "Teacher" ||
-            type == "Student") {
-            return "User";
-        }
-        else {
-            return type;
-        }
-    }
-}
-
-}
 
 int ScimActions::simplescim_scim_init() const {
     int err;
@@ -103,32 +66,6 @@ void ScimActions::simplescim_scim_clear() const {
 
     /* Delete new cache */
     scim_new_cache->clear();
-}
-
-/**
- *  Render object to JSON format and do post processing.
- */
-std::string ScimActions::render(const post_processing::plugins& ppp, const base_object& obj) const {
-    std::string type = obj.getSS12000type();
-    std::string standard_type = actualSS12000type(type);
-
-    std::string template_json = config_file::instance().get(type + "-scim-json-template");
-    std::string parsed_json = scim_json_parse(template_json, obj);
-    
-    if (parsed_json == "") {
-        throw std::runtime_error("failed to parse JSON template for " + type);
-    }
-
-    if (!verify_json(parsed_json, type)) {
-        throw std::runtime_error("failed to parse JSON template for " + type);
-    }
-
-    try {
-        parsed_json = post_processing::process(ppp, standard_type, parsed_json);
-    } catch (const std::runtime_error& e) {
-        throw std::runtime_error("post processing error when creating object " + obj.get_uid() + ": " + e.what());
-    }
-    return parsed_json;
 }
 
 /**
@@ -368,28 +305,6 @@ int ScimActions::perform(const data_server &current,
     return err;
 }
 
-bool ScimActions::verify_json(const std::string & json, const std::string &type) const {
-    if (json.empty())
-        return false;
-    else if (std::find(verified_types.begin(), verified_types.end(), type) != verified_types.end())
-        return true;
-
-    namespace pt = boost::property_tree;
-    pt::ptree root;
-    std::stringstream os;
-
-    os << json;
-    try {
-        pt::read_json(os, root);
-        verified_types.emplace_back(type);
-    } catch (const pt::ptree_error& e) {
-        std::cerr << "Failed to parse JSON for " << type << std::endl;
-        simplescim_error_string_set_message(e.what());
-        return false;
-    }
-    return true;
-}
-
 int ScimActions::copy_func::operator()(const ScimActions &actions) {
     if (cached.get_uid().empty()) {
         return -1;
@@ -429,7 +344,7 @@ int ScimActions::create_func::operator()(const ScimActions &actions,
                                          const post_processing::plugins& ppp) {
     std::string parsed_json;
     try {
-        parsed_json = actions.render(ppp, create);
+        parsed_json = actions.rend.render(ppp, create)->get_json();
     } catch (const std::runtime_error& e) {
         std::cerr << "Failed to render object to JSON: " << e.what() << std::endl;
         return -1;
@@ -469,7 +384,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions,
 
     std::string parsed_json;
     try {
-        parsed_json = actions.render(ppp, object);
+        parsed_json = actions.rend.render(ppp, object)->get_json();
     } catch (const std::runtime_error& e) {
         std::cerr << "Failed to render object to JSON: " << e.what() << std::endl;
         return -1;
