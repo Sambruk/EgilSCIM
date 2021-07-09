@@ -1,0 +1,3 @@
+Removes the school year attribute from a student.
+
+Used to cause a JSON template to fail to render in the test cases.

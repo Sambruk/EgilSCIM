@@ -1,0 +1,3 @@
+dn: uid=pejo,dc=kommunen,dc=se
+changetype: modify
+delete: departmentNumber

@@ -1,0 +1,22 @@
+{
+    "description": "Template fails to render during update",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [ "scenarios/base/remove_school_year" ],
+	  "requests": "empty.txt"
+	},
+	{ "scenario": [ "scenarios/base/remove_school_year/add_school_year" ],
+	  "requests": "empty.txt"
+	},
+	{ "scenario": [ "scenarios/base/remove_school_year" ],
+	  "requests": "empty.txt"
+	},
+	{ "scenario": [ "scenarios/base/delete_student" ],
+	  "requests": "../delete_student/delete.txt"
+	}
+	
+    ]
+}

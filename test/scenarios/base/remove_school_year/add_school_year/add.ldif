@@ -1,0 +1,4 @@
+dn: uid=pejo,dc=kommunen,dc=se
+changetype: modify
+add: departmentNumber
+departmentNumber: 4
