@@ -31,8 +31,20 @@ public:
     bad_format() : std::runtime_error("unrecognized file format") {}
 };
 
+/**
+ * Reads cache file and constructs an object list according to its contents.
+ * On success, the constructed object list is returned. If the cache file 
+ * doesn't exist, an empty object list is returned. 
+ * 
+ * On error, an std::runtime_error is thrown.
+ */
 std::shared_ptr<rendered_object_list> get_contents(const std::string& path);
 
+/**
+ * Creates/overwrites a cache file with a new object list.
+ *
+ * On error, an std::runtime_error is thrown.
+ */
 void save(const std::string& path, std::shared_ptr<rendered_object_list> objects);
 
 }
