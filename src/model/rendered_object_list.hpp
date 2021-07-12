@@ -29,12 +29,25 @@
  */
 class rendered_object_list {
 public:
+    using object_map_t = std::map<std::string, std::shared_ptr<rendered_object>>;
+
     rendered_object_list() = default;
     void add_object(std::shared_ptr<rendered_object> obj);
-    std::shared_ptr<rendered_object> get_object(const std::string& id);
+    std::shared_ptr<rendered_object> get_object(const std::string& id) const;
+    void remove_object(const std::string& id);
+
+    object_map_t::const_iterator begin() const {
+        return objects.begin();
+    }
+
+    object_map_t::const_iterator end() const {
+        return objects.end();
+    }
+
+    size_t size() const { return objects.size(); }
 
 private:
-    std::map<std::string, std::shared_ptr<rendered_object>> objects;
+    object_map_t objects;
 };
 
 #endif // EGILSCIM_RENDERED_OBJECT_LIST_HPP

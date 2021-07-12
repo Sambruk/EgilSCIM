@@ -23,10 +23,14 @@ void rendered_object_list::add_object(std::shared_ptr<rendered_object> obj) {
     objects[obj->get_id()] = obj;
 }
 
-std::shared_ptr<rendered_object> rendered_object_list::get_object(const std::string &id) {
+std::shared_ptr<rendered_object> rendered_object_list::get_object(const std::string &id) const {
     auto record = objects.find(id);
     if (record != objects.end()) {
         return record->second;
     }
     return nullptr;
+}
+
+void rendered_object_list::remove_object(const std::string &id) {
+    objects.erase(id);
 }

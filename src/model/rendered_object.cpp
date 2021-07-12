@@ -36,3 +36,9 @@ std::string rendered_object::get_type() const {
 std::string rendered_object::get_json() const {
     return json;
 }
+
+bool rendered_object::operator==(const rendered_object& other) const {
+    return id == other.id &&
+           type == other.type &&
+           json == other.json;
+}

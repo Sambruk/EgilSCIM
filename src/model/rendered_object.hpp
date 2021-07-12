@@ -38,6 +38,8 @@ public:
     std::string get_type() const;
     std::string get_json() const;
 
+    bool operator==(const rendered_object& other) const;
+
 private:
     std::string id;
     std::string type;
