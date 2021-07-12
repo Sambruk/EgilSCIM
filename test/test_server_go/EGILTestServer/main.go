@@ -98,9 +98,10 @@ func listenAndServe(handler http.Handler, cert, key string, ch chan error) {
 
 // TestStep represents one test step (a scenario and expected requests)
 type TestStep struct {
-	Scenario []string
-	Requests string
-	FailWith int
+	Scenario     []string
+	Requests     string
+	FailWith     int
+	ExpectErrors bool
 }
 
 // TestSpec represents a whole test (consisting of possibly multiple steps)
@@ -182,9 +183,8 @@ func runTest(testName, testPath string,
 			"--key="+key,
 			"--scim-auth-WEAK=true")
 
-		if step.FailWith == 0 {
-			cmd.Stderr = os.Stderr
-		}
+		var stderr strings.Builder
+		cmd.Stderr = &stderr
 		err = cmd.Run()
 
 		if err != nil {
@@ -211,6 +211,18 @@ func runTest(testName, testPath string,
 			ioutil.WriteFile(expectedFilename, []byte(requestsString), 0644)
 			ioutil.WriteFile(receivedFilename, []byte(testLogger.String()), 0644)
 			break
+		}
+
+		if step.FailWith == 0 && !step.ExpectErrors {
+			if stderr.String() != "" {
+				log.Printf("Clients printed something on stderr:\n%s", stderr.String())
+				break
+			}
+		} else {
+			if stderr.String() == "" {
+				log.Printf("Expected errors on stderr, but client was silent!")
+				break
+			}
 		}
 	}
 }
