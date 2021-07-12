@@ -23,37 +23,7 @@
 #include "utility/simplescim_error_string.hpp"
 #include "model/object_list.hpp"
 #include "config_file.hpp"
-
-// When possible, we use umask to limit access to the cache file.
-#ifdef __unix__
-#include <sys/types.h>
-#include <sys/stat.h>
-
-class temporary_umask {
-public:
-    temporary_umask(mode_t new_mask) {
-        old_mask = umask(new_mask);
-    }
-    
-    ~temporary_umask() {
-        umask(old_mask);
-    }
-
-private:
-    mode_t old_mask;
-};
-
-#else // Non-unix systems have a no-op as temporary_umask
-
-class temporary_umask {
-public:
-    temporary_umask(int) {}
-    ~temporary_umask() {}
-};
-#endif
-
-cache_file::~cache_file() {
-}
+#include "utility/temporary_umask.hpp"
 
 /**
  * Reads 'n' bytes into 'buf' from 'ifs'.
@@ -538,7 +508,7 @@ int cache_file::save(std::shared_ptr<object_list> objects) {
     }
 
     /* Write n_objects */
-    err = cache_file::instance().write_uint64(objects->size());
+    err = write_uint64(objects->size());
 
     if (err == -1) {
         ofs.close();

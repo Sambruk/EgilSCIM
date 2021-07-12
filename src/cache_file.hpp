@@ -40,13 +40,6 @@ class cache_file {
     std::ofstream ofs;
     std::string cache_file_filename;
 public:
-    static cache_file &instance() {
-        static cache_file the_cache;
-        return the_cache;
-    }
-
-    ~cache_file();
-
     std::shared_ptr<object_list> get_contents();
 
     int save(std::shared_ptr<object_list> objects);
