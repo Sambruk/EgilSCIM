@@ -29,6 +29,7 @@
 #include "model/object_list.hpp"
 #include "config_file.hpp"
 #include "cache_file.hpp"
+#include "rendered_cache_file.hpp"
 #include "simplescim_scim_send.hpp"
 
 int ScimActions::simplescim_scim_init() const {
@@ -63,9 +64,6 @@ int ScimActions::simplescim_scim_init() const {
 void ScimActions::simplescim_scim_clear() const {
     /* Clear simplescim_scim_send */
     scim_sender::instance().send_clear();
-
-    /* Delete new cache */
-    scim_new_cache->clear();
 }
 
 /**
@@ -76,7 +74,7 @@ void ScimActions::simplescim_scim_clear() const {
  * 'current' and 'cache' if the object has been updated.
  */
 void ScimActions::process_changes(const object_list& current,
-                                  const object_list &cache,
+                                  const rendered_object_list &cache,
                                   const post_processing::plugins& ppp,
                                   statistics& stats,
                                   bool rebuild_cache,
@@ -87,8 +85,14 @@ void ScimActions::process_changes(const object_list& current,
 
         const std::string &uid = iter.first;
 
-        auto object = iter.second;
-        std::shared_ptr<base_object> cached_object;
+        std::shared_ptr<rendered_object> object;
+        try {
+            object = rend.render(ppp, *iter.second);
+        } catch (const std::runtime_error& e) {
+            std::cerr << "Failed to render object to JSON: " << e.what() << std::endl;
+        }
+ 
+        std::shared_ptr<rendered_object> cached_object;
         bool create = false;
 
         if (rebuild_cache) {
@@ -101,12 +105,19 @@ void ScimActions::process_changes(const object_list& current,
 
         if (create) {
             ++stats.n_create;
-            auto create_functor = ScimActions::create_func(*object);
-            err = create_functor(*this, ppp);
+            if (object != nullptr) {
+                auto create_functor = ScimActions::create_func(*object);
+                err = create_functor(*this);
+            } else {
+                err = -1;
+            }
 
             if (err == -1) {
                 ++stats.n_create_fail;
-                std::cerr << simplescim_error_string_get() << std::endl;
+                std::cerr << "Failed to create object " << uid << " of type " << iter.second->getSS12000type() << std::endl;
+                if (object != nullptr) {
+                    std::cerr << simplescim_error_string_get() << std::endl;
+                }
             }
         } else {
             bool copy = false;
@@ -115,7 +126,7 @@ void ScimActions::process_changes(const object_list& current,
                 copy = false;
             }
             else {
-                copy = (*object == *cached_object);
+                copy = (object == nullptr || (*object == *cached_object));
             }
             
             if (copy) {
@@ -128,11 +139,20 @@ void ScimActions::process_changes(const object_list& current,
                 }
             } else {
                 ++stats.n_update;
-                ScimActions::update_func update_f(*object);
-
-                if (update_f(*this, ppp) == -1) {
+                if (object != nullptr) {
+                    ScimActions::update_func update_f(*object);
+                    err = update_f(*this);
+                }
+                else {
+                    err = -1;
+                }
+                
+                if (err == -1) {
                     ++stats.n_update_fail;
-                    std::cerr << simplescim_error_string_get() << std::endl;
+                    std::cerr << "Failed to update object " << uid << " of type " << iter.second->getSS12000type() << std::endl;
+                    if (object != nullptr) {
+                        std::cerr << simplescim_error_string_get() << std::endl;
+                    }
                 }
             }
         }
@@ -144,14 +164,14 @@ void ScimActions::process_changes(const object_list& current,
  * in 'current'.
  */
 void ScimActions::process_deletes(const object_list& current,
-                                  const object_list& cache,
+                                  const rendered_object_list& cache,
                                   const std::string& type,
                                   statistics& stats) const {
 
     /** For every object in 'cache' of the given type */
     for (const auto &item : cache) {
-        std::shared_ptr<base_object> object = item.second;
-        if (object->getSS12000type() == type) {
+        std::shared_ptr<rendered_object> object = item.second;
+        if (object->get_type() == type) {
             const std::string &uid = item.first;
             auto tmp = current.get_object(uid);
 
@@ -235,7 +255,7 @@ std::string endpoint_to_SS12000_type(const std::string& endpoint,
 }
 
 int ScimActions::perform(const data_server &current,
-                         const object_list &cached,
+                         const rendered_object_list &cached,
                          const post_processing::plugins& ppp,
                          bool rebuild_cache,
                          const std::vector<ScimActions::scim_object_ref>& all_scim_objects) const {
@@ -300,18 +320,22 @@ int ScimActions::perform(const data_server &current,
     }
 
     /* Save new cache file */
-    int err = cache_file::instance().save(scim_new_cache);
-
-    return err;
-}
-
-int ScimActions::copy_func::operator()(const ScimActions &actions) {
-    if (cached.get_uid().empty()) {
+    try {
+        rendered_cache_file::save(config_file::instance().get_path("cache-file"), scim_new_cache);
+    } catch (const std::runtime_error& e) {
+        std::cerr << std::string("Failed to save cache file: ") + e.what() << std::endl;
         return -1;
     }
 
-    actions.scim_new_cache->add_object(cached.get_uid(),
-                                       std::make_shared<base_object>(cached));
+    return 0;
+}
+
+int ScimActions::copy_func::operator()(const ScimActions &actions) {
+    if (cached.get_id().empty()) {
+        return -1;
+    }
+
+    actions.scim_new_cache->add_object(std::make_shared<rendered_object>(cached));
 
     return 0;
 
@@ -319,54 +343,44 @@ int ScimActions::copy_func::operator()(const ScimActions &actions) {
 
 int ScimActions::delete_func::operator()(const ScimActions &actions) {
 
-    if (object.get_uid().empty()) {
+    if (object.get_id().empty()) {
         simplescim_error_string_set_prefix("ScimActions::delete_func:"
                                            "get-attribute");
         simplescim_error_string_set_message("cached object does not have unique identifier attribute");
         return -1;
     }
     std::string url = actions.scim_server_info.get_url();
-    std::string urlified = unifyurl(object.get_uid());
-    std::string endpoint = config_file::instance().get(object.getSS12000type() + "-scim-url-endpoint");
+    std::string urlified = unifyurl(object.get_id());
+    std::string endpoint = config_file::instance().get(object.get_type() + "-scim-url-endpoint");
     url += '/' + endpoint + '/' + urlified;
 
     /* Send SCIM delete request */
     int err = scim_sender::instance().send_delete(url);
 
     if (err != 0 && err != 404) { // Recache if delete failed, 404 is no failure
-        actions.scim_new_cache->add_object(object.get_uid(), std::make_shared<base_object>(object));
+        actions.scim_new_cache->add_object(std::make_shared<rendered_object>(object));
     }
 
     return err;
 }
 
-int ScimActions::create_func::operator()(const ScimActions &actions,
-                                         const post_processing::plugins& ppp) {
-    std::string parsed_json;
-    try {
-        parsed_json = actions.rend.render(ppp, create)->get_json();
-    } catch (const std::runtime_error& e) {
-        std::cerr << "Failed to render object to JSON: " << e.what() << std::endl;
-        return -1;
-    }
-
+int ScimActions::create_func::operator()(const ScimActions &actions) {
     std::string url = actions.scim_server_info.get_url();
-    std::string endpoint = config_file::instance().get(create.getSS12000type() + "-scim-url-endpoint");
+    std::string endpoint = config_file::instance().get(create.get_type() + "-scim-url-endpoint");
     url += '/' + endpoint;
 
     /* Send SCIM create request */
     bool conflict = false;
     std::optional<std::string> response_json =
-        scim_sender::instance().send_create(url, parsed_json, conflict);
-    std::string uid = create.get_uid();
+        scim_sender::instance().send_create(url, create.get_json(), conflict);
+    std::string id = create.get_id();
     if (response_json)
-        actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(create));
+        actions.scim_new_cache->add_object(std::make_shared<rendered_object>(create));
     else {
         if (conflict) {
             // Put it in cache, but make sure we update in the next run
-            auto copied_user = std::make_shared<base_object>(create);
-            copied_user->add_attribute("_failed_create", { std::to_string(time(NULL)) });
-            actions.scim_new_cache->add_object(uid, copied_user);
+            auto copied_object = std::make_shared<rendered_object>(create.get_id(), create.get_type(), std::to_string(time(NULL)) + " (create conflict)");
+            actions.scim_new_cache->add_object(copied_object);
         }
         return -1;
     }
@@ -374,42 +388,32 @@ int ScimActions::create_func::operator()(const ScimActions &actions,
     return 0;
 }
 
-int ScimActions::update_func::operator()(const ScimActions &actions,
-                                         const post_processing::plugins& ppp) {
-    std::string uid = object.get_uid();
+int ScimActions::update_func::operator()(const ScimActions &actions) {
+    std::string id = object.get_id();
 
-    if (uid.empty()) {
+    if (id.empty()) {
         return -1;
     }
 
-    std::string parsed_json;
-    try {
-        parsed_json = actions.rend.render(ppp, object)->get_json();
-    } catch (const std::runtime_error& e) {
-        std::cerr << "Failed to render object to JSON: " << e.what() << std::endl;
-        return -1;
-    }
-
-    std::string unified = unifyurl(object.get_uid());
+    std::string unified = unifyurl(object.get_id());
     std::string url = actions.scim_server_info.get_url();
-    std::string endpoint = config_file::instance().get(object.getSS12000type() + "-scim-url-endpoint");
+    std::string endpoint = config_file::instance().get(object.get_type() + "-scim-url-endpoint");
     url += '/' + endpoint + '/' + unified;
 
     bool non_existent = false;
     std::optional<std::string> response_json =
-        scim_sender::instance().send_update(url, parsed_json, non_existent);
+        scim_sender::instance().send_update(url, object.get_json(), non_existent);
 
     /* Insert copied object into new cache */
     if (!response_json) {
         if (!non_existent) {
             // Keep it in cache, but make sure we retry the update next run
-            auto copied_user = std::make_shared<base_object>(object);
-            copied_user->add_attribute("_failed_put", { std::to_string(time(NULL)) });
-            actions.scim_new_cache->add_object(uid, copied_user);
+            auto copied_object = std::make_shared<rendered_object>(object.get_id(), object.get_type(), std::to_string(time(NULL)) + " (failed update)");
+            actions.scim_new_cache->add_object(copied_object);
         }
         return -1;
     } else {
-        actions.scim_new_cache->add_object(uid, std::make_shared<base_object>(object));
+        actions.scim_new_cache->add_object(std::make_shared<rendered_object>(object));
     }
 
     return 0;
