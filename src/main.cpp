@@ -27,7 +27,6 @@
 #include "EgilSCIM_config.h"
 #include "utility/simplescim_error_string.hpp"
 #include "model/object_list.hpp"
-#include "model/rendered_object_list.hpp"
 #include "config_file.hpp"
 #include "simplescim_ldap.hpp"
 #include "cache_file.hpp"
