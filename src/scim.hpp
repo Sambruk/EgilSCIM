@@ -24,30 +24,13 @@
 #include "config_file.hpp"
 #include "data_server.hpp"
 #include "scim_server_info.hpp"
-#include "post_processing.hpp"
+#include "renderer.hpp"
+#include "model/rendered_object_list.hpp"
 #include <memory>
 
 class base_object;
 
 class object_list;
-
-struct variables {
-    std::map<std::string, std::string> variable_entries;
-
-    variables();
-
-    bool valid() const {
-        for (const auto &entry : variable_entries) {
-            if (entry.second.empty())
-                return false;
-        }
-        return true;
-    }
-
-    std::string get(const std::string &key) const {
-        return variable_entries.find(key)->second;
-    }
-};
 
 class ScimActions {
 public:
@@ -72,9 +55,10 @@ public:
     };    
 
 private:
-    std::shared_ptr<object_list> scim_new_cache;
-    variables vars = variables();
-    mutable string_vector verified_types;
+
+    mutable renderer rend;
+
+    std::shared_ptr<rendered_object_list> scim_new_cache;
     const config_file &conf = config_file::instance();
     const SCIMServerInfo& scim_server_info;
 
@@ -90,14 +74,14 @@ private:
     };    
     
     void process_changes(const object_list& current,
-                         const object_list& cache,
+                         const rendered_object_list& cache,
                          const post_processing::plugins& ppp,
                          statistics& stats,
                          bool rebuild_cache,
                          const std::set<std::string>& all_scim_uuids) const;
 
     void process_deletes(const object_list& current,
-                         const object_list& cache,
+                         const rendered_object_list& cache,
                          const std::string& type,
                          statistics& stats) const;
 
@@ -111,7 +95,7 @@ private:
 public:
     ScimActions(const SCIMServerInfo& si)
            : scim_server_info(si) {
-        scim_new_cache = std::make_unique<object_list>();
+        scim_new_cache = std::make_unique<rendered_object_list>();
 
         int err = simplescim_scim_init();
 
@@ -142,41 +126,40 @@ public:
      * error message.
      */
     int perform(const data_server &current,
-                const object_list &cached,
+                const rendered_object_list &cached,
                 const post_processing::plugins& ppp,
                 bool rebuild_cache,
                 const std::vector<scim_object_ref>& all_scim_objects) const;
-    bool verify_json(const std::string &json, const std::string &type) const ;
 
     class copy_func {
-        const base_object &cached;
+        const rendered_object &cached;
     public:
-        explicit copy_func(const base_object &o) : cached(o) {}
+        explicit copy_func(const rendered_object &o) : cached(o) {}
 
         int operator()(const ScimActions &);
     };
 
     class create_func {
-        const base_object &create;
+        const rendered_object &create;
     public:
-        explicit create_func(const base_object &c) : create(c) {}
+        explicit create_func(const rendered_object &c) : create(c) {}
 
-        int operator()(const ScimActions &, const post_processing::plugins& ppp);
+        int operator()(const ScimActions &);
     };
 
     class update_func {
-        const base_object &object;
+        const rendered_object &object;
     public:
-        update_func(const base_object &o) : object(o)
+        update_func(const rendered_object &o) : object(o)
             {}
 
-        int operator()(const ScimActions &, const post_processing::plugins& ppp);
+        int operator()(const ScimActions &);
     };
 
     class delete_func {
-        const base_object &object;
+        const rendered_object &object;
     public:
-        explicit delete_func(const base_object &o) : object(o) {}
+        explicit delete_func(const rendered_object &o) : object(o) {}
 
         int operator()(const ScimActions &);
     };
@@ -189,7 +172,7 @@ public:
      */
     std::vector<scim_object_ref> get_all_objects_from_scim_server();
 
-    std::shared_ptr<object_list> get_new_cache() { return scim_new_cache; }
+    std::shared_ptr<rendered_object_list> get_new_cache() { return scim_new_cache; }
 };
 
 

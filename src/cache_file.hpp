@@ -37,19 +37,9 @@ class object_list;
  */
 class cache_file {
     std::ifstream ifs;
-    std::ofstream ofs;
     std::string cache_file_filename;
 public:
-    static cache_file &instance() {
-        static cache_file the_cache;
-        return the_cache;
-    }
-
-    ~cache_file();
-
     std::shared_ptr<object_list> get_contents();
-
-    int save(std::shared_ptr<object_list> objects);
 
 private:
 
@@ -58,18 +48,6 @@ private:
     std::shared_ptr<base_object> read_object(std::string *uidp);
 
     std::shared_ptr<object_list> get_objects_from_file(const char *filename);
-
-    int write_n(const void *buf, size_t n);
-
-    int write_uint64(uint64_t n);
-
-    int write_value(const std::string &av);
-
-    int write_value_list(const std::vector<std::string> &al);
-
-    int write_attribute(const std::string &attribute, const std::vector<std::string> &values);
-
-    int write_object(const std::string &uid, const base_object &object);
 
     int read_n(void *buf, size_t n);
 

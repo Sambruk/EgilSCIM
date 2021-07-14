@@ -30,6 +30,7 @@
 #include "config_file.hpp"
 #include "simplescim_ldap.hpp"
 #include "cache_file.hpp"
+#include "rendered_cache_file.hpp"
 #include "scim.hpp"
 #include "json_data_file.hpp"
 #include "utility/utils.hpp"
@@ -68,14 +69,14 @@ struct config_file_option {
 void write_status(const std::string& file,
                   time_t start_time,
                   int duration,
-                  std::shared_ptr<object_list> synced_objects) {
+                  std::shared_ptr<rendered_object_list> synced_objects) {
 
     std::map<std::string, int> resourceCounts;
 
     for (const auto &iter : *synced_objects) {
         auto object = iter.second;
 
-        resourceCounts[object->getSS12000type()]++;
+        resourceCounts[object->get_type()]++;
     }
 
     // TODO: Write JSON with boost::ptree instead?
@@ -120,14 +121,61 @@ void parse_override(const std::string& override_str,
  * Modifies a set of objects so they will be considered different from what's in the data source,
  * used by --force-update.
  */
-void make_dirty(std::shared_ptr<object_list> objects, const std::vector<std::string>& uuids) {
+void make_dirty(std::shared_ptr<rendered_object_list> objects, const std::vector<std::string>& uuids) {
     for (auto uuid : uuids) {
         auto obj = objects->get_object(uuid);
 
         if (obj) {
-            obj->add_attribute("_force_update", { std::to_string(time(NULL)) });
+            auto new_obj = std::make_shared<rendered_object>(obj->get_id(), obj->get_type(), std::to_string(time(NULL)));
+            objects->remove_object(uuid);
+            objects->add_object(new_obj);
         }
     }
+}
+
+/**
+ * Reads the contents of the cache file, either in new or old format.
+ * 
+ * If the cache file was in the old format, the objects are rendered with
+ * the current templates before being returned.
+ * 
+ * Returns an empty list if the cache file doesn't exist, but returns
+ * nullptr if there is no cache file path setting in the config file.
+ */
+std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins& ppp) {
+    auto cache_path = config_file::instance().get_path("cache-file");
+
+    if (cache_path.empty()) {
+        return nullptr;
+    }
+
+    try {
+        return rendered_cache_file::get_contents(cache_path);
+    } catch (const rendered_cache_file::bad_format& e) {
+        // Probably an old cache file, we'll try to convert it below
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Failed to read cache file: " << e.what() << std::endl;
+        return nullptr;
+    }
+
+    cache_file old_cache_file;
+    std::shared_ptr<object_list> object_cache = old_cache_file.get_contents();
+
+    if (object_cache == nullptr) { 
+        return nullptr;
+    }
+
+    renderer rend;
+    auto rendered_cache = std::make_shared<rendered_object_list>();
+    for (const auto itr : *object_cache) {
+        try {
+            rendered_cache->add_object(rend.render(ppp, *itr.second));
+        } catch (const std::runtime_error& e) {
+            rendered_cache->add_object(std::make_shared<rendered_object>(itr.first, itr.second->getSS12000type(), ""));
+        }
+    }
+
+    return rendered_cache;
 }
 
 int main(int argc, char *argv[]) {
@@ -304,7 +352,15 @@ int main(int argc, char *argv[]) {
         ScimActions scim_actions{server_info};
 
         /** Get objects from cache file */
-        std::shared_ptr<object_list> cache = cache_file::instance().get_contents();
+        std::shared_ptr<rendered_object_list> cache = read_cache(ppp);
+
+        if (cache == nullptr) {
+            print_error();
+            server.clear();
+            config.clear();
+            return EXIT_FAILURE;
+        }
+
         std::vector<ScimActions::scim_object_ref> all_scim_objects;
         if (vm.count("rebuild-cache")) {
             try {
@@ -312,13 +368,6 @@ int main(int argc, char *argv[]) {
             } catch (const std::runtime_error& e) {
                 std::cerr << "Failed to get objects from SCIM server (" << e.what() << ")" << std::endl;
             }
-        }
-            
-        if (cache == nullptr) {
-            print_error();
-            server.clear();
-            config.clear();
-            return EXIT_FAILURE;
         }
 
         if (vm.count("force-update")) {
@@ -330,7 +379,7 @@ int main(int argc, char *argv[]) {
             auto uuids = vm["force-create"].as<std::vector<std::string>>();
             for (auto uuid : uuids) {
                 if (server.has_object(uuid)) {
-                    cache->remove(uuid);
+                    cache->remove_object(uuid);
                 }
                 else {
                     std::cerr << "Can't force create " << uuid

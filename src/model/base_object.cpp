@@ -32,14 +32,10 @@ std::string base_object::get_uid(bool search) const {
 		config_file &conf = config_file::instance();
 		std::string uid_attr;
 		std::string type = getSS12000type();
-		if (type == "base")
-			uid_attr = conf.require("User-unique-identifier");
-		else {
-			uid_attr = conf.require(type + "-unique-identifier");
-			auto pos = uid_attr.find(',');
-			if (pos != std::string::npos)
-				uid_attr.erase(pos);
-		}
+		uid_attr = conf.require(type + "-unique-identifier");
+		auto pos = uid_attr.find(',');
+		if (pos != std::string::npos)
+			uid_attr.erase(pos);
 		ss12000type = type;
 
 		if (uid_attr.empty()) {
