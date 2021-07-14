@@ -1,5 +1,14 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - The cache file now stores objects in JSON format (#114)
+
+#### Bugfixes
+  - If a JSON template can't be applied (e.g. syntax error), for an object
+    that has previously been sent successfully, we will no longer forget that
+    it was previously sent (#116).
+
 ## v2.6.0 (2021-05-11)
 #### New features
   - Minimum TLS version and cipher suites are now configurable (#97)
