@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.7.0 (2021-07-15)
 #### New features
   - The cache file now stores objects in JSON format (#114)
 
