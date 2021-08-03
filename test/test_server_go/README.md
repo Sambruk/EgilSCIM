@@ -31,6 +31,12 @@ go build
 You should now have an executable binary named EGILTestServer in
 that directory.
 
+#### Building using Nix
+```
+cd <project-root>
+nix build '.#egil-test-server'
+```
+
 ### Generate server certificate and private key
 
 If you don't already have a certificate and private key which the test server
@@ -83,3 +89,13 @@ SchoolUnits.log).
 
 If there were existing log files when the server started, they will be
 truncated.
+
+## Running the test suite
+The test suite can be started by running the
+[run_test_suite](../scripts/run_test_suite) file from any directory.
+
+### Using Nix
+```shell
+cd <project-root>
+nix run '.#egil-test-suite`
+```
