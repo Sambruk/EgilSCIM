@@ -103,54 +103,48 @@ static long to_curl_ssl_version(const std::string& min_tls_version) {
 }
 
 static struct curl_slist *simplescim_scim_send_create_slist(const std::string &method) {
-    struct curl_slist *chunk, *tmp_chunk;
+    std::vector<std::string> headers;
 
     std::string media_type = config_file::instance().get("scim-media-type", true);
     if (media_type.empty()) {
         media_type = "application/scim+json";
     }
-    
+
+    std::string api_key_header = config_file::instance().get("http-auth-key-header", true);
+    std::string api_key_value = config_file::instance().get("http-auth-key-value", true);
+
+    if (!api_key_header.empty()) {
+        headers.push_back(http_header(api_key_header, api_key_value));
+    }
+
     if ((method == "POST") || (method == "PUT")) {
-        tmp_chunk = curl_slist_append(nullptr, http_header("Accept", media_type).c_str());
-
-        if (tmp_chunk == nullptr) {
-            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
-            return nullptr;
-        }
-
-        chunk = curl_slist_append(tmp_chunk, http_header("Content-Type", media_type).c_str());
-
-        if (chunk == nullptr) {
-            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
-            curl_slist_free_all(tmp_chunk);
-            return nullptr;
-        }
-
-        return chunk;
+        headers.push_back(http_header("Accept", media_type));
+        headers.push_back(http_header("Content-Type", media_type));
     }
     else if (method == "DELETE") {
-        chunk = curl_slist_append(nullptr, "Accept:");
-
-        if (chunk == nullptr) {
-            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
-            return nullptr;
-        }
-
-        return chunk;
+        headers.push_back("Accept:");
     }
     else if (method == "GET") {
-        chunk = curl_slist_append(nullptr, http_header("Accept", media_type).c_str());
-
-        if (chunk == nullptr) {
-            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
-            return nullptr;
-        }
-        return chunk;
+        headers.push_back(http_header("Accept", media_type));
     }
     else {
         simplescim_error_string_set("simplescim_scim_send_create_slist", "invalid HTTP method");
         return nullptr;
     }
+
+    struct curl_slist *chunk = nullptr;
+
+    for (auto header : headers) {
+        struct curl_slist *tmp_chunk = curl_slist_append(chunk, header.c_str());
+
+        if (tmp_chunk == nullptr) {
+            simplescim_error_string_set("simplescim_scim_send_create_slist", "curl_slist_append() returned nullptr");
+            curl_slist_free_all(chunk);
+            return nullptr;
+        }
+        chunk = tmp_chunk;
+    }
+    return chunk;
 }
 
 static int simplescim_scim_send(CURL* curl,

@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - It is now possible to send a static auth key as an HTTP header (#119)
+
 ## v2.7.0 (2021-07-15)
 #### New features
   - The cache file now stores objects in JSON format (#114)
