@@ -163,7 +163,7 @@ func runTest(testName, testPath string,
 
 		// Apply scenario
 		for _, scen := range step.Scenario {
-			cmd := exec.Command(path.Join(testRoot, "scripts", "apply_scenario"), scen)
+			cmd := exec.Command(path.Join(testRoot, "scripts", "apply_scenario"), path.Join(testRoot, scen))
 			err = cmd.Run()
 
 			if err != nil {
