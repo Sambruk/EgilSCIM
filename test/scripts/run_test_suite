@@ -12,5 +12,9 @@ ${testroot}/test_server_go/EGILTestServer/EGILTestServer \
   -testroot $testroot \
   -binary ${testroot}/../build/EgilSCIMClient
 
+exitstatus=$?
+
 rm $cert
 rm $key
+
+exit ${exitstatus}
