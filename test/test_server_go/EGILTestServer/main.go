@@ -115,7 +115,7 @@ func runTest(testName, testPath string,
 	testLogger *TestLogger,
 	serverErrorChannel chan error,
 	cert string,
-	key string) {
+	key string) bool {
 
 	specRaw, err := ioutil.ReadFile(path.Join(testPath, "spec.json"))
 	if err != nil {
@@ -210,21 +210,23 @@ func runTest(testName, testPath string,
 			receivedFilename := testName + "_" + strconv.Itoa(idx) + "_received.txt"
 			ioutil.WriteFile(expectedFilename, []byte(requestsString), 0644)
 			ioutil.WriteFile(receivedFilename, []byte(testLogger.String()), 0644)
-			break
+			return false;
 		}
 
 		if step.FailWith == 0 && !step.ExpectErrors {
 			if stderr.String() != "" {
 				log.Printf("Clients printed something on stderr:\n%s", stderr.String())
-				break
+				return false;
 			}
 		} else {
 			if stderr.String() == "" {
 				log.Printf("Expected errors on stderr, but client was silent!")
-				break
+				return false;
 			}
 		}
 	}
+
+	return true;
 }
 
 func findSubDirectories(p string) []string {
@@ -274,9 +276,21 @@ func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, k
 
 	testDirectories := findSubDirectories(testSuitePath)
 
+	noneFailed := true;
 	for _, dir := range testDirectories {
-		runTest(dir, path.Join(testSuitePath, dir), testLogger, serverErrorChannel, cert, key)
+		if !runTest(dir, path.Join(testSuitePath, dir), testLogger, serverErrorChannel, cert, key) {
+			noneFailed = false;
+		}
 	}
+
+	var exitStatus int
+	if noneFailed {
+		exitStatus = 0
+	} else {
+		exitStatus = 1
+	}
+
+	os.Exit(exitStatus);
 }
 
 func main() {
