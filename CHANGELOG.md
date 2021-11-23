@@ -1,12 +1,12 @@
 ## Releases
 
-## Unreleased
+## v2.8.0 (2021-11-23)
 #### New features
   - It is now possible to send a static auth key as an HTTP header (#119)
 
 #### Bugfixes
   - Make sure we terminate early if LDAP connection fails (#125)
-  
+
 ## v2.7.0 (2021-07-15)
 #### New features
   - The cache file now stores objects in JSON format (#114)
