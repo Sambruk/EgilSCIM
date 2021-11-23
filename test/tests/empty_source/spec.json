@@ -1,0 +1,18 @@
+{
+    "description": "Empty source (e.g. empty selection) leads to delete of everything",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [],
+	  "requests": null
+	},
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [],
+	  "requests": "delete.txt",
+	  "commandLine": ["--D", "StudentGroup-limit-with=regex",
+			  "--D", "StudentGroup-limit-regex=.*gurka.*",
+			  "--D", "StudentGroup-limit-by=cn"]
+	}
+    ]
+}

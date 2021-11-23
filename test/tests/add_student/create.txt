@@ -1,5 +1,5 @@
 ---
-Users POST
+Users /Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -32,7 +32,7 @@ Users POST
 }
 ---
 ---
-StudentGroups PUT
+StudentGroups /StudentGroups/39074b36-e0ed-4443-a501-5148992014b9 PUT
 
 {
   "schemas": [
