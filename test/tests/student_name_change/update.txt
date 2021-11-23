@@ -1,5 +1,5 @@
 ---
-Users PUT
+Users /Users/2b3a480f-d0b9-4c09-bbac-70f915964b02 PUT
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",

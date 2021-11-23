@@ -1,5 +1,5 @@
 ---
-Organisations POST
+Organisations /Organisations POST
 
 {
 "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Organisation"],
@@ -8,7 +8,7 @@ Organisations POST
 }
 ---
 ---
-SchoolUnits POST
+SchoolUnits /SchoolUnits POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnit"],
@@ -27,7 +27,7 @@ SchoolUnits POST
 }
 ---
 ---
-SchoolUnits POST
+SchoolUnits /SchoolUnits POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnit"],
@@ -46,7 +46,7 @@ SchoolUnits POST
 }
 ---
 ---
-SchoolUnitGroups POST
+SchoolUnitGroups /SchoolUnitGroups POST
 
 {
 	"schemas": ["urn:scim:schemas:extension:sis:school:1.0:SchoolUnitGroup"],
@@ -55,7 +55,7 @@ SchoolUnitGroups POST
 }
 ---
 ---
-Users POST
+Users /Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -88,7 +88,7 @@ Users POST
 }
 ---
 ---
-Users POST
+Users /Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -121,7 +121,7 @@ Users POST
 }
 ---
 ---
-Users POST
+Users /Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -143,7 +143,7 @@ Users POST
 }
 ---
 ---
-Users POST
+Users /Users POST
 
 {
 	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
@@ -165,7 +165,7 @@ Users POST
 }
 ---
 ---
-Employments POST
+Employments /Employments POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
@@ -183,7 +183,7 @@ Employments POST
 }
 ---
 ---
-Employments POST
+Employments /Employments POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
@@ -201,7 +201,7 @@ Employments POST
 }
 ---
 ---
-Employments POST
+Employments /Employments POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
@@ -219,7 +219,7 @@ Employments POST
 }
 ---
 ---
-Activities POST
+Activities /Activities POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
@@ -251,7 +251,7 @@ Activities POST
 }
 ---
 ---
-Activities POST
+Activities /Activities POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
@@ -277,7 +277,7 @@ Activities POST
 }
 ---
 ---
-StudentGroups POST
+StudentGroups /StudentGroups POST
 
 {
   "schemas": [
@@ -305,7 +305,7 @@ StudentGroups POST
   ]
 }---
 ---
-StudentGroups POST
+StudentGroups /StudentGroups POST
 
 {
   "schemas": [

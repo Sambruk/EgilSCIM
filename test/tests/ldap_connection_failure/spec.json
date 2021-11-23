@@ -1,0 +1,17 @@
+{
+    "description": "Failure to connect to LDAP",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [],
+	  "requests": null
+	},
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [],
+	  "commandLine": ["--D", "ldap-uri=ldap://nonexistant"],
+	  "requests": null,
+	  "expectErrors": true
+	}
+    ]
+}

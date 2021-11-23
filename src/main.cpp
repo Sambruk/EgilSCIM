@@ -336,16 +336,15 @@ int main(int argc, char *argv[]) {
         /** Get objects from data source */
         data_server &server = data_server::instance();
         try {
-            server.load(sqlp);
-        } catch (std::string& msg) {
-            std::cerr << msg << std::endl;
-            return EXIT_FAILURE;
+            if (!server.load(sqlp)) {
+                print_error();
+                std::cerr << "Failed to load from data source" << std::endl;
+                return EXIT_FAILURE;
+            }
         }
-        if (server.empty()) {
-            print_error();
-            config.clear();
-            server.clear();
-            return EXIT_SUCCESS;
+        catch (const std::exception &e) {
+            std::cerr << "Failed to load from data source: " << e.what() << std::endl;
+            return EXIT_FAILURE;
         }
 
         SCIMServerInfo server_info{config};
@@ -420,6 +419,11 @@ int main(int argc, char *argv[]) {
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    catch (const std::string& s) {
+        // We shouldn't be throwing strings anymore, if we get here it's a bug
+        std::cerr << "Unexpected string caught: " << s << std::endl;
         return EXIT_FAILURE;
     }
     catch (...) {

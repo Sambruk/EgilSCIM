@@ -50,7 +50,7 @@ var genericHandlerFailWith int
 
 func genericSCIMHandler(w http.ResponseWriter, r *http.Request, endpoint string, requestLogger io.Writer) {
 	fmt.Fprintln(requestLogger, "---")
-	fmt.Fprintf(requestLogger, "%s %s\n", endpoint, r.Method)
+	fmt.Fprintf(requestLogger, "%s %s %s\n", endpoint, r.URL, r.Method)
 	io.Copy(requestLogger, r.Body)
 	fmt.Fprintln(requestLogger, "---")
 
@@ -102,6 +102,7 @@ type TestStep struct {
 	Requests     string
 	FailWith     int
 	ExpectErrors bool
+	CommandLine  []string
 }
 
 // TestSpec represents a whole test (consisting of possibly multiple steps)
@@ -176,18 +177,24 @@ func runTest(testName, testPath string,
 		testLogger.Reset()
 
 		// Run EGIL client
-		cmd = exec.Command(egilBinaryPath,
-			path.Join(testRoot, testSpec.Config),
-			"--cache-file="+cacheFile.Name(),
-			"--cert="+cert,
-			"--key="+key,
-			"--scim-auth-WEAK=true")
+		params := []string{
+			"--cache-file=" + cacheFile.Name(),
+			"--cert=" + cert,
+			"--key=" + key,
+			"--scim-auth-WEAK=true",
+			path.Join(testRoot, testSpec.Config)}
+
+		if step.CommandLine != nil {
+			params = append(params, step.CommandLine...)
+		}
+
+		cmd = exec.Command(egilBinaryPath, params...)
 
 		var stderr strings.Builder
 		cmd.Stderr = &stderr
 		err = cmd.Run()
 
-		if err != nil {
+		if !step.ExpectErrors && err != nil {
 			log.Fatalf("Failed to run EGIL client: %v", err)
 		}
 
@@ -210,23 +217,23 @@ func runTest(testName, testPath string,
 			receivedFilename := testName + "_" + strconv.Itoa(idx) + "_received.txt"
 			ioutil.WriteFile(expectedFilename, []byte(requestsString), 0644)
 			ioutil.WriteFile(receivedFilename, []byte(testLogger.String()), 0644)
-			return false;
+			return false
 		}
 
 		if step.FailWith == 0 && !step.ExpectErrors {
 			if stderr.String() != "" {
 				log.Printf("Clients printed something on stderr:\n%s", stderr.String())
-				return false;
+				return false
 			}
 		} else {
 			if stderr.String() == "" {
 				log.Printf("Expected errors on stderr, but client was silent!")
-				return false;
+				return false
 			}
 		}
 	}
 
-	return true;
+	return true
 }
 
 func findSubDirectories(p string) []string {
@@ -276,10 +283,10 @@ func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, k
 
 	testDirectories := findSubDirectories(testSuitePath)
 
-	noneFailed := true;
+	noneFailed := true
 	for _, dir := range testDirectories {
 		if !runTest(dir, path.Join(testSuitePath, dir), testLogger, serverErrorChannel, cert, key) {
-			noneFailed = false;
+			noneFailed = false
 		}
 	}
 
@@ -290,7 +297,7 @@ func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, k
 		exitStatus = 1
 	}
 
-	os.Exit(exitStatus);
+	os.Exit(exitStatus)
 }
 
 func main() {
