@@ -1,5 +1,10 @@
 ## Releases
 
+## Unreleased
+#### Bugfixes
+  - Better warning messages when a teacher's employment points to a
+    non-existant school unit (#127)
+
 ## v2.8.0 (2021-11-23)
 #### New features
   - It is now possible to send a static auth key as an HTTP header (#119)
