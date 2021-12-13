@@ -164,6 +164,7 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
     config_file &conf = config_file::instance();
     data_server &server = data_server::instance();
     std::set<std::string> missing_ids;
+    std::set<std::string> objects_with_missing_ids;
 
     // the relational key, e.g. User.pidSchoolUnit
     string_pair relational_key = conf.get_pair(type + "-generate-key");
@@ -228,17 +229,29 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                                 " from " + relational_key.first + " with UUID " + a_master.second->get_uid() + " and " + part_type.first + " with UUID " + related_object->get_uid());
             } else {
                 missing_ids.insert(relational_item);
+                objects_with_missing_ids.insert(relational_key.first + " : " + a_master.first);
             }
         }
 
     }
 
     if (!missing_ids.empty() && !ignore_missing_schoolunit) {
-        std::cerr << "Missing SchoolUnits found:" << std::endl;
+        std::cerr << "Missing SchoolUnits found while generating Employments:" <<  std::endl;
         for (const auto &missing_id : missing_ids) {
             std::cerr << missing_id << ", ";
         }
         std::cerr << std::endl;
+        std::cerr << "Objects with missing SchoolUnits:" << std::endl;
+        int object_count = 0;
+        for (const auto &object_with_missing_id : objects_with_missing_ids) {
+            std::cerr << object_with_missing_id << ", ";
+            if (++object_count >= 10) {
+                std::cerr << "...";
+                break;
+            }
+        }
+        std::cerr << std::endl;
+        
     }
 
     return generated;
