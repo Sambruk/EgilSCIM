@@ -4,6 +4,8 @@
 #### Bugfixes
   - Better warning messages when a teacher's employment points to a
     non-existant school unit (#127)
+  - There is no longer a warning if a relation is defined by a
+    "remote" attribute that is potentially multi-valued (#131)
 
 ## v2.8.0 (2021-11-23)
 #### New features
