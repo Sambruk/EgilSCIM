@@ -143,8 +143,23 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
             }
         }
 
-        auto p1 = string_to_pair(id_cred.at(0));
-        auto p2 = string_to_pair(id_cred.at(1));
+        auto p1 = string_to_pair(id_cred[0]);
+        auto p2 = string_to_pair(id_cred[1]);
+        
+        // Check that we have the attributes for creating the UUID for this activity
+        bool bad = false;
+        for (size_t i = 0; i < id_cred.size() && !bad; ++i) {
+            if (generated_object.get_values(id_cred[i]).empty()) {
+                std::cerr << "Failed to create Activity for group " << student_group.second->get_uid() 
+                << "\n\tmissing attribute " << id_cred[i] << " (is the group missing its school unit?)" << std::endl;
+                bad = true;
+            }
+        }
+
+        if (bad) {
+            continue;
+        }
+
         std::string uuid = store_relation(generated_object, p1, p2);
         generated->add_object(uuid, std::make_shared<base_object>(generated_object));
         load_logger.log(std::string("Generated ") + type + " with UUID " + uuid +
