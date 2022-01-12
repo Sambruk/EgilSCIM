@@ -6,6 +6,8 @@
     non-existant school unit (#127)
   - There is no longer a warning if a relation is defined by a
     "remote" attribute that is potentially multi-valued (#131)
+  - Rebuild cache will now work even if the send-order includes
+    unconfigured types (#115)
 
 ## v2.8.0 (2021-11-23)
 #### New features
