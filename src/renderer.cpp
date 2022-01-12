@@ -66,12 +66,17 @@ std::shared_ptr<rendered_object> renderer::render(const post_processing::plugins
     std::string template_json = config_file::instance().get(type + "-scim-json-template");
     std::string parsed_json = scim_json_parse(template_json, obj);
     
+    std::string extra_errors;
+    if (has_errors_to_print()) {
+        extra_errors = std::string(" (") + simplescim_error_string_get() + ")";
+    }
+
     if (parsed_json == "") {
-        throw std::runtime_error("failed to parse JSON template for " + type);
+        throw std::runtime_error("failed to parse JSON template for " + type + extra_errors);
     }
 
     if (!verify_json(parsed_json, type)) {
-        throw std::runtime_error("failed to parse JSON template for " + type);
+        throw std::runtime_error("failed to parse JSON template for " + type + extra_errors);
     }
 
     try {
