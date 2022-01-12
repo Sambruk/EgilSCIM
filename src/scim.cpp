@@ -235,7 +235,11 @@ std::string endpoint_to_SS12000_type(const std::string& endpoint,
     std::map<std::string, std::string> endpoint_to_SS12000;
 
     for (const auto& type : types) {
-        auto ep = config_file::instance().get(type + "-scim-url-endpoint");
+        auto url_param = type + "-scim-url-endpoint";
+        if (!config_file::instance().has(url_param)) {
+            continue;
+        }
+        auto ep = config_file::instance().get(url_param);
 
         if (endpoint_to_SS12000.find(ep) == endpoint_to_SS12000.end()) {
             endpoint_to_SS12000[ep] = type;
@@ -286,7 +290,11 @@ int ScimActions::perform(const data_server &current,
     if (rebuild_cache) {
         std::set<std::string> endpoints;
         for (const auto& type : types_reversed) {
-            std::string endpoint = config_file::instance().get(type + "-scim-url-endpoint");
+            auto url_param = type + "-scim-url-endpoint";
+            if (!config_file::instance().has(url_param)) {
+                continue;
+            }
+            std::string endpoint = config_file::instance().get(url_param);
 
             if (endpoints.count(endpoint)) {
                 continue;
@@ -420,13 +428,17 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
 }
 
 std::vector<ScimActions::scim_object_ref> ScimActions::get_all_objects_from_scim_server() {
-    std::string types_string = config_file::instance().get("scim-type-send-order");
+    config_file &config = config_file::instance();
+    std::string types_string = config.get("scim-type-send-order");
     string_vector types = string_to_vector(types_string);
 
     std::set<std::string> endpoints;
 
     for (const auto& type : types) {
-        endpoints.insert(config_file::instance().get(type + "-scim-url-endpoint"));
+        auto url_param = type + "-scim-url-endpoint";
+        if (config.has(url_param)) {
+            endpoints.insert(config.get(url_param));
+        }
     }
 
     std::vector<scim_object_ref> results;
