@@ -8,6 +8,7 @@
     "remote" attribute that is potentially multi-valued (#131)
   - Rebuild cache will now work even if the send-order includes
     unconfigured types (#115)
+  - JSON template rendering errors are now presented better (#129)
 
 ## v2.8.0 (2021-11-23)
 #### New features
