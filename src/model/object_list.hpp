@@ -49,12 +49,6 @@ public:
     std::shared_ptr<base_object> get_object_for_attribute(const std::string &attribute, const std::string &id) {
         for (const auto &object : objects) {
             const string_vector &values = object.second->get_values(attribute);
-            if (!values.empty() && values.size() > 1) {
-                std::cerr << "Expected single value for "
-                          << object.second->getSS12000type()
-                          << " " << attribute << " " << id
-                          << " found: " << values.size() << std::endl;
-            }
             for (auto && value: values) {
                 if (value == id)
                     return object.second;
