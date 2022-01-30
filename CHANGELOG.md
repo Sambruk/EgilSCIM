@@ -11,6 +11,7 @@
   - JSON template rendering errors are now presented better (#129)
   - Improved error message when generating an Activity for a
     StudentGroup which is missing its SchoolUnit relation (#130)
+  - Entity IDs are no longer normalized before comparison (#137)
 
 ## v2.8.0 (2021-11-23)
 #### New features
