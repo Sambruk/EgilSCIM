@@ -30,16 +30,10 @@ using object_map_t = std::map<std::string, std::shared_ptr<base_object>>;
 class object_list {
     object_map_t objects{};
 public:
-    friend class cache_file;
-
     object_list() = default;
 
     object_list(const object_list &other) {
         objects = other.objects;
-    }
-
-    object_list(object_list &&other) noexcept {
-        objects = std::move(other.objects);
     }
 
     void clear() {
@@ -83,20 +77,7 @@ public:
         }
         return *this;
     }
-
-    object_list &operator+=(object_list &&other) {
-        for (auto &&object : other.objects) {
-            objects.emplace(object.first, std::move(object.second));
-        }
-        return *this;
-    }
-
     object_list &operator=(const object_list &other) = default;
-
-    object_list &operator=(object_list &&other) noexcept {
-        objects = std::move(other.objects);
-        return *this;
-    }
 
     size_t size() const {
         return objects.size();
