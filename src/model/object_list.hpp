@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2019 Föreningen Sambruk
+ *  Copyright (C) 2017-2022 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -17,8 +17,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SIMPLESCIM_USER_LIST_H
-#define SIMPLESCIM_USER_LIST_H
+#ifndef EGILSCIMCLIENT_OBJECT_LIST_H
+#define EGILSCIMCLIENT_OBJECT_LIST_H
 
 #include <map>
 #include <ostream>
@@ -40,16 +40,12 @@ public:
         objects.clear();
     }
 
-    std::shared_ptr<base_object> get_object_for_attribute(const std::string &attribute, const std::string &id) {
-        for (const auto &object : objects) {
-            const string_vector &values = object.second->get_values(attribute);
-            for (auto && value: values) {
-                if (value == id)
-                    return object.second;
-            }
-        }
-        return nullptr;
-    }
+    // Finds an object that has a given attribute set to a given value.
+    // Note that this is supposed to be used when the attribute can be used as a primary key,
+    // so it uniquely identifies an object. If there are multiple objects with the attribute
+    // set to the value, a random one will be returned.
+    // If there is no match, nullptr is returned.
+    std::shared_ptr<base_object> get_object_for_attribute(const std::string &attribute, const std::string &id);
 
     std::shared_ptr<base_object> get_object(const std::string &uid) const {
         auto record = objects.find(uid);
@@ -59,20 +55,12 @@ public:
         return nullptr;
     }
 
-    void add_object(const std::string &uid, std::shared_ptr<base_object> object) {
-        objects[uid] = object;
-    }
+    void add_object(const std::string &uid, std::shared_ptr<base_object> object);
 
-    void remove(const std::string& uuid) {
-        objects.erase(uuid);
-    }
+    void remove(const std::string& uuid);
 
-    object_list &operator+=(const object_list &other) {
-        for (auto &&object : other.objects) {
-            objects.emplace(object.first, object.second);
-        }
-        return *this;
-    }
+    object_list &operator+=(const object_list &other);
+    
     object_list &operator=(const object_list &other) = default;
 
     size_t size() const {
@@ -99,4 +87,4 @@ public:
     }
 };
 
-#endif
+#endif // EGILSCIMCLIENT_OBJECT_LIST_H
