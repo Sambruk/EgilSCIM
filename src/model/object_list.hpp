@@ -60,11 +60,7 @@ public:
     }
 
     void add_object(const std::string &uid, std::shared_ptr<base_object> object) {
-        auto record = objects.find(uid);
-        if (record != objects.end()) {
-            objects.erase(uid);
-        }
-        objects.emplace(std::make_pair(uid, object));
+        objects[uid] = object;
     }
 
     void remove(const std::string& uuid) {
