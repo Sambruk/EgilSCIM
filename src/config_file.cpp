@@ -79,6 +79,7 @@ int config_file::load_template(const std::string &ss12000type, const std::string
             }
             if (!relation.remote_attribute.empty()) {
                 add_variable(relation.type + "-scim-variables", relation.remote_attribute);
+                add_variable("all-scim-variables", relation.remote_attribute);
             }
         }
 

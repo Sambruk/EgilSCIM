@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2019 Föreningen Sambruk
+ *  Copyright (C) 2017-2022 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -17,45 +17,80 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SIMPLESCIM_USER_LIST_H
-#define SIMPLESCIM_USER_LIST_H
+#ifndef EGILSCIMCLIENT_OBJECT_LIST_H
+#define EGILSCIMCLIENT_OBJECT_LIST_H
 
 #include <map>
 #include <ostream>
+#include <vector>
 
 #include "base_object.hpp"
 
 using object_map_t = std::map<std::string, std::shared_ptr<base_object>>;
 
+/// An index for objects in an object_list
+/** The index will let us quickly lookup objects for which a given
+ *  attribute has a given value.
+ * 
+ *  The index assumes the objects don't change while they are indexed.
+ */
+class object_index {
+public:
+    object_index(const std::string &attr) : attribute(attr) {}
+
+    const std::string &get_attribute() const { return attribute; }
+
+    // Finds the objects for which attribute == value
+    std::vector<std::shared_ptr<base_object>> lookup(const std::string &value);
+
+    // Adds an object to the index
+    void add(std::shared_ptr<base_object> object);
+
+    // Removes an object from the index
+    void remove(std::shared_ptr<base_object> object);
+
+private:
+    // The attribute we're indexing over
+    std::string attribute;
+
+    // A map from values to the objects which have that value in the
+    // given attribute.
+    std::map<std::string, std::vector<std::shared_ptr<base_object>>> idx;
+};
+
 class object_list {
     object_map_t objects{};
-public:
-    friend class cache_file;
 
-    object_list() = default;
+    std::vector<std::shared_ptr<object_index>> indices;
 
-    object_list(const object_list &other) {
-        objects = other.objects;
-    }
-
-    object_list(object_list &&other) noexcept {
-        objects = std::move(other.objects);
-    }
-
-    void clear() {
-        objects.clear();
-    }
-
-    std::shared_ptr<base_object> get_object_for_attribute(const std::string &attribute, const std::string &id) {
-        for (const auto &object : objects) {
-            const string_vector &values = object.second->get_values(attribute);
-            for (auto && value: values) {
-                if (value == id)
-                    return object.second;
+    std::shared_ptr<object_index> find_index(const std::string& attr) {
+        for (size_t i = 0; i < indices.size(); ++i) {
+            if (indices[i]->get_attribute() == attr) {
+                return indices[i];
             }
         }
         return nullptr;
     }
+
+public:
+    object_list() = default;
+
+    object_list(const object_list &other) {
+        objects = other.objects;
+        indices = other.indices;
+    }
+
+    void clear() {
+        objects.clear();
+        indices.clear();
+    }
+
+    // Finds an object that has a given attribute set to a given value.
+    // Note that this is supposed to be used when the attribute can be used as a primary key,
+    // so it uniquely identifies an object. If there are multiple objects with the attribute
+    // set to the value, a random one will be returned.
+    // If there is no match, nullptr is returned.
+    std::shared_ptr<base_object> get_object_for_attribute(const std::string &attribute, const std::string &id);
 
     std::shared_ptr<base_object> get_object(const std::string &uid) const {
         auto record = objects.find(uid);
@@ -65,38 +100,13 @@ public:
         return nullptr;
     }
 
-    void add_object(const std::string &uid, std::shared_ptr<base_object> object) {
-        auto record = objects.find(uid);
-        if (record != objects.end()) {
-            objects.erase(uid);
-        }
-        objects.emplace(std::make_pair(uid, object));
-    }
+    void add_object(const std::string &uid, std::shared_ptr<base_object> object);
 
-    void remove(const std::string& uuid) {
-        objects.erase(uuid);
-    }
+    void remove(const std::string& uuid);
 
-    object_list &operator+=(const object_list &other) {
-        for (auto &&object : other.objects) {
-            objects.emplace(object.first, object.second);
-        }
-        return *this;
-    }
-
-    object_list &operator+=(object_list &&other) {
-        for (auto &&object : other.objects) {
-            objects.emplace(object.first, std::move(object.second));
-        }
-        return *this;
-    }
+    object_list &operator+=(const object_list &other);
 
     object_list &operator=(const object_list &other) = default;
-
-    object_list &operator=(object_list &&other) noexcept {
-        objects = std::move(other.objects);
-        return *this;
-    }
 
     size_t size() const {
         return objects.size();
@@ -122,4 +132,4 @@ public:
     }
 };
 
-#endif
+#endif // EGILSCIMCLIENT_OBJECT_LIST_H

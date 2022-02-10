@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - Objects are automatically indexed internally for faster lookup (#139)
+
 ## v2.8.1 (2022-01-31)
 #### Bugfixes
   - Better warning messages when a teacher's employment points to a
