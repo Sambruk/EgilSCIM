@@ -19,28 +19,81 @@
 
 #include "object_list.hpp"
 
-std::shared_ptr<base_object> object_list::get_object_for_attribute(const std::string &attribute, const std::string &id){
-    for (const auto &object : objects) {
-        const string_vector &values = object.second->get_values(attribute);
-        for (auto &&value : values) {
-            if (value == id)
-                return object.second;
+std::vector<std::shared_ptr<base_object>> object_index::lookup(const std::string &value) {
+    auto itr = idx.find(value);
+    if (itr != idx.end()) {
+        return itr->second;
+    } else {
+        return std::vector<std::shared_ptr<base_object>>();
+    }
+}
+
+void object_index::add(std::shared_ptr<base_object> object) {
+    auto values = object->get_values(attribute);
+    for (const auto &v : values) {
+        idx[v].push_back(object);
+    }
+}
+
+void object_index::remove(std::shared_ptr<base_object> object) {
+    auto values = object->get_values(attribute);
+    for (const auto &v : values) {
+        auto &objs = idx[v];
+        auto itr = objs.begin();
+        while (itr != objs.end()) {
+            if ((*itr).get() == object.get()) {
+                itr = objs.erase(itr);
+            } else {
+                ++itr;
+            }
         }
     }
-    return nullptr;
+}
+
+std::shared_ptr<base_object> object_list::get_object_for_attribute(const std::string &attribute, const std::string &id) {
+    auto idx = find_index(attribute);
+
+    if (idx == nullptr) {
+        idx = std::make_shared<object_index>(attribute);
+
+        for (const auto& itr : objects) {
+            idx->add(itr.second);
+        }
+
+        indices.push_back(idx);
+    }
+
+    auto matches = idx->lookup(id);
+
+    if (matches.empty()) {
+        return nullptr;
+    }
+    return matches[0];
 }
 
 void object_list::add_object(const std::string &uid, std::shared_ptr<base_object> object) {
+    remove(uid);
     objects[uid] = object;
+
+    for (size_t i = 0; i < indices.size(); ++i) {
+        indices[i]->add(object);
+    }
 }
 
 void object_list::remove(const std::string &uuid) { 
-    objects.erase(uuid); 
+    auto itr = objects.find(uuid);
+
+    if (itr != objects.end()) {
+        for (size_t i = 0; i < indices.size(); ++i) {
+            indices[i]->remove(itr->second);
+        }
+        objects.erase(itr);
+    }
 }
 
 object_list &object_list::operator+=(const object_list &other) {
   for (auto &&object : other.objects) {
-    objects.emplace(object.first, object.second);
+      add_object(object.first, object.second);
   }
   return *this;
 }

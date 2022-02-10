@@ -107,7 +107,6 @@ void load_related(const std::string &type,
                                                                                           relation.remote_attribute,
                                                                                           value);
                     if (!remote) {
-
                         auto filter = relation.get_ldap_filter(value);
 
                         ldap_wrapper& ldap = *server.get_ldap_wrapper();
@@ -120,8 +119,10 @@ void load_related(const std::string &type,
                         if (ldap.search(relation.type, load_logger, filter)) {
                             auto limiter = get_limiter(relation.type);
                             auto response = ldap_to_object_list(ldap, relation.type, limiter, load_logger);
-                            if (response->size() == 1)
+                            if (response->size() == 1) {
                                 remote = response->begin()->second;
+                                server.add(relation.type, remote);
+                            }
                             else if (response->size() > 1) {
                                 std::cerr << "Ambiguous (multiple) results for relation from " << type
                                           << " to " << relation.type << " when " << type << "." << relation.local_attribute
@@ -149,9 +150,6 @@ void load_related(const std::string &type,
                                 remote->append_values(type + "." + p.second, id, true);
                             }
                         }
-                        // add the new entity to the server
-                        server.cache_relation(relation.type + relation.remote_attribute + value, remote);
-                        server.add(relation.type, remote);
                     }
                 }
             }

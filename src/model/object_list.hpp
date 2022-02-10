@@ -22,22 +22,67 @@
 
 #include <map>
 #include <ostream>
+#include <vector>
 
 #include "base_object.hpp"
 
 using object_map_t = std::map<std::string, std::shared_ptr<base_object>>;
 
+/// An index for objects in an object_list
+/** The index will let us quickly lookup objects for which a given
+ *  attribute has a given value.
+ * 
+ *  The index assumes the objects don't change while they are indexed.
+ */
+class object_index {
+public:
+    object_index(const std::string &attr) : attribute(attr) {}
+
+    const std::string &get_attribute() const { return attribute; }
+
+    // Finds the objects for which attribute == value
+    std::vector<std::shared_ptr<base_object>> lookup(const std::string &value);
+
+    // Adds an object to the index
+    void add(std::shared_ptr<base_object> object);
+
+    // Removes an object from the index
+    void remove(std::shared_ptr<base_object> object);
+
+private:
+    // The attribute we're indexing over
+    std::string attribute;
+
+    // A map from values to the objects which have that value in the
+    // given attribute.
+    std::map<std::string, std::vector<std::shared_ptr<base_object>>> idx;
+};
+
 class object_list {
     object_map_t objects{};
+
+    std::vector<std::shared_ptr<object_index>> indices;
+
+    std::shared_ptr<object_index> find_index(const std::string& attr) {
+        for (size_t i = 0; i < indices.size(); ++i) {
+            if (indices[i]->get_attribute() == attr) {
+                return indices[i];
+            }
+        }
+        return nullptr;
+    }
+
 public:
     object_list() = default;
 
     object_list(const object_list &other) {
         objects = other.objects;
+        indices = other.indices;
     }
 
     void clear() {
         objects.clear();
+        indices.clear();
     }
 
     // Finds an object that has a given attribute set to a given value.
@@ -60,7 +105,7 @@ public:
     void remove(const std::string& uuid);
 
     object_list &operator+=(const object_list &other);
-    
+
     object_list &operator=(const object_list &other) = default;
 
     size_t size() const {

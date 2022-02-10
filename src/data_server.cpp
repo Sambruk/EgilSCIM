@@ -32,8 +32,6 @@
 bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
     try {
         config_file &config = config_file::instance();
-        static_types = string_to_vector(config.get("scim-static-types"));
-        dynamic_types = string_to_vector(config.get("scim-dynamic-types"));
 
         std::shared_ptr<object_list> all = std::make_shared<object_list>();
         string_vector types = config.get_vector("scim-type-load-order");
@@ -137,43 +135,24 @@ void data_server::preload() {
  * get all objects of type
  *
  * @param type the type of objects to return
- * @param query the query used to load the data
- * @return
  */
 std::shared_ptr<object_list> data_server::get_by_type(const std::string &type) const {
-    auto list = static_data.find(type);
-    if (list != static_data.end())
+    auto list = data.find(type);
+    if (list != data.end()) {
         return list->second;
-
-    list = dynamic_data.find(type);
-    if (list != dynamic_data.end())
-        return list->second;
-
+    }
     return nullptr;
 }
 
-std::shared_ptr<object_list> data_server::get_static_by_type(const std::string &type) {
-    auto stuff = static_data.find(type);
-    if (stuff != static_data.end())
-        return stuff->second;
-
-    return std::make_shared<object_list>();
-}
-
-
-void data_server::add_dynamic(const std::string &type, std::shared_ptr<object_list> list) {
-    auto type_data = dynamic_data.find(type);
-    if (type_data == dynamic_data.end())
-        dynamic_data.emplace(std::make_pair(type, list));
+void data_server::add_internal(const std::string &type, std::shared_ptr<object_list> list) {
+    auto type_data = data.find(type);
+    if (type_data == data.end())
+        data.emplace(std::make_pair(type, list));
     else
         *type_data->second += *list;
 
 }
 
-
-void data_server::add_static(const std::string &type, std::shared_ptr<object_list> list) {
-    static_data.emplace(std::make_pair(type, list));
-}
 
 void data_server::add(const std::string &type, std::shared_ptr<base_object> object) {
     auto list = get_by_type(type);
@@ -188,74 +167,24 @@ void data_server::add(const std::string &type, std::shared_ptr<base_object> obje
 
 
 void data_server::add(const std::string &type, std::shared_ptr<object_list> list) {
-    if (std::find(dynamic_types.begin(), dynamic_types.end(), type) != dynamic_types.end())
-        add_dynamic(type, list);
-    else
-        add_static(type, list);
+    add_internal(type, list);
 }
-
-void data_server::cache_relation(const std::string &key, std::weak_ptr<base_object> object) {
-    alt_key_cache.emplace(std::make_pair(key, object));
-}
-
-#define TEST_CACHE 0
 
 std::shared_ptr<base_object>
 data_server::find_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value) {
-
-#if TEST_CACHE
-    std::cout << type << " " << attrib << " " << value;
-#endif
-    auto found_pair = alt_key_cache.find(type + attrib + value);
-
-    if (found_pair != alt_key_cache.end()) {
-        if (auto sp = found_pair->second.lock()) {
-#if TEST_CACHE
-            std::cout << " Cache hit" << std::endl;
-#endif
-            return sp;
-        }
-#if TEST_CACHE
-        else {
-            std::cout << " Cached object invalid" << std::endl;
-        }
-#endif
-    }
-
-#if TEST_CACHE
-    std::cout << " Cache miss";
-#endif
     auto list = get_by_type(type);
-    if (!list)
+    if (!list) {
         return nullptr;
-    auto result = list->get_object_for_attribute(attrib, value);
-    if (result) {
-#if TEST_CACHE
-        std::cout << " - cached";
-#endif
-        cache_relation(type + attrib + value, result);
     }
-#if TEST_CACHE
-    else
-        std::cout << " - not found";
-    std::cout << std::endl;
-#endif
-    return result;
+    return list->get_object_for_attribute(attrib, value);
+
 }
 
-
 bool data_server::has_object(const std::string& uuid) const {
-    for (const auto& cur : static_data) {
+    for (const auto& cur : data) {
         if (cur.second->get_object(uuid) != nullptr) {
             return true;
         }
     }
-
-    for (const auto& cur : dynamic_data) {
-        if (cur.second->get_object(uuid) != nullptr) {
-            return true;
-        }
-    }
-    
     return false;
 }
