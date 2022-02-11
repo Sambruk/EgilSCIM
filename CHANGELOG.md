@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.9.0 (2022-02-11)
 #### New features
   - Objects are automatically indexed internally for faster lookup (#139)
 
