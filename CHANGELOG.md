@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - It's now possible to configure whether or not to follow LDAP referrals (#141)
+
 ## v2.9.0 (2022-02-11)
 #### New features
   - Objects are automatically indexed internally for faster lookup (#139)

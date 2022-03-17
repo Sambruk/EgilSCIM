@@ -92,6 +92,12 @@ an LDAP server:
 * `ldap-who` is the DN to bind as.
 * `ldap-passwd` is the password associated with the entry.
 
+You may also choose not to follow LDAP referrals:
+
+```
+ldap-follow-referrals = false
+```
+
 #### SCIM connection and authentication
 If you wish to run against Skolfederation's metadata file, the following
 set of variables need to be configured:

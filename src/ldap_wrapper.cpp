@@ -196,6 +196,7 @@ struct ldap_wrapper::Impl {
         std::string ldap_uri{};
         std::string ldap_who{};
         std::string ldap_password{};
+        bool ldap_follow_referrals;
 
         /**
          * Initialises LDAP session.
@@ -634,6 +635,16 @@ bool ldap_wrapper::Impl::connection::ldap_init() {
         return false;
     }
 
+    /* Set whether or not to follow referrals */
+
+    err = ldap_set_option(simplescim_ldap_ld, LDAP_OPT_REFERRALS, ldap_follow_referrals ? LDAP_OPT_ON : LDAP_OPT_OFF);
+
+    if (err != LDAP_OPT_SUCCESS) {
+        ldap_print_error(err, "ldap_set_option");
+        ldap_close();
+        return false;
+    }
+
     /* Perform bind */
 
 #ifndef _WIN32
@@ -664,6 +675,14 @@ int ldap_wrapper::Impl::connection::get_variables() {
     ldap_uri = con.get("ldap-uri");
     ldap_who = con.get("ldap-who");
     ldap_password = con.get("ldap-passwd");
+
+    const auto follow_referrals_arg = "ldap-follow-referrals";
+    if (con.has(follow_referrals_arg)) {
+        ldap_follow_referrals = con.get_bool(follow_referrals_arg);
+    }
+    else {
+        ldap_follow_referrals = true;
+    }
     return 0;
 }
 
