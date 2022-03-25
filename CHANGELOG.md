@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.10.0 (2022-03-25)
 #### New features
   - It's now possible to configure whether or not to follow LDAP referrals (#141)
 
