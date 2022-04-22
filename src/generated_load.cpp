@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2019 Föreningen Sambruk
+ *  Copyright (C) 2017-2022 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -18,6 +18,7 @@
  */
 
 #include "generated_load.hpp"
+#include "generated_group_load.hpp"
 #include "config_file.hpp"
 #include "data_server.hpp"
 
@@ -281,10 +282,15 @@ void load_related(const std::string &type,
 std::shared_ptr<object_list> get_generated(const std::string &type,
                                            indented_logger& load_logger) {
     std::shared_ptr<object_list> list;
-    if (type == "Activity")
+    if (type == "Activity") {
         list = get_generated_activity(type, load_logger);
-    else if (type == "Employment")
+    }
+    else if (type == "Employment") {
         list = get_generated_employment(type, load_logger);
+    }
+    else if (type == "StudentGroup") {
+        list = get_generated_student_group(type, load_logger);
+    }
     else {
         std::cerr << type << " can't be generated" << std::endl;
         return std::make_shared<object_list>();

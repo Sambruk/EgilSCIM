@@ -38,6 +38,7 @@
 #include "scim_server_info.hpp"
 #include "post_processing.hpp"
 #include "sql.hpp"
+#include "generated_group_load.hpp"
 
 namespace po = boost::program_options;
 namespace filesystem = std::experimental::filesystem;
@@ -302,6 +303,8 @@ int main(int argc, char *argv[]) {
                 config.replace_variable(variable, value);
             }
         }
+
+        add_scim_vars_for_virtual_groups();
 
         if (config.get_bool("scim-auth-WEAK")) {
             std::cout << "WARNING, running without authentication, this "
