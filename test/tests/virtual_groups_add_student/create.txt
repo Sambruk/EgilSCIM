@@ -1,0 +1,66 @@
+---
+Users /Users POST
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "ed2ecfd6-4805-4302-9c32-f4cc1b58e471",
+	"userName": "grgr@skola.kommunen.se",
+	"displayName": "Greger Gregersson",
+	"name": {
+		"familyName": "Gregersson",
+		"givenName": "Greger"
+	},
+	"emails": [
+        
+        {
+          "value": "grgr@skolan.kommunen.se" 
+        } 
+        
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+        "enrolments": [
+            
+            {
+                "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+                "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b",
+		"schoolYear": 4
+            } 
+            
+        ]
+    }
+}
+---
+---
+StudentGroups /StudentGroups/a06ee410-4721-576b-8c42-fc4a8e2a80bc PUT
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "a06ee410-4721-576b-8c42-fc4a8e2a80bc",
+  "displayName": "grupp1",
+  "studentGroupType": "Klass",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "2b3a480f-d0b9-4c09-bbac-70f915964b02",
+      "$ref": "Users/2b3a480f-d0b9-4c09-bbac-70f915964b02"
+    },
+    
+    {
+      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
+      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
+    },
+    
+    {
+      "value": "ed2ecfd6-4805-4302-9c32-f4cc1b58e471",
+      "$ref": "Users/ed2ecfd6-4805-4302-9c32-f4cc1b58e471"
+    } 
+    
+  ]
+}---
