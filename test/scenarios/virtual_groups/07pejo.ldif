@@ -1,0 +1,19 @@
+dn: uid=pejo,dc=kommunen,dc=se
+changetype: add
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+objectClass: extensibleObject
+cn: Per Johansson
+sn: Johansson
+displayName: Per Johansson
+employeeType: student
+givenName: Per
+mail: pejo@skolan.kommunen.se
+ou: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
+uid: pejo
+entryUUID: 2b3a480f-d0b9-4c09-bbac-70f915964b02
+uniqueIdentifier: 201007032038
+departmentNumber: 4
+initials: skolenhet1#grupp1

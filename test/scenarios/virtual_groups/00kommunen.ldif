@@ -1,0 +1,6 @@
+dn: o=Kommunen,dc=kommunen,dc=se
+changetype: add
+objectClass: organization
+objectClass: top
+o: Kommunen
+entryUUID: d80428c4-8788-47d7-aca7-761681fbe66a
