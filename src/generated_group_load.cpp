@@ -20,6 +20,7 @@
 #include "generated_group_load.hpp"
 #include "config_file.hpp"
 #include "data_server.hpp"
+#include "load_limiter.hpp"
 #include <regex>
 #include <boost/property_tree/json_parser.hpp>
 
@@ -85,6 +86,8 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                                                          indented_logger& load_logger) {
     config_file& conf = config_file::instance();
     data_server &server = data_server::instance();
+
+    auto limiter = get_limiter(type);
     auto generated = std::make_shared<object_list>();
 
     auto from_types = conf.get_vector_sorted_unique(type + "-generate-from-types");
@@ -117,10 +120,8 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                     auto uuid = uuid_util::instance().generate(uuid_basis);
 
                     // Do we need to create the group?
-                    bool created_now = false;
                     auto group = generated->get_object(uuid);
                     if (!group) {
-                        created_now = true;
                         group = std::make_shared<base_object>(type);
                         group->add_attribute(conf.get(type + "-unique-identifier"), {uuid});
                         // Create the group's attributes from the "from" attribute
@@ -128,6 +129,15 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                             auto name = attr.first;
                             auto value = std::regex_replace(from, attribute.match, attr.second, std::regex_constants::format_no_copy);
                             group->add_attribute(name, {value});
+                        }
+
+                        if (limiter->include(group.get())) {
+                            generated->add_object(uuid, group);
+                            load_logger.log(std::string("Generated ") + type + " with UUID " + uuid +
+                                " from " + from_type + " with UUID " + user.second->get_uid());
+                        }
+                        else {
+                            continue;
                         }
                     }
 
@@ -147,13 +157,6 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                             auto id = group->get_values(p.second);
                             user.second->append_values(type + "." + p.second, id, true);
                         }
-                    }
-
-                    // If new, add the group to the results
-                    if (created_now) {
-                        generated->add_object(uuid, group);
-                        load_logger.log(std::string("Generated ") + type + " with UUID " + uuid +
-                            " from " + from_type + " with UUID " + user.second->get_uid());
                     }
                 }
             }
