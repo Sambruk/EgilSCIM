@@ -33,7 +33,7 @@ namespace pt = boost::property_tree;
 student_group_attribute parse_student_group_attribute(const pt::ptree& spec) {
     student_group_attribute result;
     result.from = spec.get<std::string>("from");
-    result.match = spec.get<std::string>("match");
+    result.match = std::regex(spec.get<std::string>("match"), std::regex::optimize);
     result.uuid = spec.get<std::string>("uuid");
 
     auto attrs = spec.get_child("attributes");
