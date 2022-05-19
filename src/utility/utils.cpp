@@ -156,6 +156,13 @@ std::string toUpper(const std::string &s) {
     return out;
 }
 
+// Checks if a string, typically from a configuration file, has
+// a true value. For a string to be true it must equal "true"
+// but the comparison is case insensitive. Any other string is false.
+bool is_true(const std::string& s) {
+    return toUpper(s) == "TRUE";
+}
+
 std::string uuid_util::generate(const std::string &a, const std::string &b) {
     return generate(a + b);
 }

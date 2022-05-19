@@ -44,10 +44,6 @@ std::shared_ptr<object_list> filter_objects(std::shared_ptr<object_list> objects
     return included_objects;
 }
 
-bool is_true(const std::string& s) {
-    return toUpper(s) == "TRUE";
-}
-
 /**
  * for type that have "meta data", i.e. a reference to another type, fetch the corresponding
  * data from data_server or ldap and fill the missing information.

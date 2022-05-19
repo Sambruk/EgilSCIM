@@ -140,11 +140,7 @@ int config_file::load(const std::string &file_name) {
     }
 
     std::string val = get("scim-test-run", true);
-    if (!val.empty()) {
-        val = toUpper(val);
-        if (!val.empty() && val == "TRUE")
-            is_test_run = true;
-    }
+    is_test_run = is_true(val);
 
     return err;
 }
