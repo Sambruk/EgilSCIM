@@ -1,5 +1,10 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - Relations can now be marked as required (#146)
+  - Optional referential integrity warnings in relations (#147)
+
 ## v2.10.0 (2022-03-25)
 #### New features
   - It's now possible to configure whether or not to follow LDAP referrals (#141)
