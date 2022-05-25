@@ -28,7 +28,7 @@ using namespace std;
 
 bool handle_switch(const string& str, string& variable) {
     smatch m;
-    if (regex_match(str, m, regex("\\$\\{[[:space:]]*switch[[:space:]]*((\\w|\\.)+)[[:space:]](.|\n)*\\}"))) {
+    if (regex_match(str, m, regex("\\$\\{[[:space:]]*switch[[:space:]]*((\\w|\\.|-)+)[[:space:]](.|\n)*\\}"))) {
         variable = m[1].str();
         return true;
     }
@@ -39,7 +39,7 @@ bool handle_switch(const string& str, string& variable) {
 
 bool handle_for_header(const string& str, set<string>& variables) {
     smatch m;
-    if (regex_match(str, m, regex("\\$\\{[[:space:]]*for[[:space:]](.|\\n)*?[[:space:]]in[[:space:]](([[:space:]]*(\\w|\\.)+[[:space:]]*)*)\\}"))) {
+    if (regex_match(str, m, regex("\\$\\{[[:space:]]*for[[:space:]](.|\\n)*?[[:space:]]in[[:space:]](([[:space:]]*(\\w|\\.|-)+[[:space:]]*)*)\\}"))) {
         if (m.size() > 2) {
             string variable_sequence = m[2].str();
             istringstream is(variable_sequence);
@@ -57,7 +57,7 @@ bool handle_for_header(const string& str, set<string>& variables) {
 
 bool handle_variable(const string& str, string& variable) {
     smatch m;
-    if (regex_match(str, m, regex("\\$\\{[[:space:]]*((\\w|\\.)+)[[:space:]]*\\}"))) {
+    if (regex_match(str, m, regex("\\$\\{[[:space:]]*((\\w|\\.|-)+)[[:space:]]*\\}"))) {
         if (m.size() > 1 && m[1].str() != "end") {
             variable = m[1].str();
             return true;
