@@ -477,6 +477,12 @@ struct ldap_wrapper::Impl {
                 int ld_errno;
                 int err = ldap_get_option(conn.simplescim_ldap_ld, LDAP_OPT_RESULT_CODE, &ld_errno);
 
+                if (err == LDAP_OPT_SUCCESS && ld_errno == LDAP_OPT_SUCCESS) {
+                    // The attribute simply had no values, skip it
+                    ldap_memfree(attr);
+                    continue;
+                }
+
                 if (err != LDAP_OPT_SUCCESS) {
                     ldap_print_error(err, "ldap_get_option");
                 } else {
