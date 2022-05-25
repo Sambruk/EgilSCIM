@@ -3,6 +3,7 @@
 ## Unreleased
 #### Bugfixes
   - Better handling of when LDAP says an attribute both exists and has no values (#20)
+  - LDAP attribute names can now include the character '-' (#151)
 
 ## v2.10.0 (2022-03-25)
 #### New features
