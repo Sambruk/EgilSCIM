@@ -22,10 +22,12 @@ TEST_CASE("Basic variable expansion") {
     REQUIRE(find_variables("${ foo}") == VariableSet{"foo"});
     REQUIRE(find_variables("${foo }") == VariableSet{"foo"});
     REQUIRE(find_variables("${ foo }") == VariableSet{"foo"});
+    REQUIRE(find_variables("${foo-bar}") == VariableSet{"foo-bar"});
 }
 
 TEST_CASE("Switch expansion") {
     REQUIRE(find_variables("${switch foo case \"a\": \"b\" case \"c\": \"d\" default: \"e\"}") == VariableSet{"foo"});
+    REQUIRE(find_variables("${switch foo-bar case \"a\": \"b\" case \"c\": \"d\" default: \"e\"}") == VariableSet{"foo-bar"});
 
     REQUIRE(find_variables("{\n"\
                            "\t'a' : 'b',\n"\
@@ -50,6 +52,12 @@ TEST_CASE("Iterative expansion") {
                            " 'display': '${$b}'\n"\
                            "},\n"\
                            "${end}") == VariableSet{"a", "b.c"});
+
+    REQUIRE(find_variables("${for $a in foo-bar }\n"\
+                           "{\n"\
+                           " 'value': '${$a}'\n"\
+                           "},\n"\
+                           "${end}") == VariableSet{"foo-bar"});
 }
 
 TEST_CASE("Nested interative expansion") {
