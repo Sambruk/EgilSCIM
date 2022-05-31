@@ -28,7 +28,7 @@
 #include "json_data_file.hpp"
 #include "config_file.hpp"
 
-std::pair<std::string, std::string> relations::get_ldap_filter(const std::string &value) {
+std::pair<std::string, std::string> relation::get_ldap_filter(const std::string &value) {
     using boost::replace_all_copy;
     auto expanded_base = replace_all_copy(remote_ldap_base, "${value}", value);
     auto expanded_filter = replace_all_copy(remote_ldap_filter, "${value}", value);
@@ -84,7 +84,7 @@ relations_vector json_data_file::json_to_ldap_remote_relations(const std::string
         pt::ptree root;
         pt::read_json(json_stream, root);
         for (pt::ptree::value_type &rels : root.get_child("relations")) {
-            relations r;
+            relation r;
             r.type = rels.first;
             r.remote_attribute = rels.second.get<std::string>("remote_attribute");
 
@@ -93,6 +93,9 @@ relations_vector json_data_file::json_to_ldap_remote_relations(const std::string
 
             r.local_attribute = rels.second.get<std::string>("local_attribute");
             r.method = rels.second.get<std::string>("method");
+
+            r.warn_missing = rels.second.get<std::string>("warn_missing", "false");
+            r.require = rels.second.get<std::string>("require", "false");
             values.emplace_back(std::move(r));
         }
     } catch (const pt::ptree_error &e) {

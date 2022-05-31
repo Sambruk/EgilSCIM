@@ -1,0 +1,16 @@
+{
+    "description": "Virtual groups scenario with limiting and orphans filtering",
+    "config": "configs/virtual_groups/master.conf",
+    "steps": [
+	{ "scenario": [],
+	  "requests": null
+	},
+	{ "scenario": [ "scenarios/virtual_groups" ],
+	  "requests": "init.txt",
+	  "commandLine": ["--D", "StudentGroup-limit-with=regex",
+			  "--D", "StudentGroup-limit-regex=Klass",
+			  "--D", "StudentGroup-limit-by=studentGroupType",
+			  "--D", "Student-orphan-if-missing=StudentGroup"]
+	}
+    ]
+}

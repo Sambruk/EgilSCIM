@@ -45,7 +45,15 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
         for (const auto &type : types) {
             std::shared_ptr<object_list> l;
             if (config.get_bool(type + "-is-generated")) {
-                if (!filtered_orphans) {
+                /* TODO
+                 * At the moment we make sure to filter orphans before Activity and Employment,
+                 * assuming those are at the end of the load order (so as to not generate
+                 * activities and employments for objects which are orphans).
+                 * Ideally we should probably instead do the filtering after everything is
+                 * loaded. To get this to work properly we might need a multi-pass filtering,
+                 * and perhaps proper relations.
+                 */
+                if (!filtered_orphans && (type == "Activity" || type == "Employment")) {
                     filter_orphans();
                     filtered_orphans = true;
                 }

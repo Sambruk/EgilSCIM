@@ -1,0 +1,12 @@
+{
+    "description": "Add student",
+    "config": "configs/virtual_groups/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/virtual_groups" ],
+	  "requests": "../virtual_groups_base/init.txt"
+	},
+	{ "scenario": [ "scenarios/virtual_groups/add_student" ],
+	  "requests": "create.txt"
+	}
+    ]
+}

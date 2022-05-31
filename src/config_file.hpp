@@ -90,7 +90,7 @@ public:
     std::pair<std::string, std::string> get_pair(const std::string &variable, bool silent = false) const;
 
     bool get_bool(const std::string &attrib) const {
-        return ::toUpper(get(attrib, true)) == "TRUE";
+        return is_true(get(attrib, true));
     }
 
     std::string get_path(const std::string& variable, bool silent = false) const;

@@ -24,13 +24,15 @@
 #include <sstream>
 #include "model/object_list.hpp"
 
-struct relations {
+struct relation {
     std::string type;
     std::string remote_attribute;
     std::string remote_ldap_base;
     std::string remote_ldap_filter;
     std::string local_attribute;
     std::string method;
+    std::string warn_missing;
+    std::string require;
 
     /*
      * Returns LDAP base and filter from the relation.
@@ -48,7 +50,7 @@ struct data_cache {
 
 };
 using pair_map = std::map<std::string, std::pair<std::string, std::string>>;
-using relations_vector = std::vector<relations>;
+using relations_vector = std::vector<relation>;
 using data_cache_vector = std::vector<data_cache> ;
 
 class json_data_file {

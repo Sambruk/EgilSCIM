@@ -1,6 +1,10 @@
 ## Releases
 
 ## Unreleased
+#### New features
+  - Groups can now be generated from user attributes (#145)
+  - Relations can now be marked as required (#146)
+  - Optional referential integrity warnings in relations (#147)
 #### Bugfixes
   - Better handling of when LDAP says an attribute both exists and has no values (#20)
   - LDAP attribute names can now include the character '-' (#151)
