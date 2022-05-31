@@ -2,6 +2,7 @@
 
 ## Unreleased
 #### New features
+  - Groups can now be generated from user attributes (#145)
   - Relations can now be marked as required (#146)
   - Optional referential integrity warnings in relations (#147)
 
