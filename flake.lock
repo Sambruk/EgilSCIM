@@ -1,0 +1,79 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "locked": {
+        "lastModified": 1638122382,
+        "narHash": "sha256-sQzZzAbvKEqN9s0bzWuYmRaA03v40gaJ4+iL1LXjaeI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "74f7e4319258e287b0f9cb95426c9853b282730b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "nix-filter": {
+      "locked": {
+        "lastModified": 1641407557,
+        "narHash": "sha256-LRMVr6+dbmNv3I/8TepDoNsv0AaNR4/1R1qv0Okhtc8=",
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "rev": "bd03eb5242e707bc270f7a7e4f835b55713247ac",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "type": "github"
+      }
+    },
+    "nix-utils": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1642379196,
+        "narHash": "sha256-fSPpAETgZ21Ka8FOZQFZLuZwN0XDtdAHPXYXbrqRtXw=",
+        "owner": "ilkecan",
+        "repo": "nix-utils",
+        "rev": "429393fcc3ee84876955305b8f641ed45514c22e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ilkecan",
+        "repo": "nix-utils",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1641870998,
+        "narHash": "sha256-6HkxR2WZsm37VoQS7jgp6Omd71iw6t1kP8bDbaqCDuI=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "386234e2a61e1e8acf94dfa3a3d3ca19a6776efb",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "ref": "nixos-21.11",
+        "type": "indirect"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nix-filter": "nix-filter",
+        "nix-utils": "nix-utils",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

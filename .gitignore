@@ -22,3 +22,6 @@ cmake-build-debug/*
 test/test_server_go/EGILTestServer/EGILTestServer
 
 *.pem
+
+# nix build
+/result*

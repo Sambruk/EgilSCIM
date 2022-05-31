@@ -16,6 +16,12 @@ with
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 ```
 
+## Building with Nix
+```shell
+cd <project-root>
+nix build '.#scim-client.debug'
+```
+
 ## Post-mortem investigation of a crash
 
 To do a post-mortem investigation of a crash, we need the following:

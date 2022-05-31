@@ -68,6 +68,10 @@ Run EgilSCIM with:
 
 # System specific instructions
 
+## Nix package manager
+    cd <project-root>
+    nix build
+
 ## Ubuntu Server 18.04 LTS
     sudo apt install cmake libldap2-dev libcurl4-openssl-dev libboost-all-dev
     cd EgilSCIM/build
