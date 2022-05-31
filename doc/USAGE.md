@@ -360,6 +360,34 @@ the object method is used in `StudentGroup-remote-relations` to find the SchoolU
 for a given StudentGroup, SchoolUnit should come before StudentGroup in `scim-type-load-order`,
 so that the SchoolUnit objects are already loaded in memory when we load the StudentGroups.
 
+### Required relations
+Sometimes an object needs to have a relation to another object. For instance, a StudentGroup
+in SS12000 needs to have an owning SchoolUnit. If there are groups in the data source
+without a school unit attribute, or with a school unit attribute that points to a non-existing
+school unit, we can specify that these groups should be skipped in the load process by
+specifying that the relation is required:
+
+```
+  "require": "true",
+``` 
+
+By default, the object that fails to establish a relation will be silently skipped. If
+you don't expect this to happen you might prefer to get a warning. See the section below
+about referential integrity warnings.
+
+### Referential integrity warnings
+Sometimes when the value for the local attribute doesn't find a matching remote attribute
+we want to know about it. For instance, perhaps you expect all groups to have valid
+school unit codes. You can then specify that the relation should warn about attribute
+values that don't find a match:
+
+```
+  "warn_missing": "true",
+```
+
+After trying to establish relations for a data type, you will get a summary of all
+local attribute values for which there was no match (up to 100 values).
+
 ## Generating groups from attributes
 
 Sometimes the student groups are not available as their own objects in the data source.
