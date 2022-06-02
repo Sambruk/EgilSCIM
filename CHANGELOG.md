@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.11.0 (2022-06-02)
 #### New features
   - Groups can now be generated from user attributes (#145)
   - Relations can now be marked as required (#146)
