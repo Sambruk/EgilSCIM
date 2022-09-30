@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### Bugfixes
+  - Orphan filtering applies to all types (#158)
+
 ## v2.11.0 (2022-06-02)
 #### New features
   - Groups can now be generated from user attributes (#145)
