@@ -21,6 +21,7 @@
 #include "config_file.hpp"
 #include "data_server.hpp"
 #include "load_limiter.hpp"
+#include "load_common.hpp"
 #include <regex>
 #include <boost/property_tree/json_parser.hpp>
 
@@ -142,22 +143,7 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                     }
 
                     // Establish relation between group and user
-                    for (auto &&var : scim_vars) {
-                        auto p = string_to_pair(var);
-                        if (p.first == from_type) {
-                            string_vector v = user.second->get_values(p.second);
-                            group->append_values(var, v);
-                        }
-                    }
-
-                    auto relations_scim_vars = conf.get_vector(from_type + "-scim-variables");
-                    for (auto &&var : relations_scim_vars) {
-                        auto p = string_to_pair(var);
-                        if (p.first == type) {
-                            auto id = group->get_values(p.second);
-                            user.second->append_values(type + "." + p.second, id, true);
-                        }
-                    }
+                    establish_relation(group, user.second, type, from_type);
                 }
             }
 

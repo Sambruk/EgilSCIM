@@ -44,6 +44,44 @@ std::shared_ptr<object_list> filter_objects(std::shared_ptr<object_list> objects
     return included_objects;
 }
 
+void establish_relation(std::shared_ptr<base_object> main_object,
+                        std::shared_ptr<base_object> remote,
+                        const std::string& main_type,
+                        const std::string& remote_type) {
+    
+    config_file &conf = config_file::instance();
+    string_vector main_scim_vars = conf.get_vector_sorted_unique(main_type + "-scim-variables");
+    string_vector remote_scim_vars = conf.get_vector_sorted_unique(remote_type + "-scim-variables");
+
+    // from the newly loaded related object, grab some info from it
+    // e.g. a StudentGroup loads Students, grab their names and GUIDs
+    // it is whatever is in the json-config with the related objects TYPE
+    for (auto &&var : main_scim_vars) {
+        auto p = string_to_pair(var);
+        if (p.first == remote_type) {
+            string_vector v = remote->get_values(p.second);
+            main_object->append_values(var, v);
+        }
+    }
+    // Sometimes the related object need some info about this object, hand it down
+    for (auto &&var : remote_scim_vars) {
+        auto p = string_to_pair(var);
+        if (p.first == main_type) {
+            auto id = main_object->get_values(p.second);
+            remote->append_values(main_type + "." + p.second, id, true);
+        }
+    }
+
+    // Make sure there's a special "__related__" attribute created so
+    // orphan filtering will work even if the above code didn't transfer
+    // any attributes. This shouldn't be needed if we start using "real"
+    // relations instead of copying attributes like this.
+    const auto related_name = "__related__";
+    string_vector related_value = {"1"};
+    main_object->add_attribute(remote_type + "." + related_name, related_value);
+    remote->add_attribute(main_type + "." + "__related__", related_value);
+}
+
 /**
  * for type that have "meta data", i.e. a reference to another type, fetch the corresponding
  * data from data_server or ldap and fill the missing information.
@@ -91,22 +129,7 @@ void load_related(const std::string &type,
                                                                              relation.remote_attribute, values[i]);
                         if (remote_object) {
                             relation_found = true;
-                            for (auto &&var : scim_vars) {
-                                auto p = string_to_pair(var);
-                                if (p.first == relation.type) {
-                                    string_vector v = remote_object->get_values(p.second);
-                                    main_object.second->append_values(var, v);
-                                }
-                            }
-
-                            auto relations_scim_vars = conf.get_vector(relation.type + "-scim-variables");
-                            for (auto &&var : relations_scim_vars) {
-                                auto p = string_to_pair(var);
-                                if (p.first == type) {
-                                    auto id = main_object.second->get_values(p.second);
-                                    remote_object->append_values(type + "." + p.second, id, true);
-                                }
-                            }
+                            establish_relation(main_object.second, remote_object, type, relation.type);
                         }
                         else {
                             if (warn_missing && missing_local_values[relation.type].size() < MAX_MISSING_LOCAL_VALUES) {
@@ -149,25 +172,7 @@ void load_related(const std::string &type,
                     }
                     if (remote) {
                         relation_found = true;
-                        // from the newly loaded related object, grab some info from it
-                        // e.g. a StudentGroup loads Students, grab their names and GUIDs
-                        // it is whatever is in the json-config with the related objects TYPE
-                        for (auto &&var : scim_vars) {
-                            auto p = string_to_pair(var);
-                            if (p.first == relation.type) {
-                                string_vector v = remote->get_values(p.second);
-                                main_object.second->append_values(var, v);
-                            }
-                        }
-                        // Sometimes the related object need some info about this object, hand it down
-                        auto relations_scim_vars = conf.get_vector(relation.type + "-scim-variables");
-                        for (auto &&var : relations_scim_vars) {
-                            auto p = string_to_pair(var);
-                            if (p.first == type) {
-                                auto id = main_object.second->get_values(p.second);
-                                remote->append_values(type + "." + p.second, id, true);
-                            }
-                        }
+                        establish_relation(main_object.second, remote, type, relation.type);
                     }
                     else {
                         if (warn_missing && missing_local_values[relation.type].size() < MAX_MISSING_LOCAL_VALUES) {

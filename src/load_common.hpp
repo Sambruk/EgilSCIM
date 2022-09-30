@@ -41,4 +41,9 @@ std::shared_ptr<object_list> filter_objects(std::shared_ptr<object_list> objects
                                             indented_logger &load_logger,
                                             const std::string& type);
 
+void establish_relation(std::shared_ptr<base_object> main_object,
+                        std::shared_ptr<base_object> remote,
+                        const std::string& main_type,
+                        const std::string& remote_type);
+
 #endif // EGILSCIM_LOAD_COMMON_HPP

@@ -116,10 +116,11 @@ void data_server::filter_orphans() {
     config_file &config = config_file::instance();
     string_vector types = config.get_vector("scim-type-load-order");
 
-    for (const auto &type : types) {
+    for (const auto &data_for_type : data) {
+        auto type = data_for_type.first;
+        auto object_list = data_for_type.second;
         auto attributes = config.get_vector(type + "-orphan-if-missing", true);
         if (!attributes.empty()) {
-            auto object_list = get_by_type(type);
             std::vector<std::string> to_remove;
             for (const auto &iter : *object_list) {
                 if (is_orphan(iter.second, attributes)) {
