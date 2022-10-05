@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.11.1 (2022-10-05)
 #### Bugfixes
   - Orphan filtering applies to all types (#158)
 
