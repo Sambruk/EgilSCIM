@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - Functionality for transforming attributes from the data source (#165)
+
 ## v2.11.1 (2022-10-05)
 #### Bugfixes
   - Orphan filtering applies to all types (#158)

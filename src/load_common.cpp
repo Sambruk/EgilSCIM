@@ -25,6 +25,13 @@
 #include "load_limiter.hpp"
 #include <cassert>
 
+void transform_objects(std::shared_ptr<object_list> objects, std::shared_ptr<transformer> transform) {
+    for (auto &iter : *objects) {
+        auto object = iter.second;
+        transform->apply(object.get());
+    }
+}
+
 std::shared_ptr<object_list> filter_objects(std::shared_ptr<object_list> objects,
                                             std::shared_ptr<load_limiter> limiter,
                                             indented_logger &load_logger,
@@ -157,8 +164,9 @@ void load_related(const std::string &type,
                         }
 
                         if (ldap.search(relation.type, load_logger, filter)) {
+                            auto transform = get_transformer(relation.type);
                             auto limiter = get_limiter(relation.type);
-                            auto response = ldap_to_object_list(ldap, relation.type, limiter, load_logger);
+                            auto response = ldap_to_object_list(ldap, relation.type, transform, limiter, load_logger);
                             if (response->size() == 1) {
                                 remote = response->begin()->second;
                                 server.add(relation.type, remote);

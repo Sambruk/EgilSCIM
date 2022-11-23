@@ -43,6 +43,7 @@ store_relation(base_object &generated_object,
  */
 std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
                                                  const std::string& type,
+                                                 std::shared_ptr<transformer> transform,
                                                  std::shared_ptr<load_limiter> limiter,
                                                  indented_logger& load_logger) {
   std::shared_ptr<object_list> objects;
@@ -54,6 +55,7 @@ std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
       indented_logger::indenter indenter(load_logger);
       while (obj != nullptr) {
           uid = obj->get_uid();
+          transform->apply(obj.get());
 
           if (!uid.empty() && limiter->include(obj.get())) {
               objects->add_object(uid, obj);
@@ -84,8 +86,9 @@ std::shared_ptr<object_list> ldap_get(ldap_wrapper &ldap,
     
     std::shared_ptr<object_list> objects;
     if (ldap.search(type, load_logger)) {
-        auto limiter = get_limiter(type);            
-        objects = ldap_to_object_list(ldap, type, limiter, load_logger);
+        auto transform = get_transformer(type);        
+        auto limiter = get_limiter(type);
+        objects = ldap_to_object_list(ldap, type, transform, limiter, load_logger);
     }
     
     return objects;
