@@ -20,6 +20,7 @@
 #include "sql_load.hpp"
 #include "sql.hpp"
 #include "config_file.hpp"
+#include "transformer.hpp"
 #include "load_limiter.hpp"
 #include "load_common.hpp"
 #include <boost/property_tree/json_parser.hpp>
@@ -164,6 +165,9 @@ std::shared_ptr<object_list> sql_get(std::shared_ptr<sql::plugin> plugin,
     } catch (const std::runtime_error& e) {
         throw std::runtime_error("Failed to load " + type + " from SQL: " + e.what());
     }
+
+    auto transform = get_transformer(type);
+    transform_objects(objects, transform);
 
     auto limiter = get_limiter(type);
     objects = filter_objects(objects, limiter, load_logger, type);

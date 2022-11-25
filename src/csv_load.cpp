@@ -19,6 +19,7 @@
 
 #include "csv_load.hpp"
 #include "config_file.hpp"
+#include "transformer.hpp"
 #include "load_limiter.hpp"
 #include "data_server.hpp"
 #include "load_common.hpp"
@@ -127,6 +128,9 @@ std::shared_ptr<object_list> csv_get(const std::string &type,
             throw std::runtime_error(type + " : " + e.what());
         }
     }
+
+    auto transform = get_transformer(type);
+    transform_objects(objects, transform);
 
     objects = filter_objects(objects, limiter, load_logger, type);
 

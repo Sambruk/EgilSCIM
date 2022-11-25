@@ -583,6 +583,124 @@ StudentGroup-orphan-if-missing = Student Teacher
 
 Only groups that are missing _both_ Student and Teacher relations will then be filtered out.
 
+## Transforming attributes
+
+Sometimes the attributes in the data source don't have the format we require. Some tranformations
+can be carried out in the JSON templates, for instance concatenating strings or with the switch
+construct. If the data source is an SQL database the SQL queries can also be used to
+transform data. A third method is to specify transform rules which are applied to the data after
+it has been read from the data source (but before relations have been established or load limiting
+had been done).
+
+Transform rules are specified by data type. Each data type can have multiple rules, they are
+carried out in order after an object of that type has been loaded from the data source.
+
+Transform rules are specified as a JSON array, for instance to specify rules for Student
+objects:
+
+```
+Student-transform-attributes = <?
+[
+  {
+    <<< RULE 1 >>>
+  },
+  {
+    <<< RULE 2 >>>
+  }
+]
+?>
+```
+
+Each rule will have a "from" field specifying which attribute to transform. You can also
+specify a "function" field to choose which type of transform to perform (if you don't
+specify a function the default is to perform a regular expression transform).
+
+### Regular expression transforms
+
+When transforming with regular expressions each rule can have one or many regular expression
+to match against. For each regular expression you can also specify how to transform the values
+and to which new attribute the transformed value should be written.
+
+If you specify several regular expressions, you can choose whether to apply all transforms or
+just the first one to match.
+
+You can also specify that the value should simply be copied to a new attribute if none of the
+expressions match.
+
+A simple example for removing a prefix from group names:
+
+```
+StudentGroup-transform-attributes = <?
+[
+  {
+    "from": "cn",
+    "transforms": [ ["XY-(.*)", "displayName", "$1"] ]
+  }
+]
+?>
+```
+
+Here we are transforming the `cn` attribute. For all values matching the regular expression
+`XY-(.*)` we will create a new value in the displayName attribute with just the text after
+"XY-". Note that regular expression capture groups are used and `$1` in this example refers
+to the first capture group (`(.*)`).
+
+If we want to do the same but simply copy values that don't start with "XY-" we can use
+the `noMatch` field:
+
+```
+StudentGroup-transform-attributes = <?
+[
+  {
+    "from": "cn",
+    "transforms": [ ["XY-(.*)", "displayName", "$1"] ],
+    "noMatch": "displayName"
+  }
+]
+?>
+```
+
+In other words, if none of the expressions under `transforms` match, just copy the value to
+`displayName`.
+
+Here's an example with two regular expressions, for splitting a value into two new attributes
+(for instance `fullName` into `firstName` and `lastName`):
+
+```
+Student-transform-attributes  = <?
+[
+  {
+    "from": "fullName",
+    "transforms": [ ["(.*?) .*", "firstName", "$1"],
+                    [".*? (.*)", "lastName", "$1"] ]
+  }
+]
+?>
+```
+
+You can also set `allMatch` to false if you only want to apply the first matching regular
+expression. Here's an example which classifies a group into different types depending on
+an expected naming conventions:
+
+```
+Student-transform-attributes  = <?
+[
+  {
+    "from": "groups",
+    "transforms": [ ["[0-9][a-z]-(.*)", "class", "$1"],
+                    ["..-(.*)", "studyGroup", "$1"],
+		    ["(.*?)-(.*)", "otherGroup", "$0"] ],
+    "allMatch": false
+  }
+]
+?>
+```
+
+In this example we need to specify `allMatch` so that for instance classes are _only_
+classified as classes even though they also match the more general rules for study groups
+and other groups. The expressions are tried in order and only the first match will be
+applied.
+
 ## Execution
 
 EgilSCIM is executed by typing `EgilSCIMClient [OPTIONS] <file>` where `file`
