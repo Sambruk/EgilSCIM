@@ -1,0 +1,22 @@
+{
+    "description": "Unprovision all data",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [  ],
+	  "requests": "delete.txt",
+	  "commandLine": ["--skip-load"],
+	  "failWith": 500
+	},
+	{ "scenario": [  ],
+	  "requests": "delete.txt",
+	  "commandLine": ["--skip-load"]
+	},
+	{ "scenario": [  ],
+	  "requests": "empty.txt",
+	  "commandLine": ["--skip-load"]
+	}
+    ]
+}
