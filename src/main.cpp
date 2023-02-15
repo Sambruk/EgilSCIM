@@ -188,7 +188,8 @@ int main(int argc, char *argv[]) {
         generic.add_options()
             ("help,h",             "produce help message")
             ("version,v",          "displays version of this program")
-            ("rebuild-cache,r",    "ignores cache file contents and instead queries SCIM server for list of objects");
+            ("rebuild-cache,r",    "ignores cache file contents and instead queries SCIM server for list of objects")
+            ("skip-load",          "don't read from data source, causes delete for all objects in cache");
 
         // Config file variables exposed as command line options
         std::vector<config_file_option> common_vars =
@@ -338,8 +339,9 @@ int main(int argc, char *argv[]) {
 
         /** Get objects from data source */
         data_server &server = data_server::instance();
+        bool skip_load = vm.count("skip-load");
         try {
-            if (!server.load(sqlp)) {
+            if (!skip_load && !server.load(sqlp)) {
                 print_error();
                 std::cerr << "Failed to load from data source" << std::endl;
                 return EXIT_FAILURE;

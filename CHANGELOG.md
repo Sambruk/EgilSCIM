@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - Function for unprovisioning all data (#169)
+
 ## v2.12.0 (2022-12-08)
 #### New features
   - Functionality for transforming attributes from the data source (#165)
