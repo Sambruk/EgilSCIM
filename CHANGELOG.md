@@ -4,6 +4,9 @@
 #### New features
   - Function for unprovisioning all data (#169)
 
+#### Bugfixes
+  - fetch_metadata.py has more robust handling of a bad cached file (#168)
+
 ## v2.12.0 (2022-12-08)
 #### New features
   - Functionality for transforming attributes from the data source (#165)
