@@ -520,16 +520,6 @@ long scim_sender::send_delete(const std::string &url) {
         simplescim_error_string_set_prefix("simplescim_scim_send_delete");
         simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld", response_code, 204L);
         return response_code;
-    } else if (response_code == 413) {
-        std::string message = " data to " + url + " to large.";
-        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-                                            message.c_str());
-        return {};
-    } else if (response_code == 403) {
-        std::string message = " unathorized ";
-        simplescim_error_string_set_message("HTTP response code %ld returned, expected %ld %s", response_code, 201L,
-                                            message.c_str());
-        return {};
     }
 
     return 0;

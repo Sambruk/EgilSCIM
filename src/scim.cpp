@@ -368,6 +368,10 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
     if (err != 0 && err != 404) { // Recache if delete failed, 404 is no failure
         actions.scim_new_cache->add_object(std::make_shared<rendered_object>(object));
     }
+    if (err == 404) {
+        simplescim_error_string_set_prefix("ScimActions::delete_func:");
+        simplescim_error_string_set_message("tried to delete an object which the server says it doesn't have. Will not attempt to delete next run.");
+    }
 
     return err;
 }
