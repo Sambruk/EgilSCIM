@@ -60,13 +60,18 @@ def get_and_verify(url, keys, output: str) -> bool:
 
 def still_valid(cached: str) -> bool:
     """Checks if a metadata file is still valid according to its cache_ttl"""
-    with open(cached, 'r') as f:
-        cached_dict = json.load(f)
+    try:
+        with open(cached, 'r') as f:
+            cached_dict = json.load(f)
 
-    cache_ttl = cached_dict.get('cache_ttl', 3600)
-    mtime = os.path.getmtime(cached)
+        cache_ttl = cached_dict.get('cache_ttl', 3600)
+        mtime = os.path.getmtime(cached)
     
-    return time.time() < mtime + cache_ttl
+        return time.time() < mtime + cache_ttl
+    except Exception as e:
+        print("Failed to check if cached metadata was valid")
+        error_print(e)
+        return False
 
 if __name__ == '__main__':
 
