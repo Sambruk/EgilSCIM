@@ -25,3 +25,6 @@ test/test_server_go/EGILTestServer/EGILTestServer
 
 # nix build
 /result*
+
+# VS Code
+.vscode
