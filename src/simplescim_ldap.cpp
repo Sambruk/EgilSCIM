@@ -58,9 +58,11 @@ std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
           transform->apply(obj.get());
 
           if (!uid.empty() && limiter->include(obj.get())) {
-              objects->add_object(uid, obj);
-
-              load_logger.log("Found " + type + " " + uid);
+              auto acceptable_uuid = warn_if_bad_uuid(uid);
+              if (acceptable_uuid) {
+                  objects->add_object(uid, obj);
+                  load_logger.log("Found " + type + " " + uid);
+              }
           }
 
           obj = ldap.next_object();

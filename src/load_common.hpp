@@ -51,4 +51,6 @@ void establish_relation(std::shared_ptr<base_object> main_object,
                         const std::string& main_type,
                         const std::string& remote_type);
 
+bool warn_if_bad_uuid(const std::string& uuid);
+
 #endif // EGILSCIM_LOAD_COMMON_HPP

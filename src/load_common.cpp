@@ -24,6 +24,7 @@
 #include "simplescim_ldap.hpp"
 #include "load_limiter.hpp"
 #include <cassert>
+#include <regex>
 
 void transform_objects(std::shared_ptr<object_list> objects, std::shared_ptr<transformer> transform) {
     for (auto &iter : *objects) {
@@ -212,4 +213,52 @@ void load_related(const std::string &type,
             }
         }
     }
+}
+
+bool warn_if_bad_uuid(const std::string& uuid) {
+    // These will be read from config file if available,
+    // initialized to defaults if not in config file.
+    static bool discard_objects_with_bad_uuids = false;
+    static bool disable_bad_uuid_warnings = false;
+
+    // Read from config file on first call
+    static bool got_config_variables = false;
+    if (!got_config_variables) {
+        const config_file &config = config_file::instance();
+
+        const auto disable_warnings_variable_name = "disable-bad-uuid-warnings";
+        if (config.has(disable_warnings_variable_name)) {
+            disable_bad_uuid_warnings = config.get_bool(disable_warnings_variable_name);
+        }
+
+        const auto discard_objects_variable_name = "discard-objects-with-bad-uuids";
+        if (config.has(discard_objects_variable_name))  {
+            discard_objects_with_bad_uuids = config.get_bool(discard_objects_variable_name);
+        }
+        got_config_variables = true;
+    }
+
+    for (auto ch : uuid) {
+        if (isupper(ch)) {
+            if (!disable_bad_uuid_warnings) {
+                std::cerr << "Upper case character found in UUID: " << uuid << std::endl;
+            }
+            return !discard_objects_with_bad_uuids;
+        }
+    }
+    const auto strict_pattern = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$";
+    static std::regex* matcher = 0;
+
+    if (matcher == 0) {
+        matcher = new std::regex(strict_pattern, std::regex::optimize);
+    }
+
+    if (!std::regex_match(uuid, *matcher)) {
+        if (!disable_bad_uuid_warnings) {
+            std::cerr << "UUID with bad format: " << uuid << std::endl;
+        }
+        return !discard_objects_with_bad_uuids;
+    }
+
+    return true;
 }
