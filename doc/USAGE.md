@@ -701,6 +701,36 @@ classified as classes even though they also match the more general rules for stu
 and other groups. The expressions are tried in order and only the first match will be
 applied.
 
+## UUIDs
+
+The client will by default warn if an object is discovered to have a bad UUID.
+
+This includes strings that cannot be parsed as a UUID according to RFC4122
+and UUIDs that contain upper case letters (according to RFC4122 we should
+only send along UUIDs in lower case to the SCIM server).
+
+Since different SCIM servers may handle bad UUIDs differently, and treat
+case sensitivity differently, it is highly recommended to only transmit
+proper UUIDs in lower case.
+
+The warning can be disabled:
+
+```
+disable-bad-uuid-warnings = true
+```
+
+This is really only recommended to use if you have an existing integration
+which works well with the bad UUIDs and you don't want to fix it.
+
+You can also prevent any objects with bad UUIDs to be loaded:
+
+```
+discard-objects-with-bad-uuids = true
+```
+
+This is recommended to always use for new configurations so as to not
+accidentally send an object with bad UUID to a server.
+
 ## Execution
 
 EgilSCIM is executed by typing `EgilSCIMClient [OPTIONS] <file>` where `file`

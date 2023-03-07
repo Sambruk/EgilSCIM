@@ -79,7 +79,10 @@ std::shared_ptr<object_list> sql_to_object_list(std::shared_ptr<sql::plugin::ite
 
         auto uid = object->get_uid();
         if (!uid.empty()) {
-            objects->add_object(uid, object);
+            auto acceptable_uuid = warn_if_bad_uuid(uid);
+            if (acceptable_uuid) {
+                objects->add_object(uid, object);
+            }
         }
     }
 

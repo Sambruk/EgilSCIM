@@ -6,11 +6,19 @@ key=$(mktemp /tmp/testkey.XXXXXX)
 
 openssl req -x509 -newkey rsa:4096 -keyout $key -out $cert -days 1 -nodes -subj '/CN=localhost' &> /dev/null
 
+if (($# > 0))
+then
+    testargs="-tests $1"
+else
+    testargs=""
+fi
+
 ${testroot}/test_server_go/EGILTestServer/EGILTestServer \
   -cert $cert \
   -key $key \
   -testroot $testroot \
-  -binary ${testroot}/../build/EgilSCIMClient
+  -binary ${testroot}/../build/EgilSCIMClient \
+  $testargs
 
 exitstatus=$?
 

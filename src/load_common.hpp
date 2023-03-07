@@ -51,4 +51,17 @@ void establish_relation(std::shared_ptr<base_object> main_object,
                         const std::string& main_type,
                         const std::string& remote_type);
 
+/**
+ * Treatment of bad UUIDs. This function will print
+ * a warning to stderr if the uuid is bad and return whether
+ * or not the object should be allowed to be loaded.
+ * 
+ * By default all objects are allowed to be loaded regardless
+ * of what their UUID looks like (for backwards compatibility
+ * reasons), but this can be changed with a config variable.
+ * 
+ * The warning can also be disabled by a config variable.
+*/
+bool warn_if_bad_uuid(const std::string& uuid);
+
 #endif // EGILSCIM_LOAD_COMMON_HPP

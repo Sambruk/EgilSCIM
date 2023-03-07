@@ -3,6 +3,7 @@
 ## Unreleased
 #### New features
   - Function for unprovisioning all data (#169)
+  - Improved handling of bad UUIDs (#163)
 
 #### Bugfixes
   - fetch_metadata.py has more robust handling of a bad cached file (#168)
