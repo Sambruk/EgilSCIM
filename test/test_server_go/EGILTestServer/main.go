@@ -251,7 +251,7 @@ func findSubDirectories(p string) []string {
 	return result
 }
 
-func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, key string) {
+func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, key string, tests []string) {
 	testSuitePath := path.Join(testRoot, "tests")
 
 	// Restart LDAP server
@@ -281,7 +281,10 @@ func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, k
 	// Give it some extra time...
 	time.Sleep(3 * time.Second)
 
-	testDirectories := findSubDirectories(testSuitePath)
+	testDirectories := tests
+	if testDirectories == nil {
+		testDirectories = findSubDirectories(testSuitePath)
+	}
 
 	noneFailed := true
 	for _, dir := range testDirectories {
@@ -305,6 +308,7 @@ func main() {
 	var keyp = flag.String("key", "", "path to server private key")
 	var testrootp = flag.String("testroot", "", "path to root of test directory")
 	var binaryp = flag.String("binary", "", "path to EGIL client binary")
+	var testsp = flag.String("tests", "", "tests to include (comma separated)")
 
 	flag.Parse()
 
@@ -337,6 +341,10 @@ func main() {
 		err := <-ch
 		log.Fatal(err)
 	} else {
-		runTestSuite(&testLogger, ch, *certp, *keyp)
+		var tests []string
+		if *testsp != "" {
+			tests = strings.Split(*testsp, ",")
+		}
+		runTestSuite(&testLogger, ch, *certp, *keyp, tests)
 	}
 }
