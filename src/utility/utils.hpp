@@ -42,6 +42,7 @@ std::string toUpper(const std::string &s);
 bool is_true(const std::string& s);
 
 bool startsWith(const std::string& s, const std::string& prefix);
+bool endsWith(const std::string& s, const std::string& suffix);
 
 void print_error();
 
