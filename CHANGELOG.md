@@ -8,6 +8,7 @@
 #### Bugfixes
   - fetch_metadata.py has more robust handling of a bad cached file (#168)
   - Improved error message when a DELETE fails with 404 (#167)
+  - Don't introduce double '/' when building SCIM URLs (#174)
 
 ## v2.12.0 (2022-12-08)
 #### New features

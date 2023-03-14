@@ -68,6 +68,10 @@ bool startsWith(const std::string& s, const std::string& prefix) {
     return s.substr(0, prefix.size()) == prefix;
 }
 
+bool endsWith(const std::string& s, const std::string& suffix) {
+    return s.size() >= suffix.size() && s.substr(s.size()-suffix.size()) == suffix;
+}
+
 void print_error() {
     if (has_errors_to_print())
         std::cerr << simplescim_error_string_get() << std::endl;

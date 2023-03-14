@@ -32,6 +32,33 @@
 #include "rendered_cache_file.hpp"
 #include "simplescim_scim_send.hpp"
 
+// Concatenates a base URL with a path, for instance "https://foo.com" and "Users"
+// into "https://foo.com/Users"
+// If the first part ends with "/" or the second part starts with "/" we will make sure
+// only one "/" is used (so the base URL in metadata can have either a trailing / or not,
+// see #174).
+// Since the fix for #174 technically changes behaviour, there's a configuration 
+// variable for skipping the / cleaning. Hopefully we can remove this once we're sure
+// no one actually needed that.
+//
+// When the legacy behaviour is gone we can also move this function to utils.cpp
+// since it won't have a dependency on config_file.hpp anymore.
+std::string concat_url(const std::string& s1, const std::string& s2) {
+    bool legacy_behaviour = config_file::instance().get_bool("legacy-url-concatenation");
+    auto first = s1;
+    auto second = s2;
+
+    if (!legacy_behaviour) {
+        while (endsWith(first, "/")) {
+            first = first.substr(0, first.size() - 1);
+        }
+        while (startsWith(second, "/")) {
+            second = second.substr(1);
+        }
+    }
+    return first + '/' + second;
+}
+
 int ScimActions::simplescim_scim_init() const {
     int err;
 
@@ -193,7 +220,7 @@ void ScimActions::process_deletes(const object_list& current,
 void ScimActions::process_deletes_per_endpoint(const std::vector<std::string>& to_delete,
                                                const std::string& endpoint,
                                                statistics& stats) const {
-    auto prefix = scim_server_info.get_url() + '/' + endpoint + '/';
+    auto prefix = concat_url(scim_server_info.get_url(), endpoint) + '/';
 
     for (const auto& uuid : to_delete) {
         ++stats.n_delete;
@@ -360,7 +387,8 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
     std::string url = actions.scim_server_info.get_url();
     std::string urlified = unifyurl(object.get_id());
     std::string endpoint = config_file::instance().get(object.get_type() + "-scim-url-endpoint");
-    url += '/' + endpoint + '/' + urlified;
+    url = concat_url(url, endpoint);
+    url = concat_url(url, urlified);
 
     /* Send SCIM delete request */
     int err = scim_sender::instance().send_delete(url);
@@ -379,7 +407,7 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
 int ScimActions::create_func::operator()(const ScimActions &actions) {
     std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(create.get_type() + "-scim-url-endpoint");
-    url += '/' + endpoint;
+    url = concat_url(url, endpoint);
 
     /* Send SCIM create request */
     bool conflict = false;
@@ -410,7 +438,8 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
     std::string unified = unifyurl(object.get_id());
     std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(object.get_type() + "-scim-url-endpoint");
-    url += '/' + endpoint + '/' + unified;
+    url = concat_url(url, endpoint);
+    url = concat_url(url, unified);
 
     bool non_existent = false;
     std::optional<std::string> response_json =
@@ -450,7 +479,7 @@ std::vector<ScimActions::scim_object_ref> ScimActions::get_all_objects_from_scim
     for (const auto& endpoint : endpoints) {
         std::vector<boost::property_tree::ptree> resources;
         std::string url = scim_server_info.get_url();
-        url += '/' + endpoint;
+        url = concat_url(url, endpoint);
         scim_sender::instance().query(url, resources);
 
         for (const auto& resource : resources) {
