@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.13.0 (2023-03-13)
 #### New features
   - Function for unprovisioning all data (#169)
   - Improved handling of bad UUIDs (#163)
