@@ -1,0 +1,17 @@
+dn: uid=ansv,dc=kommunen,dc=se
+changetype: add
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+objectClass: extensibleObject
+cn: Annika Svensson
+sn: Svensson
+displayName: Annika Svensson
+employeeType: principal
+givenName: Annika
+mail: ansv@skolan.kommunen.se
+ou: ou=skolenhet1,ou=skolgruppen,dc=kommunen,dc=se
+uid: ansv
+entryUUID: da79003e-8511-467f-9394-ceb875fd71f2
+uniqueIdentifier: 197103172345

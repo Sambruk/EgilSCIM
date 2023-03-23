@@ -1,0 +1,17 @@
+dn: uid=soda,dc=kommunen,dc=se
+changetype: add
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+objectClass: extensibleObject
+cn: Sofie Dahlgren
+sn: Dahlgren
+displayName: Sofie Dahlgren
+employeeType: principal
+givenName: Sofie
+mail: soda@skolan.kommunen.se
+ou: ou=skolenhet2,ou=skolgruppen,dc=kommunen,dc=se
+uid: soda
+entryUUID: cb0c9a3f-d4e6-461e-8b4e-4a678cf01183
+uniqueIdentifier: 198011284567

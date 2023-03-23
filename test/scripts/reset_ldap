@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 source "${BASH_SOURCE%/*}/ldap_vars"
-docker exec $container ldapsearch -D $adminuser -w $adminpasswd -b 'dc=kommunen,dc=se' -o ldif-wrap=no -s children '(&(objectClass=*)(!(cn=admin))(!(cn=readonly)))' dn | grep '^dn: ' | awk '{print $2}' | docker exec --interactive $container ldapdelete -r -c -D $adminuser -w $adminpasswd &> /dev/null
-# ldapdelete will return an error if we delete a child
-# after it's parent (note that we use both -r and -c to
-# get rid of everything).
-# Hence we don't worry about errors from ldapdelete.
+
+# We're using ldapmodify instead of ldapdelete because
+# dn with space in it will have base64 encoding when returned
+# by ldapsearch (which ldapdelete doesn't understand).
+# We're running ldapmodify multiple times since it won't
+# delete objects with children (but since we're using -c
+# it will eventually succeed.
+for i in {1..3}
+do
+    docker exec $container ldapsearch -D $adminuser -w $adminpasswd -b 'dc=kommunen,dc=se' -o ldif-wrap=no -s children '(&(objectClass=*)(!(cn=admin))(!(cn=readonly)))' dn | grep '^dn:' | awk '{print $0; print "changetype: delete"; print ""}' | docker exec --interactive $container ldapmodify -c -D $adminuser -w $adminpasswd &> /dev/null
+done
 true
