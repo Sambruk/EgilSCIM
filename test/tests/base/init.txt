@@ -258,6 +258,29 @@ StudentGroups /StudentGroups POST
   "schemas": [
     "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
   ],
+  "externalId": "0d9a892f-3698-4b56-91c2-44fdb61dedf1",
+  "displayName": "DNP-SVASVA03",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+    "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "39732dea-e4a6-4d8f-96de-925a679c56ff",
+      "$ref": "Users/39732dea-e4a6-4d8f-96de-925a679c56ff"
+    } 
+    
+  ]
+}---
+---
+StudentGroups /StudentGroups POST
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
   "externalId": "39074b36-e0ed-4443-a501-5148992014b9",
   "displayName": "grupp1",
   "studentGroupType": "Klass",
@@ -321,6 +344,34 @@ StudentGroups /StudentGroups POST
     {
       "value": "39732dea-e4a6-4d8f-96de-925a679c56ff",
       "$ref": "Users/39732dea-e4a6-4d8f-96de-925a679c56ff"
+    } 
+    
+  ]
+}---
+---
+StudentGroups /StudentGroups POST
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "def59679-3808-4210-a707-ebce13467206",
+  "displayName": "DNP-MA Åk 6",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+    {
+      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
+      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
+    },
+    
+    {
+      "value": "2b3a480f-d0b9-4c09-bbac-70f915964b02",
+      "$ref": "Users/2b3a480f-d0b9-4c09-bbac-70f915964b02"
     } 
     
   ]
@@ -399,6 +450,64 @@ Activities /Activities POST
         "$ref": "StudentGroups/39074b36-e0ed-4443-a501-5148992014b9"
     }],
     "teachers": [
+        
+        {
+            "value": "163cbddb-9fd0-53df-81e4-e022c5dd5c71",
+            "$ref": "Employments/163cbddb-9fd0-53df-81e4-e022c5dd5c71"
+            
+        } 
+        
+    ]
+}
+---
+---
+Activities /Activities POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
+    "externalId": "b2880a10-4561-5818-ae8c-27411b6d5a24",
+    "displayName": "DNP-SVASVA03-Activity",
+    "owner": {
+        "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+        "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"  
+    },
+    "groups": [{
+        "value": "0d9a892f-3698-4b56-91c2-44fdb61dedf1",
+        "$ref": "StudentGroups/0d9a892f-3698-4b56-91c2-44fdb61dedf1"
+    }],
+    "teachers": [
+        
+        {
+            "value": "163cbddb-9fd0-53df-81e4-e022c5dd5c71",
+            "$ref": "Employments/163cbddb-9fd0-53df-81e4-e022c5dd5c71"
+            
+        } 
+        
+    ]
+}
+---
+---
+Activities /Activities POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
+    "externalId": "ce4d51e5-f563-5105-8a13-849088f1fc2d",
+    "displayName": "DNP-MA Åk 6-Activity",
+    "owner": {
+        "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+        "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"  
+    },
+    "groups": [{
+        "value": "def59679-3808-4210-a707-ebce13467206",
+        "$ref": "StudentGroups/def59679-3808-4210-a707-ebce13467206"
+    }],
+    "teachers": [
+        
+        {
+            "value": "db405316-e9d1-50d2-89c5-776f91ac2c98",
+            "$ref": "Employments/db405316-e9d1-50d2-89c5-776f91ac2c98"
+            
+        },
         
         {
             "value": "163cbddb-9fd0-53df-81e4-e022c5dd5c71",

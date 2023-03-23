@@ -8,6 +8,15 @@ Activities /Activities/7f9f75d8-9c01-5c1d-83df-b0d47cf1e4c9 DELETE
 Activities /Activities/857d1f1d-3e23-5896-9877-406ce84be599 DELETE
 ---
 ---
+Activities /Activities/b2880a10-4561-5818-ae8c-27411b6d5a24 DELETE
+---
+---
+Activities /Activities/ce4d51e5-f563-5105-8a13-849088f1fc2d DELETE
+---
+---
+StudentGroups /StudentGroups/0d9a892f-3698-4b56-91c2-44fdb61dedf1 DELETE
+---
+---
 StudentGroups /StudentGroups/39074b36-e0ed-4443-a501-5148992014b9 DELETE
 ---
 ---
@@ -15,6 +24,9 @@ StudentGroups /StudentGroups/645ebd9d-55b5-4e7a-900a-92b9369c8f6a DELETE
 ---
 ---
 StudentGroups /StudentGroups/9e2b1131-aac4-4ba3-adc8-a232a2b553d8 DELETE
+---
+---
+StudentGroups /StudentGroups/def59679-3808-4210-a707-ebce13467206 DELETE
 ---
 ---
 Employments /Employments/163cbddb-9fd0-53df-81e4-e022c5dd5c71 DELETE
