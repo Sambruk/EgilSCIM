@@ -1,0 +1,12 @@
+dn: cn=DNP-SVASVA03,dc=kommunen,dc=se
+changetype: add
+objectClass: groupOfNames
+objectClass: top
+objectClass: extensibleObject
+cn: DNP-SVASVA03
+member: uid=baje,dc=kommunen,dc=se
+member: uid=stjo,dc=kommunen,dc=se
+owner: ou=skolenhet2,ou=skolgruppen,dc=kommunen,dc=se
+entryUUID: 0d9a892f-3698-4b56-91c2-44fdb61dedf1
+l: Undervisning
+
