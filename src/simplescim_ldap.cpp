@@ -27,6 +27,7 @@
 #include "data_server.hpp"
 #include "ldap_wrapper.hpp"
 #include "load_common.hpp"
+#include "readable_id.hpp"
 
 
 std::string
@@ -61,7 +62,7 @@ std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
               auto acceptable_uuid = warn_if_bad_uuid(uid);
               if (acceptable_uuid) {
                   objects->add_object(uid, obj);
-                  load_logger.log("Found " + type + " " + uid);
+                  load_logger.log("Found " + type + " " + readable_id(obj.get(), type));
               }
           }
 

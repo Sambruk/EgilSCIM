@@ -30,6 +30,7 @@
 #include "utility/simplescim_error_string.hpp"
 #include "model/base_object.hpp"
 #include "utility/utils.hpp"
+#include "readable_id.hpp"
 
 using optional_string = std::optional<std::string>;
 using str_iter = std::string::const_iterator;
@@ -841,8 +842,9 @@ optional_string scim_json_parser::get_value(const std::string &variable) {
         if (values.empty()) {
             syntax_error();
 
+            std::string user_readable_id = readable_id(&user);
             simplescim_error_string_set_message(R"("%s" "%s" missing attribute "%s" )",
-                                                user.getSS12000type().c_str(), user.get_uid(false).c_str(), var);
+                                                user.getSS12000type().c_str(), user_readable_id.c_str(), var);
             return {};
         }
 

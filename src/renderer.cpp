@@ -23,6 +23,7 @@
 #include "config_file.hpp"
 #include "scim_json_parse.hpp"
 #include "utility/simplescim_error_string.hpp"
+#include "readable_id.hpp"
 
 namespace {
 
@@ -82,7 +83,7 @@ std::shared_ptr<rendered_object> renderer::render(const post_processing::plugins
     try {
         parsed_json = post_processing::process(ppp, standard_type, parsed_json);
     } catch (const std::runtime_error& e) {
-        throw std::runtime_error("post processing error when creating object " + obj.get_uid() + ": " + e.what());
+        throw std::runtime_error("post processing error when creating object " + readable_id(&obj, type) + ": " + e.what());
     }
     return std::make_shared<rendered_object>(obj.get_uid(), type, parsed_json);
 }

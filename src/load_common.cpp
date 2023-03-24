@@ -23,6 +23,7 @@
 #include "json_data_file.hpp"
 #include "simplescim_ldap.hpp"
 #include "load_limiter.hpp"
+#include "readable_id.hpp"
 #include <cassert>
 #include <regex>
 
@@ -45,7 +46,7 @@ std::shared_ptr<object_list> filter_objects(std::shared_ptr<object_list> objects
         assert(!uid.empty());
         if (limiter->include(object.get())) {
             included_objects->add_object(uid, object);
-            load_logger.log("Found " + type + " " + uid);
+            load_logger.log("Found " + type + " " + readable_id(object.get(), type));
         }
     }
 
@@ -123,7 +124,7 @@ void load_related(const std::string &type,
     
     for (auto &&main_object: *objects) {
         for (auto &&relation: relations) {
-            load_logger.log("Finding " + relation.type + " objects for " + type + " (" + main_object.second->get_uid() + ")");
+            load_logger.log("Finding " + relation.type + " objects for " + type + " (" + readable_id(main_object.second.get(), type) + ")");
             indented_logger::indenter indenter(load_logger);
             bool warn_missing = is_true(relation.warn_missing);
             bool require = is_true(relation.require);

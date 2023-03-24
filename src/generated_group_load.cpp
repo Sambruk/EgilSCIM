@@ -22,6 +22,7 @@
 #include "data_server.hpp"
 #include "load_limiter.hpp"
 #include "load_common.hpp"
+#include "readable_id.hpp"
 #include <regex>
 #include <boost/property_tree/json_parser.hpp>
 
@@ -134,8 +135,8 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
 
                         if (limiter->include(group.get())) {
                             generated->add_object(uuid, group);
-                            load_logger.log(std::string("Generated ") + type + " with UUID " + uuid +
-                                " from " + from_type + " with UUID " + user.second->get_uid());
+                            load_logger.log(std::string("Generated ") + type + " " + readable_id(group.get(), type) +
+                                " from " + from_type + " " + readable_id(user.second.get(), from_type));
                         }
                         else {
                             continue;
