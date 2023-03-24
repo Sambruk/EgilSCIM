@@ -79,6 +79,7 @@ Type-specific variables:
 * `<type>-remote-relations` is used to define relations between objects.
 * `<type>-scim-json-template` specifies the JSON object to send when creating and
     updating a new object.
+* `<type>-readable-id` can be used to specify an attribute to use when referring to an object in error messages or log files (otherwise only the UUID will be used)
 
 #### LDAP connection and authentication
 
