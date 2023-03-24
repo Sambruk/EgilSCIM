@@ -21,6 +21,7 @@
 #include "generated_group_load.hpp"
 #include "config_file.hpp"
 #include "data_server.hpp"
+#include "readable_id.hpp"
 
 namespace {
 
@@ -151,7 +152,7 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
         bool bad = false;
         for (size_t i = 0; i < id_cred.size() && !bad; ++i) {
             if (generated_object.get_values(id_cred[i]).empty()) {
-                std::cerr << "Failed to create Activity for group " << student_group.second->get_uid() 
+                std::cerr << "Failed to create Activity for group " << readable_id(student_group.second.get(), master_type)
                 << "\n\tmissing attribute " << id_cred[i] << " (is the group missing its school unit?)" << std::endl;
                 bad = true;
             }
@@ -163,8 +164,8 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
 
         std::string uuid = store_relation(generated_object, p1, p2);
         generated->add_object(uuid, std::make_shared<base_object>(generated_object));
-        load_logger.log(std::string("Generated ") + type + " with UUID " + uuid +
-                        " from " + master_type + " with UUID " + student_group.second->get_uid());
+        load_logger.log(std::string("Generated ") + type + " " + readable_id(&generated_object, type) +
+                        " from " + master_type + " " + readable_id(student_group.second.get(), master_type));
     }
     return generated;
 }
@@ -241,8 +242,8 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                 // create an id for the relation
                 std::string id = store_relation(generated_object, part_type, master_id);
                 generated->add_object(id, std::make_shared<base_object>(generated_object));
-                load_logger.log(std::string("Generated ") + type + " with UUID " + id +
-                                " from " + relational_key.first + " with UUID " + a_master.second->get_uid() + " and " + part_type.first + " with UUID " + related_object->get_uid());
+                load_logger.log(std::string("Generated ") + type + " " + readable_id(&generated_object, type) +
+                                " from " + relational_key.first + " " + readable_id(a_master.second.get(), relational_key.first) + " and " + part_type.first + " " + readable_id(related_object.get(), part_type.first));
             } else {
                 missing_ids.insert(relational_item);
                 objects_with_missing_ids.insert(relational_key.first + " : " + a_master.first);
