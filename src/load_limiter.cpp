@@ -95,6 +95,13 @@ std::shared_ptr<load_limiter> create_limiter(const std::string& type) {
         }
     }
     else {
+        // If there isn't a limiter for this specific type, see if there's one
+        // for the endpoint (for instance if there isn't a limiter for Teacher, try
+        // Users). This way we can specify a limiter for all users.
+        auto endpoint_variable = type + "-scim-url-endpoint";
+        if (conf.has(endpoint_variable) && conf.get(endpoint_variable) != type) {
+            return create_limiter(conf.get(endpoint_variable));
+        } 
         return std::make_shared<null_limiter>();
     }
 }

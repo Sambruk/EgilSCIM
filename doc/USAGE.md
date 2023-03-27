@@ -566,6 +566,23 @@ StudentGroup-limit = <?
 
 OR works like above except "and" is replaced by "or".
 
+### Limiting by endpoint
+
+In the load limiting examples above the limiters have been specified by
+EGIL type (e.g. Teacher or StudentGroup). Sometimes it's preferable
+to do the limiting by SS12000 type instead. You can then use the name
+of the SCIM endpoint instead of EGIL type. So to limit all users with
+the same limiter you could use:
+
+```
+Users-limit-with = list
+Users-limit-list = users.txt
+```
+
+This limiter will then be used for any type that has `Users` as their
+SCIM endpoint (unless a limiter is specified for the EGIL type, in which
+case that is used instead).
+
 ### Filtering out orphans
 
 If you wish to remove objects that were loaded but didn't have necessary relations to other
