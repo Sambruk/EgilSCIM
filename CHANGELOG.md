@@ -4,6 +4,7 @@
 #### New features
   - Configurable attribute to use to refer to an object in log or error
     messages (#162)
+  - Load limiting can be done by endpoint instead of EGIL type (#179)
 
 ## v2.13.0 (2023-03-13)
 #### New features
