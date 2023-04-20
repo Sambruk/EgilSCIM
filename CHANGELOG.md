@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.14.0 (2023-04-20)
 #### New features
   - Configurable attribute to use to refer to an object in log or error
     messages (#162)
