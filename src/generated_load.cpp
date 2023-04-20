@@ -193,17 +193,18 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
     string_pair related_id = conf.get_pair(type + "-remote-relation-id");
 
     auto ignore_missing_schoolunit = conf.get_bool(type + "-ignore-missing-schoolunit");
+    auto warn_missing_generate_key = conf.get_bool(type + "-warn-missing-generate-key");
 
     auto generated = std::make_shared<object_list>();
     if (!master_list)
         return generated;
 
     for (const auto &a_master: *master_list) {
+        auto a_master_readable_id = readable_id(a_master.second.get(), relational_key.first);
         string_vector relational_items = a_master.second->get_values(relational_key.second);
-        if (relational_items.empty()) {
-
+        if (relational_items.empty() && warn_missing_generate_key) {
             std::cerr << "Creating Employment: didn't find values for " << relational_key.second
-                      << " for " << relational_key.first << " " << a_master.first
+                      << " for " << relational_key.first << " " << a_master_readable_id
                       << std::endl;
         }
 
@@ -246,7 +247,7 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                                 " from " + relational_key.first + " " + readable_id(a_master.second.get(), relational_key.first) + " and " + part_type.first + " " + readable_id(related_object.get(), part_type.first));
             } else {
                 missing_ids.insert(relational_item);
-                objects_with_missing_ids.insert(relational_key.first + " : " + a_master.first);
+                objects_with_missing_ids.insert(relational_key.first + " : " + a_master_readable_id);
             }
         }
 
