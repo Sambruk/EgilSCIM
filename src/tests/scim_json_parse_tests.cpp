@@ -5,6 +5,7 @@
 
 #include "scim_json_parse.hpp"
 #include "model/base_object.hpp"
+#include "config_file.hpp"
 
 using namespace std;
 
@@ -14,6 +15,7 @@ TEST_CASE("Parse empty JSON template") {
 
 TEST_CASE("Parse multiple JSON templates") {
     base_object obj("Student");
+    obj.add_attribute("uuid", { "fce5eba1-7c49-46e5-b117-9dd137031680" } );
     obj.add_attribute("a", {"a"} );
     obj.add_attribute("t", { "elev" });
     obj.add_attribute("entryDN", { "dc=foo,o=org,ou=personal,ou=pre" });
@@ -45,6 +47,11 @@ TEST_CASE("Parse multiple JSON templates") {
           R"("type": "Student")" },        
     };
 
+    // TODO: remove this config file stuff once base_object doesn't
+    //       depend on config_file.
+    config_file &config = config_file::instance();
+    config.replace_variable("Student-unique-identifier", "uuid");
+    
     for (auto test_case : test_cases) {
         auto templ = test_case.first;
         auto wanted = test_case.second;
