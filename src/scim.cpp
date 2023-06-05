@@ -31,6 +31,7 @@
 #include "cache_file.hpp"
 #include "rendered_cache_file.hpp"
 #include "simplescim_scim_send.hpp"
+#include "readable_id.hpp"
 
 // Concatenates a base URL with a path, for instance "https://foo.com" and "Users"
 // into "https://foo.com/Users"
@@ -111,6 +112,7 @@ void ScimActions::process_changes(const object_list& current,
     for (const auto &iter : current) {
 
         const std::string &uid = iter.first;
+        const std::string readable = readable_id(iter.second.get());
 
         std::shared_ptr<rendered_object> object;
         try {
@@ -141,7 +143,7 @@ void ScimActions::process_changes(const object_list& current,
 
             if (err == -1) {
                 ++stats.n_create_fail;
-                std::cerr << "Failed to create object " << uid << " of type " << iter.second->getSS12000type() << std::endl;
+                std::cerr << "Failed to create object " << readable << " of type " << iter.second->getSS12000type() << std::endl;
                 if (object != nullptr) {
                     std::cerr << simplescim_error_string_get() << std::endl;
                 }
@@ -176,7 +178,7 @@ void ScimActions::process_changes(const object_list& current,
                 
                 if (err == -1) {
                     ++stats.n_update_fail;
-                    std::cerr << "Failed to update object " << uid << " of type " << iter.second->getSS12000type() << std::endl;
+                    std::cerr << "Failed to update object " << readable << " of type " << iter.second->getSS12000type() << std::endl;
                     if (object != nullptr) {
                         std::cerr << simplescim_error_string_get() << std::endl;
                     }

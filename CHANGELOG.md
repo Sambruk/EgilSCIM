@@ -8,6 +8,7 @@
 
 #### Bugfixes
   - Configurable warning for missing generate key attribute for Employment (#182)
+  - Adds a missing use of readable-id (#184)
 
 ## v2.13.0 (2023-03-13)
 #### New features
