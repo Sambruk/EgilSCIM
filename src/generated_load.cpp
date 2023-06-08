@@ -210,7 +210,7 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                 extra_rows.push_back(file[i]);
             }
         } catch (const std::runtime_error &e) {
-            // TODO: error handling
+            throw std::runtime_error(std::string("Failed to read extra info for generated Employment objects from CSV file: ") + e.what());
         }
     }
     else if (conf.has(extra_sql_attribute)) {
