@@ -20,6 +20,7 @@
 #include "generated_load.hpp"
 #include "generated_group_load.hpp"
 #include "config_file.hpp"
+#include "config.hpp"
 #include "data_server.hpp"
 #include "readable_id.hpp"
 
@@ -202,22 +203,8 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
     std::vector<std::vector<std::string>> extra_rows;
 
     if (conf.has(extra_csv_attribute)) {
-        // TODO: DRY
-        char separator = ',';
-
-        auto separator_setting = config_file::instance().get("csv-separator", true);
-        if (!separator_setting.empty()) {
-            separator = separator_setting[0];
-        }
-
-        char quote = '"';
-
-        auto quote_setting = config_file::instance().get("csv-quote", true);
-        if (!quote_setting.empty()) {
-            quote = quote_setting[0];
-        }
         try {
-            csv_file file(conf.get(extra_csv_attribute), separator, quote);
+            csv_file file(conf.get(extra_csv_attribute), config::csv_separator(), config::csv_quote());
             extra_header = file.get_header();
             for (size_t i = 0; i < file.size(); ++i) {
                 extra_rows.push_back(file[i]);

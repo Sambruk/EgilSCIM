@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2019 Föreningen Sambruk
+ *  Copyright (C) 2017-2023 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -17,22 +17,29 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "csv_store.hpp"
 #include "config.hpp"
+#include "config_file.hpp"
 
-csv_store::csv_store() {
-    separator = config::csv_separator();
-    quote = config::csv_quote();
-}
+namespace config {
 
-std::shared_ptr<csv_file> csv_store::get_file(const std::string& path) {
-    auto itr = cache.find(path);
+char csv_separator() {
+    char separator = ',';
 
-    if (itr != cache.end()) {
-        return itr->second;
+    auto separator_setting = config_file::instance().get("csv-separator", true);
+    if (!separator_setting.empty()) {
+        separator = separator_setting[0];
     }
-
-    auto file{std::make_shared<csv_file>(path, separator, quote)};
-    cache[path] = file;
-    return file;
+    return separator;
 }
+
+char csv_quote() {
+    char quote = '"';
+
+    auto quote_setting = config_file::instance().get("csv-quote", true);
+    if (!quote_setting.empty()) {
+        quote = quote_setting[0];
+    }
+    return quote;
+}
+
+} // namespace config
