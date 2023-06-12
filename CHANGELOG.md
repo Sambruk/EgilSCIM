@@ -5,6 +5,7 @@
   - Configurable attribute to use to refer to an object in log or error
     messages (#162)
   - Load limiting can be done by endpoint instead of EGIL type (#179)
+  - Functionality for adding/overriding information to Employment objects (#187)
 
 #### Bugfixes
   - Configurable warning for missing generate key attribute for Employment (#182)

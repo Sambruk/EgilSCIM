@@ -464,6 +464,93 @@ from the user (so groups generated from a user's `classes` attribute will get `s
 set to "Klass", and groups generated from a user's `educationGroups` attribute will get
 `studentGroupType` set to "Undervisning").
 
+## Generated objects (Employment and Activity)
+
+The SS12000 data types Employment and Activity often don't have corresponding objects in the
+data source. For employments this is often simply modelled as an attribute on the user accounts
+(for instance a multi valued attribute containing school unit codes for the user's employments),
+not as stand-alone objects.
+
+The Activity objects are (within EGIL) only used to associate teachers with student groups, and
+this relation is often included in the group's membership list rather than as separate Activity
+objects in the data source.
+
+Because of this the EGIL SCIM client can be configured to generate these objects based on the
+other objects (Employments are generated from the Teachers and SchoolUnits, Activity objects
+are generated from StudentGroups and Teachers).
+
+There are commented examples for both Activity and Employment in the standard example in the
+`master_config` directory.
+
+### Overriding Employment attributes
+
+For the generated Employment objects it is possible to override attributes with a separate
+data source (such as a CSV file or an SQL table). The typical use case for this is for
+employment roles (teacher/principal etc.).
+
+Since Employments are generated from the staff's user objects in data sources where there
+aren't stand-alone employment objects, it can be difficult to model attributes for the
+employments correctly. For instance, employment role is typically a single-valued attribute
+on the user object. This works for most users, but can lead to some problems for users with
+multiple employments with different roles.
+
+If it's not reasonable to introduce "correct" employment objects in the data source, but we
+still wish to rectify some values, an extra CSV file or SQL table can be used to override
+values for specific employments.
+
+If a CSV file is used, it could look something like this:
+
+```
+teacher,schoolUnit,employmentRole
+baje,12345678,Rektor
+anan,11111111,Lärare
+```
+
+The two first columns contain values that can be used to uniquely identify a user and a
+school unit and the third column contains an attribute which we want to create in the generated
+Employment objects.
+
+Whenever we create an Employment object, we will create this attribute (employmentRole in the
+example above) with a value from the CSV file if a matching row can be found for the generated
+Employment object (i.e. matching the teacher and school unit for the Employment object). For
+Employment objects that don't have a matching line in the file, we can first specify a
+fall-back attribute to use from the Teacher object, and if that doesn't exist we can also
+specify a static value to use for all other Employment objects.
+
+The configuration file for Employment may then have some extra configuration variables,
+so that the client can understand the CSV file:
+
+```
+# Where to find the extra values
+Employment-extra-csv = /workdir/data/employments.csv
+
+# Which column identifies the user?
+Employment-extra-Teacher-column = teacher
+
+# Which attribute for the Teacher objects should be used to find teachers?
+Employment-extra-Teacher-attribute = uid
+
+# Which column identifies the school unit
+Employment-extra-SchoolUnit-column = schoolUnit
+
+# Which attribute for the SchoolUnit objects should be used to find the school units?
+Employment-extra-SchoolUnit-attribute = schoolUnitCode
+
+# Attribute to fall back on when there is no match in the extra data
+Employment-extra-employmentRole-default = Teacher.employeeType
+
+# Static value to fall back on when there's no extra data and no default attribute
+Employment-extra-employmentRole-static = Lärare
+```
+
+If you wish to read this data from SQL instead, make sure to configure the SQL connection
+(as when loading other data from SQL) and then specify an SQL query instead of a path to a
+CSV file:
+
+```
+Employment-extra-sql = SELECT * FROM Employment
+```
+
 ## Limiting the load process
 
 Which objects to load from the source is typically specified with an LDAP filter
