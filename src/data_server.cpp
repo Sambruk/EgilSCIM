@@ -57,7 +57,7 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
                     filter_orphans();
                     filtered_orphans = true;
                 }
-                l = get_generated(type, load_logger);
+                l = get_generated(type, sql_plugin, load_logger);
             }
             else if (config.has(type + "-ldap-filter")) {
                 auto ldap_wrapper = get_ldap_wrapper();

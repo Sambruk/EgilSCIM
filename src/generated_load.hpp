@@ -22,8 +22,10 @@
 
 #include <memory>
 #include <model/object_list.hpp>
+#include "sql.hpp"
 #include "utility/indented_logger.hpp"
 
-std::shared_ptr<object_list> get_generated(const std::string &type,
+std::shared_ptr<object_list> get_generated(const std::string& type,
+                                           std::shared_ptr<sql::plugin> sql_plugin,
                                            indented_logger& load_logger);
-#endif // EGILSCIMCLIENT_GENERATED_LOAD_HPP
+#endif  // EGILSCIMCLIENT_GENERATED_LOAD_HPP

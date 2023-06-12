@@ -23,6 +23,7 @@
 #include "config.hpp"
 #include "data_server.hpp"
 #include "readable_id.hpp"
+#include <optional>
 
 namespace {
 
@@ -178,7 +179,8 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
  * @return the list
  */
 std::shared_ptr<object_list> get_generated_employment(const std::string &type,
-                                                      indented_logger& load_logger) {
+                                                      std::shared_ptr<sql::plugin> sql_plugin,
+                                                      indented_logger &load_logger) {
     config_file &conf = config_file::instance();
     data_server &server = data_server::instance();
     std::set<std::string> missing_ids;
@@ -200,21 +202,40 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
     const auto extra_sql_attribute = type + "-extra-sql";
 
     std::vector<std::string> extra_header;
-    std::vector<std::vector<std::string>> extra_rows;
+    std::vector<std::vector<std::optional<std::string>>> extra_rows;
 
     if (conf.has(extra_csv_attribute)) {
         try {
             csv_file file(conf.get(extra_csv_attribute), config::csv_separator(), config::csv_quote());
             extra_header = file.get_header();
             for (size_t i = 0; i < file.size(); ++i) {
-                extra_rows.push_back(file[i]);
+                std::vector<std::optional<std::string>> row;
+                row.reserve(file[i].size());
+                for (size_t j = 0; j < file[i].size(); ++j) {
+                    row[j] = file[i][j];
+                }
+
+                extra_rows.push_back(row);
             }
         } catch (const std::runtime_error &e) {
             throw std::runtime_error(std::string("Failed to read extra info for generated Employment objects from CSV file: ") + e.what());
         }
     }
     else if (conf.has(extra_sql_attribute)) {
-        // TODO: SQL impl
+        auto sql_query = conf.get(extra_sql_attribute);
+        try {
+            if (!sql_plugin) {
+                throw std::runtime_error("no configured SQL connection");
+            }
+            auto sql_itr = sql_plugin->execute(sql_query);
+            extra_header = sql_itr->get_header();
+            std::vector<std::optional<std::string>> row;
+            while (sql_itr->next(row)) {
+                extra_rows.push_back(row);
+            }
+        } catch (const std::runtime_error &e) {
+            throw std::runtime_error(std::string("Failed to read extra info for generated Employment objects from SQL source: ") + e.what());
+        }
     }
 
     auto extra_master_column = conf.get(type + "-extra-" + relational_key.first + "-column", true);
@@ -225,11 +246,11 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
     // Transfer the rows from the extra info to a map for quick lookup based on the keys
     // for the master and remote type. Since the keys are used in the map as indices, only
     // the other values are kept in the string vectors stored for each row.
-    std::map<std::string, std::map<std::string, std::vector<std::string>>> extras;
+    std::map<std::string, std::map<std::string, std::vector<std::optional<std::string>>>> extras;
 
     for (size_t i = 0; i < extra_rows.size(); ++i) {
-        std::string master, remote;
-        std::vector<std::string> values;
+        std::optional<std::string> master, remote;
+        std::vector<std::optional<std::string>> values;
         for (size_t j = 0; j < extra_header.size(); ++j) {
             auto value = extra_rows[i][j];
             if (extra_header[j] == extra_master_column) {
@@ -240,7 +261,9 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                 values.push_back(value);
             }
         }
-        extras[master][remote] = values;
+        if (master.has_value() && remote.has_value()) {
+            extras[*master][*remote] = values;
+        }
     }
 
     // Since the vectors in extras only store the values (not the keys), we want to have
@@ -342,7 +365,9 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                                 continue;
                             }
                             auto index = extra_column_to_index[header_name];
-                            generated_object.add_attribute(header_name, {extra_values[index]});
+                            if (extra_values[index].has_value()) {
+                                generated_object.add_attribute(header_name, {*extra_values[index]});
+                            }
                         }
                         extras_set = true;
                     } catch (const std::out_of_range& e) {
@@ -408,13 +433,14 @@ void load_related(const std::string &type,
                   indented_logger& load_logger);
 
 std::shared_ptr<object_list> get_generated(const std::string &type,
-                                           indented_logger& load_logger) {
+                                           std::shared_ptr<sql::plugin> sql_plugin,
+                                           indented_logger &load_logger) {
     std::shared_ptr<object_list> list;
     if (type == "Activity") {
         list = get_generated_activity(type, load_logger);
     }
     else if (type == "Employment") {
-        list = get_generated_employment(type, load_logger);
+        list = get_generated_employment(type, sql_plugin, load_logger);
     }
     else if (type == "StudentGroup") {
         list = get_generated_student_group(type, load_logger);
