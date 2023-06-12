@@ -212,7 +212,7 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                 std::vector<std::optional<std::string>> row;
                 row.reserve(file[i].size());
                 for (size_t j = 0; j < file[i].size(); ++j) {
-                    row[j] = file[i][j];
+                    row.push_back(file[i][j]);
                 }
 
                 extra_rows.push_back(row);
