@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.15.0 (2023-06-13)
 #### New features
   - Functionality for adding/overriding information to Employment objects (#187)
 
