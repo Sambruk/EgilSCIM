@@ -1,15 +1,20 @@
 ## Releases
 
+## Unreleased
+#### New features
+  - Functionality for adding/overriding information to Employment objects (#187)
+
+#### Bugfixes
+  - Adds a missing use of readable-id (#184)
+
 ## v2.14.0 (2023-04-20)
 #### New features
   - Configurable attribute to use to refer to an object in log or error
     messages (#162)
   - Load limiting can be done by endpoint instead of EGIL type (#179)
-  - Functionality for adding/overriding information to Employment objects (#187)
 
 #### Bugfixes
   - Configurable warning for missing generate key attribute for Employment (#182)
-  - Adds a missing use of readable-id (#184)
 
 ## v2.13.0 (2023-03-13)
 #### New features
