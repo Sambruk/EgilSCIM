@@ -206,7 +206,7 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
 
     if (conf.has(extra_csv_attribute)) {
         try {
-            csv_file file(conf.get(extra_csv_attribute), config::csv_separator(), config::csv_quote());
+            csv_file file(conf.get_path(extra_csv_attribute), config::csv_separator(), config::csv_quote());
             extra_header = file.get_header();
             for (size_t i = 0; i < file.size(); ++i) {
                 std::vector<std::optional<std::string>> row;
