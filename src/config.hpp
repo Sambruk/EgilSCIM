@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2019 Föreningen Sambruk
+ *  Copyright (C) 2017-2023 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -17,22 +17,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "csv_store.hpp"
-#include "config.hpp"
+#ifndef EGILSCIM_CONFIG_HPP
+#define EGILSCIM_CONFIG_HPP
 
-csv_store::csv_store() {
-    separator = config::csv_separator();
-    quote = config::csv_quote();
-}
+namespace config {
 
-std::shared_ptr<csv_file> csv_store::get_file(const std::string& path) {
-    auto itr = cache.find(path);
+char csv_separator();
+char csv_quote();
 
-    if (itr != cache.end()) {
-        return itr->second;
-    }
+} // namespace config
 
-    auto file{std::make_shared<csv_file>(path, separator, quote)};
-    cache[path] = file;
-    return file;
-}
+#endif // EGILSCIM_CONFIG_HPP

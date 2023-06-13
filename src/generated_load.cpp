@@ -20,8 +20,10 @@
 #include "generated_load.hpp"
 #include "generated_group_load.hpp"
 #include "config_file.hpp"
+#include "config.hpp"
 #include "data_server.hpp"
 #include "readable_id.hpp"
+#include <optional>
 
 namespace {
 
@@ -177,7 +179,8 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
  * @return the list
  */
 std::shared_ptr<object_list> get_generated_employment(const std::string &type,
-                                                      indented_logger& load_logger) {
+                                                      std::shared_ptr<sql::plugin> sql_plugin,
+                                                      indented_logger &load_logger) {
     config_file &conf = config_file::instance();
     data_server &server = data_server::instance();
     std::set<std::string> missing_ids;
@@ -194,6 +197,106 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
 
     auto ignore_missing_schoolunit = conf.get_bool(type + "-ignore-missing-schoolunit");
     auto warn_missing_generate_key = conf.get_bool(type + "-warn-missing-generate-key");
+
+    const auto extra_csv_attribute = type + "-extra-csv";
+    const auto extra_sql_attribute = type + "-extra-sql";
+
+    std::vector<std::string> extra_header;
+    std::vector<std::vector<std::optional<std::string>>> extra_rows;
+
+    if (conf.has(extra_csv_attribute)) {
+        try {
+            csv_file file(conf.get_path(extra_csv_attribute), config::csv_separator(), config::csv_quote());
+            extra_header = file.get_header();
+            for (size_t i = 0; i < file.size(); ++i) {
+                std::vector<std::optional<std::string>> row;
+                row.reserve(file[i].size());
+                for (size_t j = 0; j < file[i].size(); ++j) {
+                    row.push_back(file[i][j]);
+                }
+
+                extra_rows.push_back(row);
+            }
+        } catch (const std::runtime_error &e) {
+            throw std::runtime_error(std::string("Failed to read extra info for generated Employment objects from CSV file: ") + e.what());
+        }
+    }
+    else if (conf.has(extra_sql_attribute)) {
+        auto sql_query = conf.get(extra_sql_attribute);
+        try {
+            if (!sql_plugin) {
+                throw std::runtime_error("no configured SQL connection");
+            }
+            auto sql_itr = sql_plugin->execute(sql_query);
+            extra_header = sql_itr->get_header();
+            std::vector<std::optional<std::string>> row;
+            while (sql_itr->next(row)) {
+                extra_rows.push_back(row);
+            }
+        } catch (const std::runtime_error &e) {
+            throw std::runtime_error(std::string("Failed to read extra info for generated Employment objects from SQL source: ") + e.what());
+        }
+    }
+
+    auto extra_master_column = conf.get(type + "-extra-" + relational_key.first + "-column", true);
+    auto extra_master_attribute = conf.get(type + "-extra-" + relational_key.first + "-attribute", true);
+    auto extra_remote_column = conf.get(type + "-extra-" + part_type.first + "-column", true);
+    auto extra_remote_attribute = conf.get(type + "-extra-" + part_type.first + "-attribute", true);
+
+    // Transfer the rows from the extra info to a map for quick lookup based on the keys
+    // for the master and remote type. Since the keys are used in the map as indices, only
+    // the other values are kept in the string vectors stored for each row.
+    std::map<std::string, std::map<std::string, std::vector<std::optional<std::string>>>> extras;
+
+    for (size_t i = 0; i < extra_rows.size(); ++i) {
+        std::optional<std::string> master, remote;
+        std::vector<std::optional<std::string>> values;
+        for (size_t j = 0; j < extra_header.size(); ++j) {
+            auto value = extra_rows[i][j];
+            if (extra_header[j] == extra_master_column) {
+                master = value;
+            } else if (extra_header[j] == extra_remote_column) {
+                remote = value;
+            } else {
+                values.push_back(value);
+            }
+        }
+        if (master.has_value() && remote.has_value()) {
+            extras[*master][*remote] = values;
+        }
+    }
+
+    // Since the vectors in extras only store the values (not the keys), we want to have
+    // an easy way to map from a column name to an index into those vectors.
+    std::map<std::string, size_t> extra_column_to_index;
+
+    size_t current_index = 0;
+    for (size_t c = 0; c < extra_header.size(); ++c) {
+        auto column_name = extra_header[c];
+        if (column_name == extra_master_column ||
+            column_name == extra_remote_column) {
+            continue;
+        }
+        extra_column_to_index[column_name] = current_index++;
+    }
+
+    // For each value column in the extras we get the static and default
+    // settings to use for those attributes when there isn't a match in the extras.
+    // Default is a variable to fall back on (such as Teacher.employmentType) and
+    // static is a value to fall back on (such as Lärare), when the default variable
+    // doesn't exist either.
+    std::map<std::string, std::string> extra_statics;
+    std::map<std::string, std::string> extra_defaults;
+
+    for (size_t c = 0; c < extra_header.size(); ++c) {
+        auto column_name = extra_header[c];
+        if (column_name == extra_master_column ||
+            column_name == extra_remote_column) {
+            continue;
+        }
+        extra_statics[column_name] = conf.get(type + "-extra-" + column_name + "-static");
+        extra_defaults[column_name] = conf.get(type + "-extra-" + column_name + "-default");
+    }
 
     auto generated = std::make_shared<object_list>();
     if (!master_list)
@@ -226,20 +329,68 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
 
                 string_vector scim_vars = conf.get_vector_sorted_unique(type + "-scim-variables");
                 scim_vars.emplace_back(conf.get(type + "-hidden-attributes", true));
+
+                for (auto itr = extra_defaults.begin(); itr != extra_defaults.end(); ++itr) {
+                    scim_vars.push_back(itr->second);
+                }
+
                 for (const auto &var : scim_vars) {
                     auto var_pair = string_to_pair(var);
                     if (var_pair.first == relational_key.first && var_pair.second != relational_key.second) {
                         // get info from the main object, except the relational attribute
-                        string_vector attributes = a_master.second->get_values(var_pair.second);
-                        generated_object.add_attribute(var, attributes);
+                        if (a_master.second->has_attribute(var_pair.second)) {
+                            string_vector attributes = a_master.second->get_values(var_pair.second);
+                            generated_object.add_attribute(var, attributes);
+                        }
                     } else if (var_pair.first == part_type.first) {
                         // grab this attribute's values from the related object
-                        if (related_object != nullptr) {
+                        if (related_object != nullptr && related_object->has_attribute(var_pair.second)) {
                             string_vector attributes = related_object->get_values(var_pair.second);
                             generated_object.add_attribute(var, attributes);
                         }
                     }
                 }
+
+                // Create attributes with the extras
+                bool extras_set = false;
+                auto master_extra_key = a_master.second->get_values(extra_master_attribute);
+                auto remote_extra_key = related_object->get_values(extra_remote_attribute);
+                if (master_extra_key.size() == 1 && remote_extra_key.size() == 1) {
+                    try {
+                        auto extra_values = extras.at(master_extra_key[0]).at(remote_extra_key[0]);
+                        for (size_t c = 0; c < extra_header.size(); ++c) {
+                            auto header_name = extra_header[c];
+                            if (header_name == extra_master_column ||
+                                header_name == extra_remote_column) {
+                                continue;
+                            }
+                            auto index = extra_column_to_index[header_name];
+                            if (extra_values[index].has_value()) {
+                                generated_object.add_attribute(header_name, {*extra_values[index]});
+                            }
+                        }
+                        extras_set = true;
+                    } catch (const std::out_of_range& e) {
+                        // no match in extras for this Employment object
+                    }
+                }
+                if (!extras_set && (!extra_defaults.empty() || !extra_statics.empty())) {
+                    // No row for this Employment object in the extras, create the
+                    // attribute according to static or default.
+                    for (size_t c = 0; c < extra_header.size(); ++c) {
+                        auto header_name = extra_header[c];
+                        if (header_name == extra_master_column ||
+                            header_name == extra_remote_column) {
+                            continue;
+                        }
+                        if (generated_object.has_attribute(extra_defaults[header_name])) {
+                            generated_object.add_attribute(header_name, generated_object.get_values(extra_defaults[header_name]));
+                        } else {
+                            generated_object.add_attribute(header_name, {extra_statics[header_name]});
+                        }
+                    }
+                }
+
                 // create an id for the relation
                 std::string id = store_relation(generated_object, part_type, master_id);
                 generated->add_object(id, std::make_shared<base_object>(generated_object));
@@ -282,13 +433,14 @@ void load_related(const std::string &type,
                   indented_logger& load_logger);
 
 std::shared_ptr<object_list> get_generated(const std::string &type,
-                                           indented_logger& load_logger) {
+                                           std::shared_ptr<sql::plugin> sql_plugin,
+                                           indented_logger &load_logger) {
     std::shared_ptr<object_list> list;
     if (type == "Activity") {
         list = get_generated_activity(type, load_logger);
     }
     else if (type == "Employment") {
-        list = get_generated_employment(type, load_logger);
+        list = get_generated_employment(type, sql_plugin, load_logger);
     }
     else if (type == "StudentGroup") {
         list = get_generated_student_group(type, load_logger);

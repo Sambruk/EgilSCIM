@@ -1,0 +1,15 @@
+{
+    "description": "Extra CSV file for employment roles",
+    "config": "configs/employment_extra/master.conf",
+    "steps": [
+	{ "scenario": [],
+	  "requests": null
+	},
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "init.txt"
+	},
+	{ "scenario": [],
+	  "requests": null
+	}
+    ]
+}
