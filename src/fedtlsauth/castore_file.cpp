@@ -27,7 +27,7 @@ castore_file::castore_file() {
         throw std::runtime_error("Failed to create temporary file name");
     }
 
-    err = fopen_s(&f, name, "wbTD");
+    err = fopen_s(&f, name, "wb");
 
     if (err) {
         throw std::runtime_error("Failed to create temporary file");
@@ -50,6 +50,7 @@ castore_file::~castore_file() {
     if (f) {
         fclose(f);
     }
+    remove(path.c_str());
 #else
     if (fd >= 0) {
         // Make sure it gets deleted when closed
@@ -61,11 +62,22 @@ castore_file::~castore_file() {
 
 void castore_file::write(const void* data, size_t count) {
 #ifdef _WIN32
+    if (!f) {
+        errno_t err;
+
+        err = fopen_s(&f, path.c_str(), "ab");
+
+        if (err) {
+            throw std::runtime_error("Failed to open temporary file for appending");
+        }
+    }
     auto res = fwrite(data, 1, count, f);
 
     if (res != count) {
         throw std::runtime_error("Failed to write to temporary file");
     }
+    fclose(f);
+    f = nullptr;
 #else
     ssize_t res = ::write(fd, data, count);
     if (res != static_cast<ssize_t>(count)) {
