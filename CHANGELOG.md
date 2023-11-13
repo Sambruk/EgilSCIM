@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### Bugfixes
+  - Temporary CA store file for FedTLS now works on Windows (191)
+
 ## v2.15.0 (2023-06-13)
 #### New features
   - Functionality for adding/overriding information to Employment objects (#187)
