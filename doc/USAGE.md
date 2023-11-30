@@ -203,6 +203,13 @@ the following additions:
  * The quote character can be configured (with the `csv-quote` variable)
  * UTF-8 encoded text is allowed
 
+If you wish to use the tab character as a separator character it needs to be
+set with a special escape sequence:
+
+```
+csv-separator = \t
+```
+
 ## Loading objects from SQL
 
 If your source data is in a relational database, loading directly from SQL instead

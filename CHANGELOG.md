@@ -1,8 +1,11 @@
 ## Releases
 
 ## Unreleased
+#### Features
+  - The CSV separator character can now be a tab character (#193)
+  
 #### Bugfixes
-  - Temporary CA store file for FedTLS now works on Windows (191)
+  - Temporary CA store file for FedTLS now works on Windows (#191)
 
 ## v2.15.0 (2023-06-13)
 #### New features
