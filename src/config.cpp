@@ -27,7 +27,12 @@ char csv_separator() {
 
     auto separator_setting = config_file::instance().get("csv-separator", true);
     if (!separator_setting.empty()) {
-        separator = separator_setting[0];
+        if (separator_setting == "\\t") {
+            separator = '\t';
+        }
+        else {
+            separator = separator_setting[0];
+        }
     }
     return separator;
 }
