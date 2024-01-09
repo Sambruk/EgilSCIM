@@ -85,6 +85,9 @@ public:
         indices.clear();
     }
 
+    // Finds objects that have a given attribute set to a given value.
+    std::vector<std::shared_ptr<base_object>> get_objects_for_attribute(const std::string &attribute, const std::string &value);
+
     // Finds an object that has a given attribute set to a given value.
     // Note that this is supposed to be used when the attribute can be used as a primary key,
     // so it uniquely identifies an object. If there are multiple objects with the attribute

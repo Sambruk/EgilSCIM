@@ -103,3 +103,25 @@ TEST_CASE("Object lookup") {
     REQUIRE(res != nullptr);
     REQUIRE(res.get() == obj3.get());
 }
+
+TEST_CASE("Multi object lookup") {
+    object_list list;
+    auto obj1 = std::make_shared<base_object>("User");
+    obj1->add_attribute("name", {"foo"});
+    auto obj2 = std::make_shared<base_object>("User");
+    obj2->add_attribute("name", {"foo"});
+    list.add_object("a", obj1);
+    list.add_object("b", obj2);
+
+    auto res = list.get_objects_for_attribute("name", "foo");
+    REQUIRE(!res.empty());
+    REQUIRE((res[0].get() == obj1.get() ||res[0].get() == obj2.get()));
+    REQUIRE((res[1].get() == obj1.get() ||res[1].get() == obj2.get()));
+    REQUIRE((res[0].get() != res[1].get()));
+
+    res = list.get_objects_for_attribute("name", "bar");
+    REQUIRE(res.empty());
+
+    res = list.get_objects_for_attribute("displayName", "foo");
+    REQUIRE(res.empty());
+}

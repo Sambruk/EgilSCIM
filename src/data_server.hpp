@@ -56,8 +56,15 @@ public:
         return data.empty();
     }
 
+    // Lookup of objects based on attribute value, meant to be used for attributes that can be used as primary key
+    // so only one object is identified by the value. If multiple objects have the value for the given attribute
+    // a random object will be returned. If no object is found a nullptr is returned.
     std::shared_ptr<base_object>
     find_object_by_attribute(const std::string &type, const std::string &attrib, const std::string &value);
+
+    // Lookup of objects based on attribute value, returns multiple objects if many objects have the value for the given attribute.
+    std::vector<std::shared_ptr<base_object>>
+    find_objects_by_attribute(const std::string &type, const std::string &attrib, const std::string &value);
 
     bool has_object(const std::string& uuid) const;
 

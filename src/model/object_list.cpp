@@ -50,7 +50,7 @@ void object_index::remove(std::shared_ptr<base_object> object) {
     }
 }
 
-std::shared_ptr<base_object> object_list::get_object_for_attribute(const std::string &attribute, const std::string &id) {
+std::vector<std::shared_ptr<base_object>> object_list::get_objects_for_attribute(const std::string &attribute, const std::string &value) {
     auto idx = find_index(attribute);
 
     if (idx == nullptr) {
@@ -63,7 +63,11 @@ std::shared_ptr<base_object> object_list::get_object_for_attribute(const std::st
         indices.push_back(idx);
     }
 
-    auto matches = idx->lookup(id);
+    return idx->lookup(value);
+}
+
+std::shared_ptr<base_object> object_list::get_object_for_attribute(const std::string &attribute, const std::string &id) {
+    auto matches = get_objects_for_attribute(attribute, id);
 
     if (matches.empty()) {
         return nullptr;
