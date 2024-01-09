@@ -111,6 +111,35 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
         return nullptr;
     }
 
+    // Attributes which we will use to identify the schoolunit in the Employment and StudentGroup objects,
+    // in order to choose an appropriate Employment-object for each Teacher (we should try to use
+    // the Employment-object which is tied to the same schoolunit as the StudentGroup).
+    std::string employment_attribute = "SchoolUnit." + conf.get("SchoolUnit-unique-identifier", true);
+    std::string group_attribute = employment_attribute;
+
+    // Simply using the Employment-generate-remote-part for both Employment and StudentGroup
+    // should work in most configurations with generated Employments and wont require additional 
+    // configuration for this match.
+    // Most configurations which read Employment objects from the data source instead should
+    // work with the defaults above instead.
+    const auto employment_generate_remote = "Employment-generate-remote-part";
+    if (conf.has(employment_generate_remote)) {
+        employment_attribute = conf.get(employment_generate_remote);
+        group_attribute = employment_attribute;
+    }
+
+    // If there's a special attribute configured for the Employment type, use that instead
+    const auto employment_match_attribute = type + "-Employment-SchoolUnit-match";
+    if (conf.has(employment_match_attribute)) {
+        employment_attribute = conf.get(employment_match_attribute);
+    }
+
+    // If there's a special attribute configured for the StudentGroup type, use that instead
+    const auto group_match_attribute = type + "-StudentGroup-SchoolUnit-match";
+    if (conf.has(group_match_attribute)) {
+        group_attribute = conf.get(group_match_attribute);
+    }
+
     data_server &server = data_server::instance();
     auto student_groups = server.get_by_type(master_type);
     auto employments = server.get_by_type(related_type.first);
@@ -122,9 +151,27 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
 
         string_vector members = student_group.second->get_values(remote_relation);
         for (auto &&member: members) {
-            auto employment = data_server::instance().find_object_by_attribute(related_type.first, remote_relation,
-                                                                               member);
-            if (employment) {
+            auto employments = data_server::instance().find_objects_by_attribute(related_type.first, remote_relation,
+                                                                                 member);
+            bool found_proper_employment = false;
+            // Try to find an Employment object with a SchoolUnit which matches the StudentGroup's SchoolUnit
+            for (size_t i = 0; i < employments.size() && !found_proper_employment; ++i) {
+                auto employment = employments[i];
+
+                auto employment_schoolunit = employment->get_values(employment_attribute);
+                auto group_schoolunit = student_group.second->get_values(group_attribute);
+
+                if (employment_schoolunit.empty() || group_schoolunit.empty()) {
+                    continue;
+                }
+
+                if (employment_schoolunit.front() == group_schoolunit.front()) {
+                    generated_object.append_values(pair_to_string(related_type), {employment->get_uid()});
+                    found_proper_employment = true;
+                }
+            }
+            if (!found_proper_employment && !employments.empty()) {
+                auto employment = employments.front();
                 generated_object.append_values(pair_to_string(related_type), {employment->get_uid()});
             }
         }

@@ -2,6 +2,7 @@
 
 ## Unreleased
 #### Features
+  - Improvement in Activity objects for users with multiple employments (#195)
   - The CSV separator character can now be a tab character (#193)
   
 #### Bugfixes

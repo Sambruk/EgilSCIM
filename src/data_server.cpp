@@ -186,7 +186,15 @@ data_server::find_object_by_attribute(const std::string &type, const std::string
         return nullptr;
     }
     return list->get_object_for_attribute(attrib, value);
+}
 
+std::vector<std::shared_ptr<base_object>>
+data_server::find_objects_by_attribute(const std::string &type, const std::string &attrib, const std::string &value) {
+    auto list = get_by_type(type);
+    if (!list) {
+        return std::vector<std::shared_ptr<base_object>>();
+    }
+    return list->get_objects_for_attribute(attrib, value);
 }
 
 bool data_server::has_object(const std::string& uuid) const {
