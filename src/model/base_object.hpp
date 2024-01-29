@@ -152,20 +152,6 @@ public:
 			attributes.emplace(std::make_pair(attr, values));
 	}
 
-	void append_values(const std::string &attr, string_vector &&values, bool unique = false) {
-		auto iter = attributes.find(attr);
-		if (iter != attributes.end()) {
-			if (unique) {
-				for (auto &&val: values) {
-					if (std::find(std::begin(iter->second), std::end(iter->second), val) == std::end(iter->second))
-						iter->second.emplace_back(std::move(val));
-				}
-			} else
-				iter->second.insert(iter->second.end(), values.begin(), values.end());
-		} else
-			attributes.emplace(std::make_pair(attr, std::move(values)));
-	}
-
 	void add_attribute(const std::string &attr, const string_vector &values) {
 		auto iter = attributes.find(attr);
 
