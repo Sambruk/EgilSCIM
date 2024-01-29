@@ -33,7 +33,7 @@ void multi_attribute_transformer::apply(base_object* obj) const {
 }
 
 void regex_transformer::apply(base_object* obj) const {
-    auto values = obj->get_values(from);
+    string_vector values = obj->get_values(from);
 
     for (const auto& value : values) {
         bool foundMatch = false;
