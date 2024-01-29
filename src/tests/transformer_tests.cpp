@@ -90,3 +90,21 @@ TEST_CASE("regex_transformer") {
     REQUIRE(student3.get_values("studyGroup") == student3_studyGroup);
     REQUIRE(student3.get_values("otherGroup") == student3_otherGroup);
 }
+
+TEST_CASE("urldecode_transformer") {
+    regex_transform_rule strip_prefix("DL-(.*)", "displayName", "$1");
+    regex_transformer strip_cn_prefix("cn", {strip_prefix}, true, "");
+    urldecode_transformer urldecoder("encoded", "decoded");
+
+    base_object user1("Student");
+    std::vector<std::string> values({"https://kommunen.se/12345678/MA%3A7", "MA%3a7", "foo%00bar"});
+    user1.add_attribute("encoded", values);
+
+    urldecoder.apply(&user1);
+
+    auto decoded = user1.get_values("decoded");
+    REQUIRE(decoded.size() == 3);
+    REQUIRE(decoded[0] == "https://kommunen.se/12345678/MA:7");
+    REQUIRE(decoded[1] == "MA:7");
+    REQUIRE(decoded[2] == "foo");
+}

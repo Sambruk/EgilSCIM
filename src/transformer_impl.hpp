@@ -69,4 +69,17 @@ private:
     std::string noMatch;
 };
 
+class urldecode_transformer : public transformer {
+public:
+    urldecode_transformer(const std::string& from,
+                          const std::string& to)
+        : from(from), to(to) {
+    }
+    virtual void apply(base_object* obj) const;    
+
+private:
+    std::string from;
+    std::string to;
+};
+
 #endif // EGILSCIM_TRANSFORMER_IMPL_HPP

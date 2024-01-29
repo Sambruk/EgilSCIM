@@ -813,6 +813,28 @@ classified as classes even though they also match the more general rules for stu
 and other groups. The expressions are tried in order and only the first match will be
 applied.
 
+### URL decode transforms
+
+If the attribute values are URL encoded, the function "urldecode" can be used to
+decode the values. For instance:
+
+```
+Student-transform-attributes = <?
+[
+ {
+  "from": "extensionAttribute7",
+  "to": "classDecoded",
+  "function": "urldecode"
+ }
+]
+?>
+```
+
+The example above will transform the attribute `extensionAttribute7` by URL decoding
+it and write the decoded values to the attribute `classDecoded`. If the `to` attribute
+already existed it will be overwritten. If `to` isn't specified the `from` attribute
+will be transformed in-place.
+
 ## UUIDs
 
 The client will by default warn if an object is discovered to have a bad UUID.
