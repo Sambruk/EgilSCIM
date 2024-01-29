@@ -65,6 +65,14 @@ std::shared_ptr<transformer> create_attribute_transformer_from_json(const pt::pt
             throw std::runtime_error(std::string("failed to create regex transformer: ") + e.what());
         }
     }
+    else if (function == "urldecode") {
+        try {
+            auto to = root.get<std::string>("to", from); // if to isn't specified we'll replace the from attribute
+            return std::make_shared<urldecode_transformer>(from, to);
+        } catch (const std::runtime_error& e) {
+            throw std::runtime_error(std::string("failed to create urldecode transformer: ") + e.what());
+        }
+    }
     else {
         throw std::runtime_error("failed to parse attribute transformer, unknown function \"" + function + "\"");
     }

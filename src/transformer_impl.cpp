@@ -18,6 +18,7 @@
  */
 
 #include "transformer_impl.hpp"
+#include <curl/curl.h> // for URL decoding
 
 multi_attribute_transformer::multi_attribute_transformer() {
 }
@@ -53,4 +54,32 @@ void regex_transformer::apply(base_object* obj) const {
             obj->append_values(noMatch, {value});
         }
     }
+}
+
+namespace {
+    std::string urldecode(const std::string& str) {
+        static CURL* curl = nullptr;
+        if (curl == nullptr) {
+            curl = curl_easy_init();
+        }
+        int decodelen;
+        char *decoded = curl_easy_unescape(curl, str.c_str(), 0, &decodelen);
+        if (decoded) {
+            std::string result(decoded);
+            curl_free(decoded);
+            return result;
+        } else {
+            return std::string("");
+        }
+    }
+}
+
+void urldecode_transformer::apply(base_object* obj) const {
+    string_vector values = obj->get_values(from);
+    string_vector transformed_values;
+    for (const auto& value : values) {
+        const std::string transformed = urldecode(value);
+        transformed_values.push_back(transformed);
+    }
+    obj->add_attribute(to, transformed_values);
 }

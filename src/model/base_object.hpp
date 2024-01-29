@@ -152,22 +152,10 @@ public:
 			attributes.emplace(std::make_pair(attr, values));
 	}
 
+	// If the attribute already existed it is overwritten.
+	// TODO: rename to set_attribute?
 	void add_attribute(const std::string &attr, const string_vector &values) {
-		auto iter = attributes.find(attr);
-
-		if (iter != attributes.end()) {
-			attributes.erase(attr);
-		}
-		attributes.emplace(std::make_pair(attr, values));
-	}
-
-	void add_attribute(const std::string &attr, string_vector &&values) {
-		auto iter = attributes.find(attr);
-
-		if (iter != attributes.end()) {
-			attributes.erase(attr);
-		}
-		attributes.emplace(std::make_pair(attr, std::move(values)));
+		attributes[attr] = values;
 	}
 
 	size_t number_of_attributes() const {
