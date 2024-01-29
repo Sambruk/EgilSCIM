@@ -89,6 +89,7 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
     config_file& conf = config_file::instance();
     data_server &server = data_server::instance();
 
+    auto transform = get_transformer(type);
     auto limiter = get_limiter(type);
     auto generated = std::make_shared<object_list>();
 
@@ -132,6 +133,9 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                             auto value = std::regex_replace(from, attribute.match, attr.second, std::regex_constants::format_no_copy);
                             group->add_attribute(name, {value});
                         }
+
+                        // Apply transforms
+                        transform->apply(group.get());
 
                         if (limiter->include(group.get())) {
                             generated->add_object(uuid, group);

@@ -4,6 +4,9 @@
 #### Features
   - A new transform function for URL decoding attributes (#200)
 
+#### Bugfixes
+  - Transforms can now also be applied for generated (virtual) groups (#202)
+
 ## v2.16.0 (2024-01-09)
 #### Features
   - Improvement in Activity objects for users with multiple employments (#195)
