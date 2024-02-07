@@ -20,6 +20,8 @@
 #include "dnpactivities.hpp"
 #include <sstream>
 #include <boost/property_tree/json_parser.hpp>
+#include "utility/utils.hpp"
+#include "utility/simpleurl.hpp"
 
 namespace pt = boost::property_tree;
 
@@ -56,4 +58,22 @@ boost::optional<std::string> DNPActivities::name_to_id(const std::string& name) 
         }
     }
     return boost::optional<std::string>();
+}
+
+std::shared_ptr<DNPActivities> create_activities_from_url(const std::string& url) {
+    int http_code;
+    std::vector<char> http_response;
+
+    try {
+        http_code = simpleurl::read(url, http_response);
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error("failed to get activities from " + url + " : " + e.what());
+    }
+
+    if (startsWith(toUpper(url), "HTTP")) {
+        if (http_code != 200) {
+            throw std::runtime_error("unexpected HTTP response code for " + url + " : " + std::to_string(http_code));
+        }
+    }
+    return std::make_shared<DNPActivities>(std::string(http_response.begin(), http_response.end()));
 }

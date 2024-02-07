@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <boost/optional.hpp>
 
 /** A single DNP test activity from Skolverket's API.
@@ -44,5 +45,13 @@ public:
 private:
     std::vector<DNPActivity> activities;
 };
+
+/** Reads the test activities from a URL and parses them to create a 
+ *  DNPActivities object.
+ * 
+ *  Throws runtime_error if the resource can't be fetched from the URL
+ *  or if the data can't be parsed.
+ */
+std::shared_ptr<DNPActivities> create_activities_from_url(const std::string& url);
 
 #endif // EGILSCIM_DNPACTIVITIES_HPP
