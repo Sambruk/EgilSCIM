@@ -1,0 +1,15 @@
+{
+    "description": "Initial sync of DNP scenario",
+    "config": "configs/dnp/master.conf",
+    "steps": [
+	{ "scenario": [],
+	  "requests": null
+	},
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "init.txt"
+	},
+	{ "scenario": [],
+	  "requests": null
+	}
+    ]
+}

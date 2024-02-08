@@ -1,9 +1,9 @@
-dn: cn=DNP-SVASVA03,dc=kommunen,dc=se
+dn: cn=DNP-SVASVA03_GY,dc=kommunen,dc=se
 changetype: add
 objectClass: groupOfNames
 objectClass: top
 objectClass: extensibleObject
-cn: DNP-SVASVA03
+cn: DNP-SVASVA03_GY
 member: uid=baje,dc=kommunen,dc=se
 member: uid=stjo,dc=kommunen,dc=se
 owner: ou=skolenhet2,ou=skolgruppen,dc=kommunen,dc=se

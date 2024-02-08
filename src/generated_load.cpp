@@ -24,6 +24,7 @@
 #include "data_server.hpp"
 #include "readable_id.hpp"
 #include <optional>
+#include "dnpactivities.hpp"
 
 namespace {
 
@@ -66,6 +67,16 @@ std::string store_relation(base_object &generated_object,
         }
     }
     return uuid;
+}
+
+namespace {
+// Helper to determine whether the setting for DNP activities URL should
+// be read as it is (a URL) or as a local file path (in which case we want
+// to read it differently from the config file so relative paths work).
+bool looks_like_url(const std::string& str) {
+    auto upper = toUpper(str);
+    return startsWith(upper, "HTTP://") || startsWith(upper, "HTTPS://") || startsWith(upper, "FILE://");
+}
 }
 
 /**
@@ -140,6 +151,37 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
         group_attribute = conf.get(group_match_attribute);
     }
 
+    // DNP Activities settings
+    std::shared_ptr<DNPActivities> dnpactivities;
+    const std::string test_activities_url_variable = type + "-national-test-activities-url";
+    std::string test_activities_url = conf.get(test_activities_url_variable, true);
+    if (!test_activities_url.empty()) {
+        if (!looks_like_url(test_activities_url)) {
+            // Assume it's a path instead, in which case we'll get it with get_path instead so
+            // relative paths are converted to absolute.
+            test_activities_url = conf.get_path(test_activities_url_variable, true);
+            // Then convert it to a file:// URL
+#ifdef _WIN32
+            std::string separator = "/";
+#else
+            std::string separator = "";
+#endif
+            test_activities_url = "file://" + separator + test_activities_url;
+        }
+        // This will throw and terminate the load process if it fails
+        dnpactivities = create_activities_from_url(test_activities_url);
+    }
+    // Which attribute (in the StudentGroup) contains the test name
+    std::string activity_name_attribute = conf.get(type + "-national-test-activity-name-attribute", true);
+    // Which attribute (in the generated Activity object) should be used to store the UUID of the test activity
+    std::string activity_id_attribute = conf.get(type + "-national-test-activity-id-attribute", true);
+    if (activity_id_attribute == "") {
+        activity_id_attribute = "parentActivity";
+    }
+    // Converting names to ids will be done if dnpactivities have been loaded and the 
+    // configuration has specified where to find the names.
+    const bool convertActivityNamesToIds = dnpactivities != nullptr && !activity_name_attribute.empty();
+
     data_server &server = data_server::instance();
     auto student_groups = server.get_by_type(master_type);
     auto employments = server.get_by_type(related_type.first);
@@ -173,6 +215,21 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
             if (!found_proper_employment && !employments.empty()) {
                 auto employment = employments.front();
                 generated_object.append_values(pair_to_string(related_type), {employment->get_uid()});
+            }
+        }
+
+        if (convertActivityNamesToIds) {
+            auto values = student_group.second->get_values(activity_name_attribute);
+            // Multi-valued is a bit weird but we'll handle it...
+            std::vector<std::string> ids;
+            for (const std::string &value : values) {
+                auto id = dnpactivities->name_to_id(value);
+                if (id) {
+                    ids.push_back(id.get());
+                }
+            }
+            if (!ids.empty()) {
+                generated_object.add_attribute(activity_id_attribute, ids);
             }
         }
 
