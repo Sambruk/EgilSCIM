@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <map>
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -86,5 +87,33 @@ public:
 };
 
 std::string format_log_path(const std::string& path);
+
+/** Finds the most common element in a sequence.
+ *  Will throw std::out_of_range if the sequence is empty.
+ */
+template<typename T, typename InputIterator>
+T most_common(InputIterator begin, InputIterator end) {
+    if (begin == end) {
+        throw std::out_of_range("most_common: empty sequence");
+    }
+    std::map<T, int> counts;
+    InputIterator current = begin;
+    while (current != end) {
+        counts[*current]++;
+        ++current;
+    }
+
+    T result = *begin;
+    int max = -1;
+
+    for (auto p : counts) {
+        if (p.second > max) {
+            max = p.second;
+            result = p.first;
+        }
+    }
+
+    return result;
+}
 
 #endif //SIMPLESCIM_UTILS_HPP

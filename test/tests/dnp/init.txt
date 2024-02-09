@@ -73,7 +73,7 @@ Users /Users POST
             {
                 "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
                 "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b",
-		"schoolYear": 4,
+		"schoolYear": 6,
                 "schoolType": "GR" 
 		
             } 
@@ -133,7 +133,7 @@ Users /Users POST
             {
                 "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
                 "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b",
-		"schoolYear": 4,
+		"schoolYear": 6,
                 "schoolType": "GR" 
 		
             } 
