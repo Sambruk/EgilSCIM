@@ -489,6 +489,101 @@ are generated from StudentGroups and Teachers).
 There are commented examples for both Activity and Employment in the standard example in the
 `master_config` directory.
 
+### Associating Activity objects with national test activities
+When provisioning to the Swedish National Agency for Education (Skolverket) for the
+national assessments (DNP) student groups of type "Undervisning" should be associated
+with one of the test activities published by Skolverket. This is done in the group's
+Activity object by specifying a parent activity which points to the test activity's UUID.
+
+Usually the data sources don't contain these UUIDs so the EGIL SCIM client has built-in
+support for converting from the test activities' names to UUIDs. A name such as
+"GRGRMAT01_6" can then be converted to "b229977a-7bd3-58ad-b7a2-3fdc774840fd".
+
+The available test activities are published in Skolverket's open data API. To do the
+conversion automatically the URL to the activities API need to be configured, e.g.:
+
+```
+Activity-national-test-activities-url = https://apigw-pre.skolverket.se/provtjanst/verifieringstest/open-data/v1/activities
+```
+
+If you prefer to have the file downloaded locally you can specify a file:// URL:
+
+```
+Activity-national-test-activities-url = file:///workdir/data/activities.json
+```
+
+You also need to specify which attribute in the student group contains the test activity name:
+
+```
+Activity-national-test-activity-name-attribute = testName
+```
+
+With the settings above the EGIL SCIM client will, when generating an Activity object, read the
+student group's `testName` value and convert it to a UUID according to the test activities read
+from the URL. The UUID will be placed in a new attribute in the Activity object, which by default
+will be named `parentActivity`. The `parentActivity` attribute will only be created if the test
+name can be matched with a test activity in the data read from the URL. If you wish to use a
+different attribute name for the UUID you can specify it:
+
+```
+Activity-national-test-activity-id-attribute = testUUID
+```
+
+But there is usually no need to do so. Assuming you use the default attribute (`parentActivity`)
+it can then be specified like so in the Activity object's JSON template:
+
+```
+    <...>
+    
+    ${for $id in parentActivity}
+    "parentActivity": [
+      {
+        "value": "${$id}"
+      }
+    ],
+    
+    <...>
+```
+
+In many cases the data source doesn't already have an attribute for test name in the student
+groups. If the test name (or something that can be mapped to the test name) is available as a
+part of the group's name you will need to configure a transform so as to create a new attribute
+in the group which contains the test name.
+
+In many cases the information that could be mapped to a test name will only map to a subject
+or course code. For instance you may have the text "-MA1-" as a substring in the names of all
+groups that correspond to the subject "GRGRMAT01", but can't get the full test name including
+the suffix (e.g. "GRGRMAT01_6"). In this case you we can try to deduce it.
+
+The suffix is either a school year or a school type, so we need to configure where to find
+those values. If possible we should read both from the StudentGroup object:
+
+```
+Activity-deduce-test-activity-suffix-from-school-type-attribute = schoolType
+Activity-deduce-test-activity-suffix-from-school-year-attribute = schoolYear
+```
+
+If the StudentGroup doesn't have an attribute for schoolType we can sometimes take it from the
+SchoolUnit instead:
+
+```
+Activity-deduce-test-activity-suffix-from-school-type-attribute = SchoolUnit.schoolType
+```
+
+which only works if we can safely assume that each SchoolUnit only offers one school type.
+
+If the StudentGroup doesn't have an attribute for schoolYear we can take it from the Students
+by specifying how to find the Students from the StudentGroup object:
+
+```
+Activity-deduce-test-activity-suffix-from-members-with-school-year = Student.entryUUID
+```
+
+In other words we point out the student's UUIDs. Note that if this method is used to find the
+school year, the attribute `Activity-deduce-test-activity-suffix-from-school-year-attribute`
+should specify an attribute in the Student objects. If the students have different school years
+we'll use the most common value.
+
 ### Overriding Employment attributes
 
 For the generated Employment objects it is possible to override attributes with a separate
