@@ -28,4 +28,26 @@
 std::shared_ptr<object_list> get_generated(const std::string& type,
                                            std::shared_ptr<sql::plugin> sql_plugin,
                                            indented_logger& load_logger);
+
+using object_vector = std::vector<std::shared_ptr<base_object>>;
+
+/** Deduce the test activity name suffix for a national test activity.
+ * 
+ *  The national test activities are named like GRGRMAT01_6 or SVASVA03_GY
+ *  where the first part identifies a subject or course code and the second
+ *  part is either a school year or a school type. If only the first part
+ *  is available from the data source we can deduce the suffix if we can
+ *  figure out the school type and school year based on the group's attributes
+ *  and if necessary the group's students' school year attribute.
+ * 
+ *  @param deduce_from_school_type_attribute The attribute (in the group) to use for school type
+ *  @param deduce_from_school_year_attribute The attribute (either in the group or in the students) to use for school year
+ *  @param members_with_school_year If we want to use the students to deduce school year this is non-null.
+ *  @returns for instance _6 or _GY.
+ */
+std::string deduce_suffix(std::shared_ptr<base_object> student_group, 
+    const std::string& deduce_from_school_type_attribute, 
+    const std::string& deduce_from_school_year_attribute,
+    std::shared_ptr<object_vector> members_with_school_year);
+
 #endif  // EGILSCIMCLIENT_GENERATED_LOAD_HPP

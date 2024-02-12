@@ -2,6 +2,7 @@
 
 ## Unreleased
 #### Features
+  - Built-in support for converting national test activity names to UUIDs (#206)
   - A new transform function for URL decoding attributes (#200)
 
 #### Bugfixes
@@ -11,7 +12,7 @@
 #### Features
   - Improvement in Activity objects for users with multiple employments (#195)
   - The CSV separator character can now be a tab character (#193)
-  
+
 #### Bugfixes
   - Temporary CA store file for FedTLS now works on Windows (#191)
 

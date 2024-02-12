@@ -1,9 +1,9 @@
-dn: cn=DNP-MA Åk 6,dc=kommunen,dc=se
+dn: cn=DNP-GRGRMAT01_6,dc=kommunen,dc=se
 changetype: add
 objectClass: groupOfNames
 objectClass: top
 objectClass: extensibleObject
-cn: DNP-MA Åk 6
+cn: DNP-GRGRMAT01_6
 member: uid=anan,dc=kommunen,dc=se
 member: uid=baje,dc=kommunen,dc=se
 member: uid=lini,dc=kommunen,dc=se

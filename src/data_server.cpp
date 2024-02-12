@@ -205,3 +205,11 @@ bool data_server::has_object(const std::string& uuid) const {
     }
     return false;
 }
+
+std::shared_ptr<base_object> data_server::get_by_id(const std::string &type, const std::string &uuid) const {
+    auto list = get_by_type(type);
+    if (!list) {
+        return nullptr;
+    }
+    return list->get_object(uuid);
+}

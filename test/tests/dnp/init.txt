@@ -67,23 +67,19 @@ Users /Users POST
 		"familyName": "Johansson",
 		"givenName": "Per"
 	},
-	"emails": [
-        
-        {
-          "value": "pejo@skolan.kommunen.se" 
-        } 
-        
-    ],
     "urn:scim:schemas:extension:sis:school:1.0:User": {
         "enrolments": [
             
             {
                 "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
                 "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b",
-		"schoolYear": 6
+		"schoolYear": 6,
+                "schoolType": "GR" 
+		
             } 
             
-        ]
+        ],
+	"civicNo": "201007032038"
     }
 }
 ---
@@ -100,23 +96,21 @@ Users /Users POST
 		"familyName": "Johansson",
 		"givenName": "Stefan"
 	},
-	"emails": [
-        
-        {
-          "value": "stjo@skolan.kommunen.se" 
-        } 
-        
-    ],
     "urn:scim:schemas:extension:sis:school:1.0:User": {
         "enrolments": [
             
             {
                 "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
                 "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2",
-		"schoolYear": 10
+		"schoolYear": 10,
+                "schoolType": "GY",
+		
+		"programCode": "NANAT"
+		
             } 
             
-        ]
+        ],
+	"civicNo": "200406042903"
     }
 }
 ---
@@ -133,23 +127,19 @@ Users /Users POST
 		"familyName": "Nilsson",
 		"givenName": "Lisa"
 	},
-	"emails": [
-        
-        {
-          "value": "lini@skolan.kommunen.se" 
-        } 
-        
-    ],
     "urn:scim:schemas:extension:sis:school:1.0:User": {
         "enrolments": [
             
             {
                 "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
                 "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b",
-		"schoolYear": 6
+		"schoolYear": 6,
+                "schoolType": "GR" 
+		
             } 
             
-        ]
+        ],
+	"civicNo": "201006042905"
     }
 }
 ---
@@ -172,7 +162,10 @@ Users /Users POST
           "value": "baje@skolan.kommunen.se" 
         } 
         
-    ]
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+	"civicNo": "197506014427"
+    }
 }
 ---
 ---
@@ -194,7 +187,60 @@ Users /Users POST
           "value": "anan@skolan.kommunen.se" 
         } 
         
-    ]
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+	"civicNo": "197508236556"
+    }
+}
+---
+---
+Users /Users POST
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "cb0c9a3f-d4e6-461e-8b4e-4a678cf01183",
+	"userName": "soda@skola.kommunen.se",
+	"displayName": "Sofie Dahlgren",
+	"name": {
+		"familyName": "Dahlgren",
+		"givenName": "Sofie"
+	},
+	"emails": [
+        
+        {
+          "value": "soda@skolan.kommunen.se" 
+        } 
+        
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+	"civicNo": "198011284567"
+    }
+}
+---
+---
+Users /Users POST
+
+{
+	"schemas": ["urn:ietf:params:scim:schemas:core:2.0:User",
+	            "urn:scim:schemas:extension:sis:school:1.0:User"],
+	"externalId": "da79003e-8511-467f-9394-ceb875fd71f2",
+	"userName": "ansv@skola.kommunen.se",
+	"displayName": "Annika Svensson",
+	"name": {
+		"familyName": "Svensson",
+		"givenName": "Annika"
+	},
+	"emails": [
+        
+        {
+          "value": "ansv@skolan.kommunen.se" 
+        } 
+        
+    ],
+    "urn:scim:schemas:extension:sis:school:1.0:User": {
+	"civicNo": "197103172345"
+    }
 }
 ---
 ---
@@ -238,6 +284,24 @@ Employments /Employments POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
+    "externalId": "82a4993a-43ef-5b1a-86b5-ecdacb7e4406",
+    "employedAt":  {
+                   "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+                   "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
+    },
+    "user":  {
+             "value": "cb0c9a3f-d4e6-461e-8b4e-4a678cf01183",
+             "$ref": "Users/cb0c9a3f-d4e6-461e-8b4e-4a678cf01183"
+    },
+    "employmentRole": "Rektor",
+    "signature": "soda"
+}
+---
+---
+Employments /Employments POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
     "externalId": "db405316-e9d1-50d2-89c5-776f91ac2c98",
     "employedAt":  {
                    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
@@ -249,6 +313,24 @@ Employments /Employments POST
     },
     "employmentRole": "Lärare",
     "signature": "anan"
+}
+---
+---
+Employments /Employments POST
+
+{
+    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Employment"],
+    "externalId": "ed03a069-30fe-56b6-a1af-4461bcf127f8",
+    "employedAt":  {
+                   "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+                   "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+    },
+    "user":  {
+             "value": "da79003e-8511-467f-9394-ceb875fd71f2",
+             "$ref": "Users/da79003e-8511-467f-9394-ceb875fd71f2"
+    },
+    "employmentRole": "Rektor",
+    "signature": "ansv"
 }
 ---
 ---
@@ -265,6 +347,7 @@ StudentGroups /StudentGroups POST
     "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
     "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
   },
+  "schoolType": "GY",
   "studentMemberships": [
     
     {
@@ -288,6 +371,7 @@ StudentGroups /StudentGroups POST
     "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
     "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
   },
+  "schoolType": "GR",
   "studentMemberships": [
     
     {
@@ -298,52 +382,6 @@ StudentGroups /StudentGroups POST
     {
       "value": "2b3a480f-d0b9-4c09-bbac-70f915964b02",
       "$ref": "Users/2b3a480f-d0b9-4c09-bbac-70f915964b02"
-    } 
-    
-  ]
-}---
----
-StudentGroups /StudentGroups POST
-
-{
-  "schemas": [
-    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
-  ],
-  "externalId": "645ebd9d-55b5-4e7a-900a-92b9369c8f6a",
-  "displayName": "grupp2",
-  "studentGroupType": "Undervisning",
-  "owner": {
-    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
-    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
-  },
-  "studentMemberships": [
-    
-    {
-      "value": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
-      "$ref": "Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef"
-    } 
-    
-  ]
-}---
----
-StudentGroups /StudentGroups POST
-
-{
-  "schemas": [
-    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
-  ],
-  "externalId": "9e2b1131-aac4-4ba3-adc8-a232a2b553d8",
-  "displayName": "grupp3",
-  "studentGroupType": "Undervisning",
-  "owner": {
-    "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
-    "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
-  },
-  "studentMemberships": [
-    
-    {
-      "value": "39732dea-e4a6-4d8f-96de-925a679c56ff",
-      "$ref": "Users/39732dea-e4a6-4d8f-96de-925a679c56ff"
     } 
     
   ]
@@ -362,6 +400,7 @@ StudentGroups /StudentGroups POST
     "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
     "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
   },
+  "schoolType": "GR",
   "studentMemberships": [
     
     {
@@ -381,64 +420,6 @@ Activities /Activities POST
 
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
-    "externalId": "3df5c3cd-1194-574e-b107-6973f5695a66",
-    "displayName": "grupp3-Activity",
-    "owner": {
-        "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
-        "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"  
-    },
-    "groups": [{
-        "value": "9e2b1131-aac4-4ba3-adc8-a232a2b553d8",
-        "$ref": "StudentGroups/9e2b1131-aac4-4ba3-adc8-a232a2b553d8"
-    }],
-    "teachers": [
-        
-        {
-            "value": "3b86c590-551e-5464-84ee-d505effff97e",
-            "$ref": "Employments/3b86c590-551e-5464-84ee-d505effff97e"
-            
-        } 
-        
-    ]
-}
----
----
-Activities /Activities POST
-
-{
-    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
-    "externalId": "7f9f75d8-9c01-5c1d-83df-b0d47cf1e4c9",
-    "displayName": "grupp2-Activity",
-    "owner": {
-        "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
-        "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"  
-    },
-    "groups": [{
-        "value": "645ebd9d-55b5-4e7a-900a-92b9369c8f6a",
-        "$ref": "StudentGroups/645ebd9d-55b5-4e7a-900a-92b9369c8f6a"
-    }],
-    "teachers": [
-        
-        {
-            "value": "db405316-e9d1-50d2-89c5-776f91ac2c98",
-            "$ref": "Employments/db405316-e9d1-50d2-89c5-776f91ac2c98"
-            
-        },
-        
-        {
-            "value": "163cbddb-9fd0-53df-81e4-e022c5dd5c71",
-            "$ref": "Employments/163cbddb-9fd0-53df-81e4-e022c5dd5c71"
-            
-        } 
-        
-    ]
-}
----
----
-Activities /Activities POST
-
-{
-    "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
     "externalId": "857d1f1d-3e23-5896-9877-406ce84be599",
     "displayName": "grupp1-Activity",
     "owner": {
@@ -449,6 +430,7 @@ Activities /Activities POST
         "value": "39074b36-e0ed-4443-a501-5148992014b9",
         "$ref": "StudentGroups/39074b36-e0ed-4443-a501-5148992014b9"
     }],
+    
     "teachers": [
         
         {
@@ -457,7 +439,7 @@ Activities /Activities POST
             
         } 
         
-    ]
+    ] 
 }
 ---
 ---
@@ -475,6 +457,13 @@ Activities /Activities POST
         "value": "0d9a892f-3698-4b56-91c2-44fdb61dedf1",
         "$ref": "StudentGroups/0d9a892f-3698-4b56-91c2-44fdb61dedf1"
     }],
+    
+    "parentActivity": [
+      {
+        "value": "a1935bf4-a6f3-5890-9c47-a611d22eba23"
+      }
+    ],
+    
     "teachers": [
         
         {
@@ -483,7 +472,7 @@ Activities /Activities POST
             
         } 
         
-    ]
+    ] 
 }
 ---
 ---
@@ -501,6 +490,13 @@ Activities /Activities POST
         "value": "def59679-3808-4210-a707-ebce13467206",
         "$ref": "StudentGroups/def59679-3808-4210-a707-ebce13467206"
     }],
+    
+    "parentActivity": [
+      {
+        "value": "b229977a-7bd3-58ad-b7a2-3fdc774840fd"
+      }
+    ],
+    
     "teachers": [
         
         {
@@ -515,6 +511,6 @@ Activities /Activities POST
             
         } 
         
-    ]
+    ] 
 }
 ---

@@ -80,7 +80,7 @@ Users /Users POST
             {
                 "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
                 "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b",
-		"schoolYear": 4
+		"schoolYear": 6
             } 
             
         ]
@@ -146,7 +146,7 @@ Users /Users POST
             {
                 "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
                 "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b",
-		"schoolYear": 4
+		"schoolYear": 6
             } 
             
         ]
@@ -259,7 +259,7 @@ StudentGroups /StudentGroups POST
     "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
   ],
   "externalId": "0d9a892f-3698-4b56-91c2-44fdb61dedf1",
-  "displayName": "DNP-SVASVA03",
+  "displayName": "DNP-SVASVA03_GY",
   "studentGroupType": "Undervisning",
   "owner": {
     "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
@@ -356,7 +356,7 @@ StudentGroups /StudentGroups POST
     "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
   ],
   "externalId": "def59679-3808-4210-a707-ebce13467206",
-  "displayName": "DNP-MA Åk 6",
+  "displayName": "DNP-GRGRMAT01_6",
   "studentGroupType": "Undervisning",
   "owner": {
     "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
@@ -466,7 +466,7 @@ Activities /Activities POST
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
     "externalId": "b2880a10-4561-5818-ae8c-27411b6d5a24",
-    "displayName": "DNP-SVASVA03-Activity",
+    "displayName": "DNP-SVASVA03_GY-Activity",
     "owner": {
         "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
         "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"  
@@ -492,7 +492,7 @@ Activities /Activities POST
 {
     "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Activity"],
     "externalId": "ce4d51e5-f563-5105-8a13-849088f1fc2d",
-    "displayName": "DNP-MA Åk 6-Activity",
+    "displayName": "DNP-GRGRMAT01_6-Activity",
     "owner": {
         "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
         "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"  

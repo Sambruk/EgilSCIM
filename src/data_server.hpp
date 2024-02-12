@@ -70,6 +70,10 @@ public:
 
     std::shared_ptr<object_list> get_by_type(const std::string &type) const;
 
+    // Finds an object based on its type and uuid.
+    // Returns a nullptr if the object didn't exist.
+    std::shared_ptr<base_object> get_by_id(const std::string &type, const std::string &uuid) const;
+
     bool load(std::shared_ptr<sql::plugin> sql_plugin);
 
     void preload();
