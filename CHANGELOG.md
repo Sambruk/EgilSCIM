@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.17.0 (2024-02-27)
 #### Features
   - Built-in support for converting national test activity names to UUIDs (#206)
   - A new transform function for URL decoding attributes (#200)
