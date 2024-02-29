@@ -112,9 +112,9 @@ std::shared_ptr<load_limiter> get_limiter(const std::string& type) {
     static std::string current_config;
     static std::map<std::string, std::shared_ptr<load_limiter>> limiters;
 
-    if (conf.file_name() != current_config) {
+    if (conf.file_name_str() != current_config) {
         limiters.clear();
-        current_config = conf.file_name();
+        current_config = conf.file_name_str();
     }
 
     if (limiters.find(type) == limiters.end()) {
