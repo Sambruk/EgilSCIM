@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### Bugfixes
+  - In the Windows version a heap corruption problem was fixed in the LDAP code (#211)
+
 ## v2.17.0 (2024-02-27)
 #### Features
   - Built-in support for converting national test activity names to UUIDs (#206)
