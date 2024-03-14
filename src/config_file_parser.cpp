@@ -269,7 +269,8 @@ int config_parser::rule_comment() {
 
 void config_parser::syntax_error(const std::string &str) {
 	/** Set prefix */
-	simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", config_file::instance().file_name(),
+	auto config = config_file::instance().file_name_str();
+	simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", config.c_str(),
 	                                   line, col);
 
 	/** Set message */
@@ -278,7 +279,8 @@ void config_parser::syntax_error(const std::string &str) {
 
 void config_parser::syntax_error_expected(const std::string &str) {
 	/** Set prefix */
-	simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", config_file::instance().file_name(),
+	auto config = config_file::instance().file_name_str();
+	simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", config.c_str(),
 	                                   line, col);
 
 	/** Set message */

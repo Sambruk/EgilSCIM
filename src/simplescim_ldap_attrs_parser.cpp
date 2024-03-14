@@ -51,8 +51,9 @@ public:
 	 * according to global 'parser' object and 'str'.
 	 */
 	void syntax_error(const std::string &str) {
+		auto config = config_file::instance().file_name_str();
 		simplescim_error_string_set_prefix(
-				"%s:ldap-attrs:%lu:%lu:syntax error", config_file::instance().file_name(),
+				"%s:ldap-attrs:%lu:%lu:syntax error", config.c_str(),
 				line, col);
 		simplescim_error_string_set_message("%s", str.c_str()
 		);
@@ -64,8 +65,9 @@ public:
 	 * when the error is of type "expected x, found y".
 	 */
 	void syntax_error_expected(const std::string &str) {
+		auto config = config_file::instance().file_name_str();
 		simplescim_error_string_set_prefix(
-				"%s:ldap-attrs:%lu:%lu:syntax error", config_file::instance().file_name(),
+				"%s:ldap-attrs:%lu:%lu:syntax error", config.c_str(),
 				line, col);
 
 		if (isprint(*cur)) {

@@ -96,7 +96,7 @@ int ldap_search_ext_s_utf8(
         int n = MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED, attrs[i], (int)strlen(attrs[i]), wattrs[i], buffer_size);
         wattrs[i][n] = 0;
     }
-    wattrs[num_attrs] = nullptr;
+    wattrs.push_back(nullptr);
 
     return ldap_search_ext_sW(ld, base_buffer, scope,
         filter_buffer,

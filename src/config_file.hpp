@@ -57,8 +57,8 @@ public:
         return theconfigfile;
     }
 
-    const char *file_name() {
-        return filename.u8string().c_str();
+    std::string file_name_str() {
+        return filename.u8string();
     }
 
     /**
