@@ -20,6 +20,7 @@
 #include "simpleurl.hpp"
 #include <curl/curl.h>
 #include <memory>
+#include <stdexcept>
 
 namespace {
 size_t write_http_response(void *buffer, size_t size, size_t nmemb,
