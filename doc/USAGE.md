@@ -541,7 +541,7 @@ it can then be specified like so in the Activity object's JSON template:
         "value": "${$id}"
       }
     ],
-    
+    ${end}
     <...>
 ```
 
