@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.17.1 (2024-04-30)
 #### Bugfixes
   - In the Windows version a heap corruption problem was fixed in the LDAP code (#211)
 
