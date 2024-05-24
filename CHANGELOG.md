@@ -1,5 +1,9 @@
 ## Releases
 
+## v2.17.2 (2024-05-24)
+#### Features
+  - Unit tests build on Debian Bookworm
+
 ## v2.17.1 (2024-04-30)
 #### Bugfixes
   - In the Windows version a heap corruption problem was fixed in the LDAP code (#211)
