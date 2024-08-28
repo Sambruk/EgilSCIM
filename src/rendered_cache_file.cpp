@@ -19,6 +19,7 @@
 
 #include "rendered_cache_file.hpp"
 #include "utility/temporary_umask.hpp"
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <experimental/filesystem>
 #include <fstream>
 
