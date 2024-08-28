@@ -21,6 +21,7 @@
 #include <curl/curl.h>
 #include <memory>
 #include <stdexcept>
+#include <iterator>
 
 namespace {
 size_t write_http_response(void *buffer, size_t size, size_t nmemb,
