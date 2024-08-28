@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 project(EgilSCIMClient CXX)
 
 set(EgilSCIM_VERSION_MAJOR 2)
@@ -43,7 +43,7 @@ else ()
 endif ()
 
 if (WIN32)
-    set(LDFLAGS wldap32.lib ${CURL_LIBRARY_RELEASE})
+    set(LDFLAGS wldap32.lib ${CURL_LIBRARIES})
 else()
     set(LDFLAGS -lldap -llber -lcurl -lstdc++fs -ldl)
 endif()
