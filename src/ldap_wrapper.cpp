@@ -21,6 +21,9 @@
 #include <set>
 #include <string>
 #ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <Windows.h>
 #include <Winldap.h>
 #include <Winber.h>
