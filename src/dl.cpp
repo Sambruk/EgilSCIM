@@ -25,6 +25,7 @@
 #else
 #include <dlfcn.h>
 #endif
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <experimental/filesystem>
 
 namespace {

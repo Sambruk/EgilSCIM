@@ -19,9 +19,14 @@
 
 #ifndef SIMPLESCIM_SCIM_SEND
 #define SIMPLESCIM_SCIM_SEND
-
 #include <string>
 #include <optional>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#endif
 #include <curl/curl.h>
 #include <fstream>
 #include <vector>

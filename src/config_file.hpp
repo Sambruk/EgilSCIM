@@ -24,6 +24,7 @@
 #include <iostream>
 #include <map>
 #include "utility/utils.hpp"
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <experimental/filesystem>
 
 class config_file {
