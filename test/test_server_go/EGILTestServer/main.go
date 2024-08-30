@@ -195,7 +195,11 @@ func runTest(testName, testPath string,
 		err = cmd.Run()
 
 		if !step.ExpectErrors && err != nil {
-			log.Fatalf("Failed to run EGIL client: %v", err)
+			log.Printf("Failed to run EGIL client: %v", err)
+			if stderr.String() != "" {
+				log.Printf("stderr:\n%s", stderr.String())
+			}
+			log.Fatalf("Exiting testing.")
 		}
 
 		// Verify that the requests match
@@ -279,7 +283,7 @@ func runTestSuite(testLogger *TestLogger, serverErrorChannel chan error, cert, k
 	}
 
 	// Give it some extra time...
-	time.Sleep(3 * time.Second)
+	time.Sleep(8 * time.Second)
 
 	testDirectories := tests
 	if testDirectories == nil {
