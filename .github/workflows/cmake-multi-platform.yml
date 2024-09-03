@@ -1,0 +1,76 @@
+# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+name: CMake on multiple platforms
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+            cmake_preset: windows
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+            cmake_preset: unix
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: "Set environmental variables"
+      shell: bash
+      run: |
+        echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV        
+
+    - name: Install dependencies on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get install -y libldap2-dev
+
+    - name: Configure CMake
+      run: cmake -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} --preset=${{ matrix.cmake_preset }}
+
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Tests on Windows
+      if: matrix.os == 'windows-latest'
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      run: .\${{ matrix.build_type }}\tests.exe
+
+    - name: Tests on Unix
+      if: matrix.os == 'ubuntu-latest'
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      run: ./tests
+
+    - name: Upload Windows artifacts
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: EgilSCIMClient-${{ matrix.os }}
+        path: build/${{ matrix.build_type }}
+
+    - name: Upload Ubuntu artifacts
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: EgilSCIMClient-${{ matrix.os }}
+        path: build/EgilSCIMClient
