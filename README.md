@@ -1,8 +1,8 @@
 # EGIL SCIM client
 
-The EGIL SCIM client implements the EGIL profile of the SS 12000 
+The EGIL SCIM client implements the EGIL profile of the SS 12000:2018
 standard. It reads information about students, groups etc. from 
-LDAP and sends updates to a SCIM server.
+various data sources (LDAP, SQL or CSV) and sends updates to a SCIM server.
 
 EGIL SCIM client is developed and managed by Föreningen Sambruk, https://sambruk.se/portfolio/egil-dnp/.
 Contact Sambruk when you want to participate in the managed group for EGIL and get access to documentation and other features.
@@ -13,7 +13,7 @@ To find the latest released version, go to
 Documentation can be found in the 
 [doc directory](https://github.com/Sambruk/EgilSCIM/tree/master/doc), especially:
 
- * [Installing](doc/INSTALL.md)
+ * [Building](doc/BUILDING.md)
  * [Using](doc/USAGE.md)
 
 After downloading EGIL SCIM client, you can find example configuration
