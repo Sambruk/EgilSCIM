@@ -24,8 +24,10 @@ Make sure the following is installed:
 
 Then you can execute the following commands to build the program:
 
-`cmake --preset=unix`
-`cmake --build build`
+```
+cmake --preset=unix
+cmake --build build
+```
 
 This should produce an EgilSCIMClient binary in the `build` directory.
 
@@ -42,7 +44,9 @@ in `CMakePresets.json`.
 
 Then you can execute the following commands to build the program:
 
-`cmake --preset=windows`
-`cmake --build build --config Release`
+```
+cmake --preset=windows
+cmake --build build --config Release
+```
 
 This should produce an EgilSCIMClient.exe binary in the `build\Release` directory.
