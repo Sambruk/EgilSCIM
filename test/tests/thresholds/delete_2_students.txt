@@ -1,0 +1,60 @@
+---
+StudentGroups /StudentGroups/39074b36-e0ed-4443-a501-5148992014b9 PUT
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "39074b36-e0ed-4443-a501-5148992014b9",
+  "displayName": "grupp1",
+  "studentGroupType": "Klass",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+  ]
+}---
+---
+StudentGroups /StudentGroups/645ebd9d-55b5-4e7a-900a-92b9369c8f6a PUT
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "645ebd9d-55b5-4e7a-900a-92b9369c8f6a",
+  "displayName": "grupp2",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+  ]
+}---
+---
+StudentGroups /StudentGroups/def59679-3808-4210-a707-ebce13467206 PUT
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "def59679-3808-4210-a707-ebce13467206",
+  "displayName": "DNP-GRGRMAT01_6",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "8d371858-3fbd-4af2-ae33-84225ead4a1b",
+    "$ref": "SchoolUnits/8d371858-3fbd-4af2-ae33-84225ead4a1b"
+  },
+  "studentMemberships": [
+    
+  ]
+}---
+---
+Users /Users/2b3a480f-d0b9-4c09-bbac-70f915964b02 DELETE
+---
+---
+Users /Users/aeb9dfad-c824-49e2-89d6-84cf5e33feef DELETE
+---

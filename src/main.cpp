@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2019 Föreningen Sambruk
+ *  Copyright (C) 2017-2024 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -40,6 +40,7 @@
 #include "post_processing.hpp"
 #include "sql.hpp"
 #include "generated_group_load.hpp"
+#include "thresholds.hpp"
 
 namespace po = boost::program_options;
 namespace filesystem = std::experimental::filesystem;
@@ -143,13 +144,19 @@ void make_dirty(std::shared_ptr<rendered_object_list> objects, const std::vector
  * 
  * Returns an empty list if the cache file doesn't exist, but returns
  * nullptr if there is no cache file path setting in the config file.
+ * 
+ * When deciding whether or not to apply thresholds, we want to differentiate
+ * between an empty cache and a non-existent cache, so the cache_file_existed
+ * parameter will let the caller know if there was a cache file or not.
  */
-std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins& ppp) {
+std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins& ppp, bool *cache_file_existed) {
     auto cache_path = config_file::instance().get_path("cache-file");
 
     if (cache_path.empty()) {
         return nullptr;
     }
+
+    *cache_file_existed = std::experimental::filesystem::exists(cache_path);
 
     try {
         return rendered_cache_file::get_contents(cache_path);
@@ -169,7 +176,7 @@ std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins&
 
     renderer rend;
     auto rendered_cache = std::make_shared<rendered_object_list>();
-    for (const auto itr : *object_cache) {
+    for (const auto &itr : *object_cache) {
         try {
             rendered_cache->add_object(rend.render(ppp, *itr.second));
         } catch (const std::runtime_error& e) {
@@ -190,7 +197,8 @@ int main(int argc, char *argv[]) {
             ("help,h",             "produce help message")
             ("version,v",          "displays version of this program")
             ("rebuild-cache,r",    "ignores cache file contents and instead queries SCIM server for list of objects")
-            ("skip-load",          "don't read from data source, causes delete for all objects in cache");
+            ("skip-load",          "don't read from data source, causes delete for all objects in cache")
+            ("skip-thresholds",    "don't verify thresholds");
 
         // Config file variables exposed as command line options
         std::vector<config_file_option> common_vars =
@@ -357,13 +365,32 @@ int main(int argc, char *argv[]) {
         ScimActions scim_actions{server_info};
 
         /** Get objects from cache file */
-        std::shared_ptr<rendered_object_list> cache = read_cache(ppp);
+        auto cache_file_existed = false;
+        std::shared_ptr<rendered_object_list> cache = read_cache(ppp, &cache_file_existed);
 
         if (cache == nullptr) {
             print_error();
             server.clear();
             config.clear();
             return EXIT_FAILURE;
+        }
+
+        // Possibly apply thresholds
+        bool skip_thresholds = vm.count("skip-thresholds");
+        if (cache_file_existed && !skip_load && !skip_thresholds) {
+            try { 
+                verify_thresholds(cache, server);
+            }
+            catch (const threshold_error& e) {
+                // One of the thresholds were violated
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
+            catch (const std::runtime_error& e) {
+                // Probably unparsable threshold
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
         }
 
         std::vector<ScimActions::scim_object_ref> all_scim_objects;
