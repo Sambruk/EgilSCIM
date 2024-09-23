@@ -1,0 +1,59 @@
+{
+    "description": "Thresholds (absolute and relative)",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt",
+	  "commandLine": ["--D", "Student-threshold=1"]
+	},
+	{
+	    "scenario": [],
+	    "requests": "../unprovision/delete.txt",
+	    "commandLine": ["--skip-load",
+			    "--D", "Student-threshold=1"]
+	},
+	{ "scenario": [],
+	  "requests": null,
+	  "commandLine": ["--D", "Student-threshold=1"],
+	  "expectErrors": true
+	},
+	{ "scenario": [],
+	  "requests": "../base/init.txt",
+	  "commandLine": ["--D", "Student-threshold=1",
+			  "--skip-thresholds"]
+	},
+	{ "scenario": [],
+	  "requests": null,
+	  "commandLine": ["--D", "Student-threshold-relative=10",
+			  "--D", "Student-limit-with=regex",
+			  "--D", "Student-limit-regex=stjo",
+			  "--D", "Student-limit-by=uid"],
+	  "expectErrors": true
+	},
+	{ "scenario": [],
+	  "requests": null,
+	  "commandLine": ["--D", "Student-threshold=1",
+			  "--D", "Student-limit-with=regex",
+			  "--D", "Student-limit-regex=stjo",
+			  "--D", "Student-limit-by=uid"],
+	  "expectErrors": true
+	},
+	{ "scenario": [],
+	  "requests": null,
+	  "commandLine": ["--D", "Object-threshold=1",
+			  "--D", "Student-threshold-relative=75",
+			  "--D", "Student-limit-with=regex",
+			  "--D", "Student-limit-regex=stjo",
+			  "--D", "Student-limit-by=uid"],
+	  "expectErrors": true
+	},	
+	{ "scenario": [],
+	  "requests": "delete_2_students.txt",
+	  "commandLine": ["--D", "Student-threshold-relative=75",
+			  "--D", "Object-threshold-relative=10",
+			  "--D", "Student-limit-with=regex",
+			  "--D", "Student-limit-regex=stjo",
+			  "--D", "Student-limit-by=uid"]
+	}	
+    ]
+}

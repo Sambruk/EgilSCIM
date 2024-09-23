@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### Features
+  - Configurable threshols to prevent accidental large changes (#196)
+
 ## v2.17.2 (2024-05-24)
 #### Features
   - Unit tests build on Debian Bookworm
