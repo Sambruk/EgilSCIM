@@ -960,6 +960,63 @@ discard-objects-with-bad-uuids = true
 This is recommended to always use for new configurations so as to not
 accidentally send an object with bad UUID to a server.
 
+## Thresholds
+
+Configurable thresholds can be used to protect against sending unintended
+large changes. After initially provisioning all intended objects an integration
+typically only transfers a few changes every time it runs. By setting
+thresholds the EgilSCIMClient will refuse to run if there is suddenly a large
+change in the number of objects.
+
+This can protect both against problems in the data source (for instance
+all students accidentally disappearing from the data source), and problems
+with selections (for instance if your configured rule for selecting groups
+and users suddenly by accident selects too many objects).
+
+The easiest way to configure a threshold looks like this:
+
+```
+Student-threshold = 50
+```
+
+This means that if running the EgilSCIMClient would lead to a change in
+objects exceeding 50 Students, the run will be aborted without sending any
+changes. Note that this applies both if the number of Students decrease by
+50 as well as if it increases by 50.
+
+You can also specify a threshold which applies to all object types:
+
+```
+Object-threshold = 100
+```
+
+If `Object-threshold` is used together with type specific thresholds, the
+type specific thresholds will be used for the types that have them, and
+`Object-threshold` will be used for types without type specific thresholds.
+
+If you wish you can also specify relative thresholds:
+
+```
+Object-threshold-relative = 10
+Student-threshold-relative = 20
+```
+
+In the example above students are allowed to change by 20% in each run, objects
+of other types may only change by 10%.
+
+You can use both absolute and relative thresholds at once, the EgilSCIMClient
+will then abort if either threshold is exceeded.
+
+### Exceptions for thresholds
+
+If you have configured thresholds you can temporarily disable them by
+running with the `--skip-thresholds` command line parameter.
+
+Thresholds will also be ignored in the following cases:
+
+ * When there is no cache file to compare against (typically the first run)
+ * When using the `--skip-load` parameter (typically used to unprovision everything)
+
 ## Execution
 
 EgilSCIM is executed by typing `EgilSCIMClient [OPTIONS] <file>` where `file`
