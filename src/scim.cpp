@@ -32,6 +32,7 @@
 #include "rendered_cache_file.hpp"
 #include "simplescim_scim_send.hpp"
 #include "readable_id.hpp"
+#include "audit.hpp"
 
 // Concatenates a base URL with a path, for instance "https://foo.com" and "Users"
 // into "https://foo.com/Users"
@@ -106,7 +107,7 @@ void ScimActions::process_changes(const object_list& current,
                                   const post_processing::plugins& ppp,
                                   statistics& stats,
                                   bool rebuild_cache,
-                                  const std::set<std::string>& all_scim_uuids) const {
+                                  const std::set<std::string>& all_scim_uuids) {
     int err;
 
     for (const auto &iter : current) {
@@ -148,6 +149,7 @@ void ScimActions::process_changes(const object_list& current,
                     std::cerr << simplescim_error_string_get() << std::endl;
                 }
             }
+            audit::log_scim_operation(audit_log, err == 0, SCIM_CREATE, iter.second->getSS12000type(), uid, nullptr, object);
         } else {
             bool copy = false;
 
@@ -183,6 +185,7 @@ void ScimActions::process_changes(const object_list& current,
                         std::cerr << simplescim_error_string_get() << std::endl;
                     }
                 }
+                audit::log_scim_operation(audit_log, err == 0, SCIM_UPDATE, iter.second->getSS12000type(), uid, cached_object, object);
             }
         }
     }
@@ -195,7 +198,7 @@ void ScimActions::process_changes(const object_list& current,
 void ScimActions::process_deletes(const object_list& current,
                                   const rendered_object_list& cache,
                                   const std::string& type,
-                                  statistics& stats) const {
+                                  statistics& stats) {
 
     /** For every object in 'cache' of the given type */
     for (const auto &item : cache) {
@@ -214,6 +217,7 @@ void ScimActions::process_deletes(const object_list& current,
                     ++stats.n_delete_fail;
                     fprintf(stderr, "%s\n", simplescim_error_string_get());
                 }
+                audit::log_scim_operation(audit_log, err == 0, SCIM_DELETE, type, uid, object, nullptr);
             }
         }
     }
@@ -221,7 +225,8 @@ void ScimActions::process_deletes(const object_list& current,
 
 void ScimActions::process_deletes_per_endpoint(const std::vector<std::string>& to_delete,
                                                const std::string& endpoint,
-                                               statistics& stats) const {
+                                               statistics& stats,
+                                               const std::string& type) {
     auto prefix = concat_url(scim_server_info.get_url(), endpoint) + '/';
 
     for (const auto& uuid : to_delete) {
@@ -234,6 +239,7 @@ void ScimActions::process_deletes_per_endpoint(const std::vector<std::string>& t
             ++stats.n_delete_fail;
             fprintf(stderr, "%s\n", simplescim_error_string_get());
         }
+        audit::log_scim_operation(audit_log, err == 0, SCIM_DELETE, type, uuid, nullptr, nullptr);
     }
 }
 
@@ -291,7 +297,7 @@ int ScimActions::perform(const data_server &current,
                          const rendered_object_list &cached,
                          const post_processing::plugins& ppp,
                          bool rebuild_cache,
-                         const std::vector<ScimActions::scim_object_ref>& all_scim_objects) const {
+                         const std::vector<ScimActions::scim_object_ref>& all_scim_objects) {
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = post_processing::filter_types(string_to_vector(types_string), ppp);
 
@@ -339,7 +345,8 @@ int ScimActions::perform(const data_server &current,
                 }
             }
             
-            process_deletes_per_endpoint(to_delete, endpoint, stats[endpoint_to_SS12000_type(endpoint, types)]);
+            auto type_for_endpoint = endpoint_to_SS12000_type(endpoint, types);
+            process_deletes_per_endpoint(to_delete, endpoint, stats[type_for_endpoint], type_for_endpoint);
         }
     }
     else {
