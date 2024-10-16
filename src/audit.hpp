@@ -60,14 +60,26 @@ void log_scim_operation(std::ostream& os,
                         std::shared_ptr<rendered_object> previous,
                         std::shared_ptr<rendered_object> current);
 
+/** 
+* Testable implementation of log_scim_operation.
+* Returns the message in a string instead of writing to a stream if it's open.
+* Doesn't add a timestamp to the start of the message.
+*/
+std::string scim_operation_audit_message(bool success,
+    SCIMOperation operation,
+    const std::string& type,
+    const std::string& uuid,
+    std::shared_ptr<rendered_object> previous,
+    std::shared_ptr<rendered_object> current);
+
 /**
  * Describes a rendered object. This function assumes object is not a nullptr.
  * The description will attempt to find a readable description that identifies
- * the object. It will always include the UUID so the object can be uniquely
- * identifier, but it will start with a more user friendly attribute if possible.
+ * the object. It will always start with the UUID so the object can be uniquely
+ * identified, but it will also add a more user friendly attribute if possible.
  * To choose a user friendly attribute, this function uses knowledge of SS12000.
  */
-std::string object_description(const std::string& type, std::shared_ptr<rendered_object> object);
+std::string object_description(std::shared_ptr<rendered_object> object);
 
 } // namespace audit
 

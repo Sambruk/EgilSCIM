@@ -24,15 +24,15 @@
 
 namespace audit {
 
-const char *operation_to_string(SCIMOperation op) {
+const char *operation_to_string(bool success, SCIMOperation op) {
     switch (op)
     {
     case SCIM_CREATE:
-        return "create";
+        return success ? "Created" : "Failed to create";
     case SCIM_DELETE:
-        return "delete";
+        return success ? "Deleted" : "Failed to delete";
     case SCIM_UPDATE:
-        return "update";
+        return success ? "Updated" : "Failed to update";
     default:
         return "<unknown operation>";
     }
@@ -50,9 +50,25 @@ void log_scim_operation(std::ostream& os,
     }
 
     std::time_t now = std::time(nullptr);
-    auto tm = localtime(&now);
 
-    auto outcome = success ? "Successful" : "Failed";
+    std::tm tm;
+#ifdef _WIN32
+    localtime_s(&tm, &now);
+#else
+    localtime_s(&now, &tm);
+#endif
+
+    os << std::put_time(&tm, "%F %T") << " "
+        << scim_operation_audit_message(success, operation, type, uuid, previous, current) << std::endl;
+}
+
+std::string scim_operation_audit_message(bool success,
+    SCIMOperation operation,
+    const std::string& type,
+    const std::string& uuid,
+    std::shared_ptr<rendered_object> previous,
+    std::shared_ptr<rendered_object> current) {
+    std::ostringstream os;
 
     auto description = uuid;
     auto object_to_base_description_on = current;
@@ -65,15 +81,15 @@ void log_scim_operation(std::ostream& os,
         assert(operation == SCIM_DELETE);
     }
     if (object_to_base_description_on != nullptr) {
-        description = audit::object_description(type, object_to_base_description_on);
+        description = audit::object_description(object_to_base_description_on);
     }
 
-    os << std::put_time(tm, "%F %T") << " " << outcome << " " << operation_to_string(operation) 
-        << " of " << type << " " << description << std::endl;
+    os << operation_to_string(success, operation) << " " << type << " " << description;
+    return os.str();
 }
 
 // Assumes object is not a nullptr
-std::string object_description(const std::string& type, std::shared_ptr<rendered_object> object) {
+std::string object_description(std::shared_ptr<rendered_object> object) {
     std::ostringstream os;
     os << object->get_id();
 
@@ -100,11 +116,15 @@ std::string object_description(const std::string& type, std::shared_ptr<rendered
     auto displayName = root.get_optional<std::string>("displayName");
     if (displayName) {
         os << " " << displayName.get();
+        auto owner = root.get_optional<std::string>("owner.value");
+        if (owner) {
+            os << " owner: " << owner.get();
+        }
         return os.str();
     }
 
     // Otherwise if type == Employment, use UUIDs for user and school unit
-    if (type == "Employment") {
+    if (object->get_type() == "Employment") {
         auto user = root.get_optional<std::string>("user.value");
         auto schoolUnit = root.get_optional<std::string>("employedAt.value");
         if (user) {
