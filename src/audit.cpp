@@ -70,7 +70,7 @@ void log_scim_operation(std::ostream& os,
 #ifdef _WIN32
     localtime_s(&tm, &now);
 #else
-    localtime_s(&now, &tm);
+    localtime_r(&now, &tm);
 #endif
 
     os << std::put_time(&tm, "%F %T") << " "
