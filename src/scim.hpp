@@ -38,6 +38,12 @@ enum SCIMOperation {
     SCIM_UPDATE
 };
 
+enum SCIMOperationFailureType {
+    SCIM_OTHER_FAILURE,
+    SCIM_CONFLICT_FAILURE,
+    SCIM_NOT_FOUND_FAILURE
+};
+
 class ScimActions {
 public:
         /** A reference to an object in the SCIM server.
@@ -156,7 +162,7 @@ public:
     public:
         explicit create_func(const rendered_object &c) : create(c) {}
 
-        int operator()(const ScimActions &);
+        int operator()(const ScimActions &, bool& conflict);
     };
 
     class update_func {
@@ -165,7 +171,7 @@ public:
         update_func(const rendered_object &o) : object(o)
             {}
 
-        int operator()(const ScimActions &);
+        int operator()(const ScimActions &, bool& non_existent);
     };
 
     class delete_func {
@@ -173,7 +179,7 @@ public:
     public:
         explicit delete_func(const rendered_object &o) : object(o) {}
 
-        int operator()(const ScimActions &);
+        int operator()(const ScimActions &, bool& non_existent);
     };
     
     /** Gets a list of all resources in the SCIM server.

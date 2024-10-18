@@ -30,17 +30,20 @@ TEST_CASE("Log SCIM audit message") {
     auto previous = std::make_shared<rendered_object>("1", "StudentGroup", R"xyz({"displayName": "A"})xyz");
     auto current = std::make_shared<rendered_object>("1", "StudentGroup", R"xyz({"displayName": "B"})xyz");
 
-    REQUIRE(scim_operation_audit_message(true, SCIM_CREATE, "StudentGroup", "1", nullptr, current) == "Created StudentGroup 1 B");
-    REQUIRE(scim_operation_audit_message(false, SCIM_CREATE, "StudentGroup", "1", nullptr, current) == "Failed to create StudentGroup 1 B");
-    REQUIRE(scim_operation_audit_message(false, SCIM_CREATE, "StudentGroup", "1", nullptr, nullptr) == "Failed to create StudentGroup 1");
+    REQUIRE(scim_operation_audit_message(true, SCIM_OTHER_FAILURE, SCIM_CREATE, "StudentGroup", "1", nullptr, current) == "Created StudentGroup 1 B");
+    REQUIRE(scim_operation_audit_message(false, SCIM_OTHER_FAILURE, SCIM_CREATE, "StudentGroup", "1", nullptr, current) == "Failed to create StudentGroup 1 B");
+    REQUIRE(scim_operation_audit_message(false, SCIM_OTHER_FAILURE, SCIM_CREATE, "StudentGroup", "1", nullptr, nullptr) == "Failed to create StudentGroup 1");
+    REQUIRE(scim_operation_audit_message(false, SCIM_CONFLICT_FAILURE, SCIM_CREATE, "StudentGroup", "1", nullptr, current) == "Failed to create (conflict) StudentGroup 1 B");
 
-    REQUIRE(scim_operation_audit_message(true, SCIM_UPDATE, "StudentGroup", "1", nullptr, current) == "Updated StudentGroup 1 B");
-    REQUIRE(scim_operation_audit_message(true, SCIM_UPDATE, "StudentGroup", "1", previous, current) == "Updated StudentGroup 1 B");
-    REQUIRE(scim_operation_audit_message(false, SCIM_UPDATE, "StudentGroup", "1", nullptr, current) == "Failed to update StudentGroup 1 B");
-    REQUIRE(scim_operation_audit_message(false, SCIM_UPDATE, "StudentGroup", "1", nullptr, nullptr) == "Failed to update StudentGroup 1");
+    REQUIRE(scim_operation_audit_message(true, SCIM_OTHER_FAILURE, SCIM_UPDATE, "StudentGroup", "1", nullptr, current) == "Updated StudentGroup 1 B");
+    REQUIRE(scim_operation_audit_message(true, SCIM_OTHER_FAILURE, SCIM_UPDATE, "StudentGroup", "1", previous, current) == "Updated StudentGroup 1 B");
+    REQUIRE(scim_operation_audit_message(false, SCIM_OTHER_FAILURE, SCIM_UPDATE, "StudentGroup", "1", nullptr, current) == "Failed to update StudentGroup 1 B");
+    REQUIRE(scim_operation_audit_message(false, SCIM_OTHER_FAILURE, SCIM_UPDATE, "StudentGroup", "1", nullptr, nullptr) == "Failed to update StudentGroup 1");
+    REQUIRE(scim_operation_audit_message(false, SCIM_NOT_FOUND_FAILURE, SCIM_UPDATE, "StudentGroup", "1", previous, current) == "Failed to update (not found) StudentGroup 1 B");
 
-    REQUIRE(scim_operation_audit_message(true, SCIM_DELETE, "StudentGroup", "1", previous, nullptr) == "Deleted StudentGroup 1 A");
-    REQUIRE(scim_operation_audit_message(true, SCIM_DELETE, "StudentGroup", "1", nullptr, nullptr) == "Deleted StudentGroup 1");
-    REQUIRE(scim_operation_audit_message(false, SCIM_DELETE, "StudentGroup", "1", previous, nullptr) == "Failed to delete StudentGroup 1 A");
-    REQUIRE(scim_operation_audit_message(false, SCIM_DELETE, "StudentGroup", "1", nullptr, nullptr) == "Failed to delete StudentGroup 1");
+    REQUIRE(scim_operation_audit_message(true, SCIM_OTHER_FAILURE, SCIM_DELETE, "StudentGroup", "1", previous, nullptr) == "Deleted StudentGroup 1 A");
+    REQUIRE(scim_operation_audit_message(true, SCIM_OTHER_FAILURE, SCIM_DELETE, "StudentGroup", "1", nullptr, nullptr) == "Deleted StudentGroup 1");
+    REQUIRE(scim_operation_audit_message(false, SCIM_OTHER_FAILURE, SCIM_DELETE, "StudentGroup", "1", previous, nullptr) == "Failed to delete StudentGroup 1 A");
+    REQUIRE(scim_operation_audit_message(false, SCIM_OTHER_FAILURE, SCIM_DELETE, "StudentGroup", "1", nullptr, nullptr) == "Failed to delete StudentGroup 1");
+    REQUIRE(scim_operation_audit_message(false, SCIM_NOT_FOUND_FAILURE, SCIM_DELETE, "StudentGroup", "1", previous, nullptr) == "Failed to delete (not found) StudentGroup 1 A");
 }

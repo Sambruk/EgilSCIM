@@ -54,6 +54,7 @@ namespace audit {
  */
 void log_scim_operation(std::ostream& os,
                         bool success,
+                        SCIMOperationFailureType failure_type,
                         SCIMOperation operation,
                         const std::string &type,
                         const std::string &uuid,
@@ -66,6 +67,7 @@ void log_scim_operation(std::ostream& os,
 * Doesn't add a timestamp to the start of the message.
 */
 std::string scim_operation_audit_message(bool success,
+    SCIMOperationFailureType failure_type,
     SCIMOperation operation,
     const std::string& type,
     const std::string& uuid,

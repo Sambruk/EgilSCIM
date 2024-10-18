@@ -160,7 +160,7 @@ std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins&
 
     try {
         return rendered_cache_file::get_contents(cache_path);
-    } catch (const rendered_cache_file::bad_format& e) {
+    } catch (const rendered_cache_file::bad_format&) {
         // Probably an old cache file, we'll try to convert it below
     } catch (const std::runtime_error& e) {
         std::cerr << "Failed to read cache file: " << e.what() << std::endl;
@@ -179,7 +179,7 @@ std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins&
     for (const auto &itr : *object_cache) {
         try {
             rendered_cache->add_object(rend.render(ppp, *itr.second));
-        } catch (const std::runtime_error& e) {
+        } catch (const std::runtime_error&) {
             rendered_cache->add_object(std::make_shared<rendered_object>(itr.first, itr.second->getSS12000type(), ""));
         }
     }

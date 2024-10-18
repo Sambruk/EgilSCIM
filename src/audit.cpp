@@ -38,8 +38,23 @@ const char *operation_to_string(bool success, SCIMOperation op) {
     }
 }
 
+const char* failure_type_to_string(SCIMOperationFailureType ft) {
+    switch (ft)
+    {
+    case SCIM_OTHER_FAILURE:
+        return "other";
+    case SCIM_CONFLICT_FAILURE:
+        return "conflict";
+    case SCIM_NOT_FOUND_FAILURE:
+        return "not found";
+    default:
+        return "<unknown failure type>";
+    }
+}
+
 void log_scim_operation(std::ostream& os,
                        bool success,
+                       SCIMOperationFailureType failure_type,
                        SCIMOperation operation,
                        const std::string &type,
                        const std::string &uuid,
@@ -59,10 +74,11 @@ void log_scim_operation(std::ostream& os,
 #endif
 
     os << std::put_time(&tm, "%F %T") << " "
-        << scim_operation_audit_message(success, operation, type, uuid, previous, current) << std::endl;
+        << scim_operation_audit_message(success, failure_type, operation, type, uuid, previous, current) << std::endl;
 }
 
 std::string scim_operation_audit_message(bool success,
+    SCIMOperationFailureType failure_type,
     SCIMOperation operation,
     const std::string& type,
     const std::string& uuid,
@@ -84,7 +100,11 @@ std::string scim_operation_audit_message(bool success,
         description = audit::object_description(object_to_base_description_on);
     }
 
-    os << operation_to_string(success, operation) << " " << type << " " << description;
+    os << operation_to_string(success, operation);
+    if (failure_type != SCIM_OTHER_FAILURE) {
+        os << " (" << failure_type_to_string(failure_type) << ")";
+    }
+    os << " " << type << " " << description;
     return os.str();
 }
 
