@@ -119,6 +119,9 @@ public:
         auto audit_log_file = format_log_path(config_file::instance().get_path("audit-log-file", true));
         if (audit_log_file != "") {
             audit_log.open(audit_log_file, std::ios_base::out | std::ios_base::app);
+	    if (audit_log.fail()) {
+	      throw std::runtime_error("Failed to open audit log");
+	    }
         }
     }
 
