@@ -116,12 +116,14 @@ public:
             throw std::runtime_error("Failed to init SCIM");
         }
 
-        auto audit_log_file = format_log_path(config_file::instance().get_path("audit-log-file", true));
-        if (audit_log_file != "") {
-            audit_log.open(audit_log_file, std::ios_base::out | std::ios_base::app);
-	    if (audit_log.fail()) {
-	      throw std::runtime_error("Failed to open audit log");
-	    }
+	const auto audit_log_file_cfg_variable = "audit-log-file";
+        if (config_file::instance().get(audit_log_file_cfg_variable, true) != "") {
+	  auto audit_log_file = format_log_path(config_file::instance().get_path(audit_log_file_cfg_variable, true));
+
+	  audit_log.open(audit_log_file, std::ios_base::out | std::ios_base::app);
+	  if (audit_log.fail()) {
+	    throw std::runtime_error("Failed to open audit log");
+	  }
         }
     }
 
