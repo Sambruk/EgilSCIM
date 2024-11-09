@@ -2,7 +2,8 @@
 
 ## Unreleased
 #### Features
-  - Configurable threshols to prevent accidental large changes (#196)
+  - Configurable thresholds to prevent accidental large changes (#196)
+  - Audit logging (#124)
 
 ## v2.17.2 (2024-05-24)
 #### Features

@@ -1097,3 +1097,30 @@ them, see
 [libcurl's documentation about ciphers](https://curl.se/docs/ssl-ciphers.html)
 
 The default list of ciphers depends on your version of OpenSSL.
+
+## Audit logging
+
+The audit log can be enabled by setting a path to a file to write to, for instance:
+
+```
+audit-log-file = /var/log/fun_math_learning.log
+```
+
+The audit log will contain short human readable log entries for each SCIM operation
+(and whether the operation was a success or not). The objects involved will be
+identified by their UUID, but when possible a more user friendly id will be included
+as well (for instance the `userName` for objects that have a `userName`).
+
+If the log file already exists when the client runs new log entries will be appended
+to the end of the file.
+
+The log file path can contain date and time format specifiers, in order
+to include a timestamp in the log's filename. The format specifiers work
+roughly the same as in the unix `date` command, for a complete specification
+see the documentation for the C function strftime.
+
+Note that the audit log entries will not contain information about which SCIM server
+we are sending the operation to. Instead you can use a file path that shows what
+the destination is. Note that if you wish to re-use the same configuration files
+for multiple destinations you can use the -D command line argument to set the
+`audit-log-file` variable.
