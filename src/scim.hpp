@@ -32,6 +32,18 @@ class base_object;
 
 class object_list;
 
+enum SCIMOperation {
+    SCIM_CREATE,
+    SCIM_DELETE,
+    SCIM_UPDATE
+};
+
+enum SCIMOperationFailureType {
+    SCIM_OTHER_FAILURE,
+    SCIM_CONFLICT_FAILURE,
+    SCIM_NOT_FOUND_FAILURE
+};
+
 class ScimActions {
 public:
         /** A reference to an object in the SCIM server.
@@ -52,7 +64,7 @@ public:
                 : uuid(u),
                   endpoint(e) {
         }
-    };    
+    };
 
 private:
 
@@ -71,27 +83,28 @@ private:
         size_t n_create = 0, n_create_fail = 0;
         size_t n_update = 0, n_update_fail = 0;
         size_t n_delete = 0, n_delete_fail = 0;
-    };    
-    
+    };
+
     void process_changes(const object_list& current,
                          const rendered_object_list& cache,
                          const post_processing::plugins& ppp,
                          statistics& stats,
                          bool rebuild_cache,
-                         const std::set<std::string>& all_scim_uuids) const;
+                         const std::set<std::string>& all_scim_uuids);
 
     void process_deletes(const object_list& current,
                          const rendered_object_list& cache,
                          const std::string& type,
-                         statistics& stats) const;
+                         statistics& stats);
 
     void process_deletes_per_endpoint(const std::vector<std::string>& to_delete,
                                       const std::string& endpoint,
-                                      statistics& stats) const;    
+                                      statistics& stats,
+                                      const std::string& type);    
 
     static void print_statistics(const std::string& type,
                                  const statistics& stats);
-    
+
 public:
     ScimActions(const SCIMServerInfo& si)
            : scim_server_info(si) {
@@ -101,6 +114,16 @@ public:
 
         if (err == -1) {
             throw std::runtime_error("Failed to init SCIM");
+        }
+
+	const auto audit_log_file_cfg_variable = "audit-log-file";
+        if (config_file::instance().get(audit_log_file_cfg_variable, true) != "") {
+	  auto audit_log_file = format_log_path(config_file::instance().get_path(audit_log_file_cfg_variable, true));
+
+	  audit_log.open(audit_log_file, std::ios_base::out | std::ios_base::app);
+	  if (audit_log.fail()) {
+	    throw std::runtime_error("Failed to open audit log");
+	  }
         }
     }
 
@@ -129,7 +152,7 @@ public:
                 const rendered_object_list &cached,
                 const post_processing::plugins& ppp,
                 bool rebuild_cache,
-                const std::vector<scim_object_ref>& all_scim_objects) const;
+                const std::vector<scim_object_ref>& all_scim_objects);
 
     class copy_func {
         const rendered_object &cached;
@@ -144,7 +167,7 @@ public:
     public:
         explicit create_func(const rendered_object &c) : create(c) {}
 
-        int operator()(const ScimActions &);
+        int operator()(const ScimActions &, bool& conflict);
     };
 
     class update_func {
@@ -153,7 +176,7 @@ public:
         update_func(const rendered_object &o) : object(o)
             {}
 
-        int operator()(const ScimActions &);
+        int operator()(const ScimActions &, bool& non_existent);
     };
 
     class delete_func {
@@ -161,7 +184,7 @@ public:
     public:
         explicit delete_func(const rendered_object &o) : object(o) {}
 
-        int operator()(const ScimActions &);
+        int operator()(const ScimActions &, bool& non_existent);
     };
     
     /** Gets a list of all resources in the SCIM server.
@@ -173,6 +196,9 @@ public:
     std::vector<scim_object_ref> get_all_objects_from_scim_server();
 
     std::shared_ptr<rendered_object_list> get_new_cache() { return scim_new_cache; }
+
+    // The audit_log stream will be unopened if audit logging isn't configured.
+    std::ofstream audit_log;
 };
 
 

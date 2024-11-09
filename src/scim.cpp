@@ -32,6 +32,7 @@
 #include "rendered_cache_file.hpp"
 #include "simplescim_scim_send.hpp"
 #include "readable_id.hpp"
+#include "audit.hpp"
 
 // Concatenates a base URL with a path, for instance "https://foo.com" and "Users"
 // into "https://foo.com/Users"
@@ -106,7 +107,7 @@ void ScimActions::process_changes(const object_list& current,
                                   const post_processing::plugins& ppp,
                                   statistics& stats,
                                   bool rebuild_cache,
-                                  const std::set<std::string>& all_scim_uuids) const {
+                                  const std::set<std::string>& all_scim_uuids) {
     int err;
 
     for (const auto &iter : current) {
@@ -134,9 +135,10 @@ void ScimActions::process_changes(const object_list& current,
 
         if (create) {
             ++stats.n_create;
+            bool conflict = false;
             if (object != nullptr) {
                 auto create_functor = ScimActions::create_func(*object);
-                err = create_functor(*this);
+                err = create_functor(*this, conflict);
             } else {
                 err = -1;
             }
@@ -148,6 +150,7 @@ void ScimActions::process_changes(const object_list& current,
                     std::cerr << simplescim_error_string_get() << std::endl;
                 }
             }
+            audit::log_scim_operation(audit_log, err == 0, conflict ? SCIM_CONFLICT_FAILURE : SCIM_OTHER_FAILURE, SCIM_CREATE, iter.second->getSS12000type(), uid, nullptr, object);
         } else {
             bool copy = false;
 
@@ -168,9 +171,10 @@ void ScimActions::process_changes(const object_list& current,
                 }
             } else {
                 ++stats.n_update;
+                bool non_existent = false;
                 if (object != nullptr) {
                     ScimActions::update_func update_f(*object);
-                    err = update_f(*this);
+                    err = update_f(*this, non_existent);
                 }
                 else {
                     err = -1;
@@ -183,6 +187,7 @@ void ScimActions::process_changes(const object_list& current,
                         std::cerr << simplescim_error_string_get() << std::endl;
                     }
                 }
+                audit::log_scim_operation(audit_log, err == 0, non_existent ? SCIM_NOT_FOUND_FAILURE : SCIM_OTHER_FAILURE, SCIM_UPDATE, iter.second->getSS12000type(), uid, cached_object, object);
             }
         }
     }
@@ -195,7 +200,7 @@ void ScimActions::process_changes(const object_list& current,
 void ScimActions::process_deletes(const object_list& current,
                                   const rendered_object_list& cache,
                                   const std::string& type,
-                                  statistics& stats) const {
+                                  statistics& stats) {
 
     /** For every object in 'cache' of the given type */
     for (const auto &item : cache) {
@@ -207,13 +212,15 @@ void ScimActions::process_deletes(const object_list& current,
             if (tmp == nullptr) {
                 // Object doesn't exist in 'current', delete it
                 ++stats.n_delete;
+                bool non_existent = false;
                 auto delete_f = ScimActions::delete_func(*object);
-                int err = delete_f(*this);
+                int err = delete_f(*this, non_existent);
 
                 if (err == -1) {
                     ++stats.n_delete_fail;
                     fprintf(stderr, "%s\n", simplescim_error_string_get());
                 }
+                audit::log_scim_operation(audit_log, err == 0, non_existent ? SCIM_NOT_FOUND_FAILURE : SCIM_OTHER_FAILURE, SCIM_DELETE, type, uid, object, nullptr);
             }
         }
     }
@@ -221,7 +228,8 @@ void ScimActions::process_deletes(const object_list& current,
 
 void ScimActions::process_deletes_per_endpoint(const std::vector<std::string>& to_delete,
                                                const std::string& endpoint,
-                                               statistics& stats) const {
+                                               statistics& stats,
+                                               const std::string& type) {
     auto prefix = concat_url(scim_server_info.get_url(), endpoint) + '/';
 
     for (const auto& uuid : to_delete) {
@@ -234,6 +242,8 @@ void ScimActions::process_deletes_per_endpoint(const std::vector<std::string>& t
             ++stats.n_delete_fail;
             fprintf(stderr, "%s\n", simplescim_error_string_get());
         }
+        bool non_existent = err == 404; // shouldn't really happen since we're only here when using rebuild cache
+        audit::log_scim_operation(audit_log, err == 0, non_existent ? SCIM_NOT_FOUND_FAILURE : SCIM_OTHER_FAILURE, SCIM_DELETE, type, uuid, nullptr, nullptr);
     }
 }
 
@@ -291,7 +301,7 @@ int ScimActions::perform(const data_server &current,
                          const rendered_object_list &cached,
                          const post_processing::plugins& ppp,
                          bool rebuild_cache,
-                         const std::vector<ScimActions::scim_object_ref>& all_scim_objects) const {
+                         const std::vector<ScimActions::scim_object_ref>& all_scim_objects) {
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = post_processing::filter_types(string_to_vector(types_string), ppp);
 
@@ -339,7 +349,8 @@ int ScimActions::perform(const data_server &current,
                 }
             }
             
-            process_deletes_per_endpoint(to_delete, endpoint, stats[endpoint_to_SS12000_type(endpoint, types)]);
+            auto type_for_endpoint = endpoint_to_SS12000_type(endpoint, types);
+            process_deletes_per_endpoint(to_delete, endpoint, stats[type_for_endpoint], type_for_endpoint);
         }
     }
     else {
@@ -378,8 +389,8 @@ int ScimActions::copy_func::operator()(const ScimActions &actions) {
 
 }
 
-int ScimActions::delete_func::operator()(const ScimActions &actions) {
-
+int ScimActions::delete_func::operator()(const ScimActions &actions, bool& non_existent) {
+    non_existent = false;
     if (object.get_id().empty()) {
         simplescim_error_string_set_prefix("ScimActions::delete_func:"
                                            "get-attribute");
@@ -399,6 +410,7 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
         actions.scim_new_cache->add_object(std::make_shared<rendered_object>(object));
     }
     if (err == 404) {
+        non_existent = true;
         simplescim_error_string_set_prefix("ScimActions::delete_func:");
         simplescim_error_string_set_message("tried to delete an object which the server says it doesn't have. Will not attempt to delete next run.");
     }
@@ -406,13 +418,13 @@ int ScimActions::delete_func::operator()(const ScimActions &actions) {
     return err;
 }
 
-int ScimActions::create_func::operator()(const ScimActions &actions) {
+int ScimActions::create_func::operator()(const ScimActions &actions, bool& conflict) {
     std::string url = actions.scim_server_info.get_url();
     std::string endpoint = config_file::instance().get(create.get_type() + "-scim-url-endpoint");
     url = concat_url(url, endpoint);
 
     /* Send SCIM create request */
-    bool conflict = false;
+    conflict = false;
     std::optional<std::string> response_json =
         scim_sender::instance().send_create(url, create.get_json(), conflict);
     std::string id = create.get_id();
@@ -430,7 +442,7 @@ int ScimActions::create_func::operator()(const ScimActions &actions) {
     return 0;
 }
 
-int ScimActions::update_func::operator()(const ScimActions &actions) {
+int ScimActions::update_func::operator()(const ScimActions &actions, bool& non_existent) {
     std::string id = object.get_id();
 
     if (id.empty()) {
@@ -443,7 +455,7 @@ int ScimActions::update_func::operator()(const ScimActions &actions) {
     url = concat_url(url, endpoint);
     url = concat_url(url, unified);
 
-    bool non_existent = false;
+    non_existent = false;
     std::optional<std::string> response_json =
         scim_sender::instance().send_update(url, object.get_json(), non_existent);
 
