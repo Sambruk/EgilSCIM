@@ -111,7 +111,6 @@ std::string scim_operation_audit_message(bool success,
 // Assumes object is not a nullptr
 std::string object_description(std::shared_ptr<rendered_object> object) {
     std::ostringstream os;
-    os << object->get_id();
 
     // Try to parse JSON
     namespace pt = boost::property_tree;
@@ -121,21 +120,21 @@ std::string object_description(std::shared_ptr<rendered_object> object) {
         json_stream << object->get_json();
         pt::read_json(json_stream, root);
     } catch (const pt::ptree_error&) {
-        os <<  " (unparsable JSON)";
+        os <<  object->get_id() << " (unparsable JSON)";
         return os.str();
     }
 
     // If there's a userName attribute, use that
     auto userName = root.get_optional<std::string>("userName");
     if (userName) {
-        os << " " << userName.get();
+        os << userName.get() << " (" << object->get_id() << ")";
         return os.str();
     }
 
     // Otherwise if there's a displayName, use that
     auto displayName = root.get_optional<std::string>("displayName");
     if (displayName) {
-        os << " " << displayName.get();
+        os << displayName.get() << " (" << object->get_id() << ")";
         auto owner = root.get_optional<std::string>("owner.value");
         if (owner) {
             os << " owner: " << owner.get();
@@ -145,6 +144,7 @@ std::string object_description(std::shared_ptr<rendered_object> object) {
 
     // Otherwise if type == Employment, use UUIDs for user and school unit
     if (object->get_type() == "Employment") {
+        os << object->get_id();
         auto user = root.get_optional<std::string>("user.value");
         auto schoolUnit = root.get_optional<std::string>("employedAt.value");
         if (user) {
@@ -156,6 +156,7 @@ std::string object_description(std::shared_ptr<rendered_object> object) {
         return os.str();
     }
 
+    os << object->get_id();
     return os.str();
 }
 
