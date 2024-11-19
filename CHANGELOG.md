@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.18 (2024-11-19)
 #### Features
   - Configurable thresholds to prevent accidental large changes (#196)
   - Audit logging (#124)
