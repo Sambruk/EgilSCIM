@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### Features
+  - New functionality for blacklisting users (#223)
+
 ## v2.18 (2024-11-19)
 #### Features
   - Configurable thresholds to prevent accidental large changes (#196)

@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2019 Föreningen Sambruk
+ *  Copyright (C) 2017-2024 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -24,6 +24,31 @@
 #include <boost/property_tree/json_parser.hpp>
 
 namespace pt = boost::property_tree;
+
+namespace {
+    std::shared_ptr<load_limiter> user_blacklist;
+}
+
+void set_user_blacklist(const std::string &filename,
+                        const std::string &attribute) {
+    user_blacklist = std::make_shared<not_limiter>(std::make_shared<list_limiter>(filename, attribute));
+}
+
+/** If there is a user blacklist set, this function will return a new limiter based on the
+ *  passed in limiter. The returned limiter will work like the passed in limiter except that
+ *  it will exclude users from the blacklist.
+ * 
+ *  If no user blacklist is set the limiter will be returned as it is.
+ * 
+*/
+std::shared_ptr<load_limiter> combine_with_user_blacklist(std::shared_ptr<load_limiter> limiter) {
+    if (user_blacklist == nullptr) {
+        return limiter;
+    }
+    else {
+        return std::make_shared<and_limiter>(std::vector<std::shared_ptr<load_limiter>>{limiter, user_blacklist});
+    }
+}
 
 std::shared_ptr<load_limiter> create_limiter_from_json(const pt::ptree& root);
 
@@ -62,6 +87,13 @@ std::shared_ptr<load_limiter> create_limiter_from_json(const pt::ptree& root) {
     }
 }
 
+/** Returns the limiter for a specific type, or for the SCIM endpoint
+ *  if there's no type specific limiter (or a null_limiter if there's
+ *  no endpoint limiter).
+ *  Note that if there's a user blacklist, it is not created here, the
+ *  caller of this function is expected to combine the limiter with
+ *  the user blacklist if the type is a user type.
+ */
 std::shared_ptr<load_limiter> create_limiter(const std::string& type) {
     config_file &conf = config_file::instance();
 
@@ -118,7 +150,15 @@ std::shared_ptr<load_limiter> get_limiter(const std::string& type) {
     }
 
     if (limiters.find(type) == limiters.end()) {
-        limiters[type] = create_limiter(type);
+        auto l = create_limiter(type);
+
+        // Figure out if we should add the user blacklist to the limiter
+        auto endpoint_variable = type + "-scim-url-endpoint";
+        if (conf.has(endpoint_variable) && conf.get(endpoint_variable) == "Users") {
+            limiters[type] = combine_with_user_blacklist(l);
+        } else {
+            limiters[type] = l;
+        }
     }
     return limiters[type];
 }

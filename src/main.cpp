@@ -187,6 +187,12 @@ std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins&
     return rendered_cache;
 }
 
+// TODO: Add the rest of the options names here
+namespace options {
+    const char* USER_BLACKLIST_FILE = "user-blacklist-file";
+    const char* USER_BLACKLIST_ATTRIBUTE = "user-blacklist-attribute";
+}
+
 int main(int argc, char *argv[]) {
     try {
         po::options_description cmdline_options("All options");
@@ -230,6 +236,10 @@ int main(int argc, char *argv[]) {
         generic.add_options()
             ("force-update", po::value<std::vector<std::string>>(), "update object even if it hasn't changed")
             ("force-create", po::value<std::vector<std::string>>(), "create object even if it's already in the cache");
+
+        generic.add_options()
+            (options::USER_BLACKLIST_FILE, po::value<std::string>(), "a file of users which shall be blocked from loading")
+            (options::USER_BLACKLIST_ATTRIBUTE, po::value<std::string>(), "attribute (in the data source) to match against user blacklist file");
 
         hidden.add_options()
             ("config-file", po::value<std::vector<std::string>>(), "config file");
@@ -345,6 +355,16 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
             }
         }
+
+        if (vm.count(options::USER_BLACKLIST_FILE)) {
+            auto user_blacklist_file = filesystem::absolute(vm[options::USER_BLACKLIST_FILE].as<std::string>()).u8string();
+            std::string user_blacklist_attribute;
+            if (vm.count(options::USER_BLACKLIST_ATTRIBUTE)) {
+                user_blacklist_attribute = vm[options::USER_BLACKLIST_ATTRIBUTE].as<std::string>();
+            }
+            set_user_blacklist(user_blacklist_file, user_blacklist_attribute);
+        }
+        
 
         /** Get objects from data source */
         data_server &server = data_server::instance();

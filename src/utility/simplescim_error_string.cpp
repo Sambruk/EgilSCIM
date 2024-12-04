@@ -35,7 +35,7 @@ static char prefix_buffer[1024];
 static int message_present = 0;
 static char message_buffer[1024];
 
-static char error_string_buffer[1024];
+static char error_string_buffer[2051];
 
 static const char *no_error = "No error";
 
