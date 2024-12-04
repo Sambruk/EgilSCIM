@@ -1,0 +1,39 @@
+---
+StudentGroups /StudentGroups/0d9a892f-3698-4b56-91c2-44fdb61dedf1 PUT
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "0d9a892f-3698-4b56-91c2-44fdb61dedf1",
+  "displayName": "DNP-SVASVA03_GY",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+    "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
+  },
+  "studentMemberships": [
+    
+  ]
+}---
+---
+StudentGroups /StudentGroups/9e2b1131-aac4-4ba3-adc8-a232a2b553d8 PUT
+
+{
+  "schemas": [
+    "urn:scim:schemas:extension:sis:school:1.0:StudentGroup"
+  ],
+  "externalId": "9e2b1131-aac4-4ba3-adc8-a232a2b553d8",
+  "displayName": "grupp3",
+  "studentGroupType": "Undervisning",
+  "owner": {
+    "value": "7bbc6be0-5fa1-45d1-ba50-0736582190e2",
+    "$ref": "SchoolUnits/7bbc6be0-5fa1-45d1-ba50-0736582190e2"
+  },
+  "studentMemberships": [
+    
+  ]
+}---
+---
+Users /Users/39732dea-e4a6-4d8f-96de-925a679c56ff DELETE
+---

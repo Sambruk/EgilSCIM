@@ -138,7 +138,7 @@ void write_object(ofstream& ofs, std::shared_ptr<rendered_object> object) {
 void write_objects(ofstream& ofs, std::shared_ptr<rendered_object_list> objects) {
     write<uint64_t>(ofs, objects->size());
 
-    for (const auto obj : *objects) {
+    for (const auto& obj : *objects) {
         write_object(ofs, obj.second);
     }
 }

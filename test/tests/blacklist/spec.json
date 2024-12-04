@@ -1,0 +1,37 @@
+{
+    "description": "User blacklisting",
+    "config": "configs/base/master.conf",
+    "steps": [
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [],
+	  "commandLine": ["--user-blacklist-file=tests/blacklist/pejo.txt", "--user-blacklist-attribute=uid"],
+	  "requests": "../delete_student/delete.txt"
+	},
+	{ "scenario": [],
+	  "commandLine": ["--user-blacklist-file=tests/blacklist/pejo_uuid.txt"],
+	  "requests": null
+	},
+	{ "scenario": [],
+	  "commandLine": ["--user-blacklist-file=tests/blacklist/pejo_uuid.txt",
+			  "--D", "Student-limit-with=regex",
+			  "--D", "Student-limit-by=departmentNumber",
+			  "--D", "Student-limit-regex=6"],
+	  "requests": "limitstudentstograde6.txt"
+	},
+	{ "scenario": [],
+	  "commandLine": ["--user-blacklist-file=tests/blacklist/pejo_uuid.txt",
+			  "--D", "Users-limit-with=regex",
+			  "--D", "Users-limit-by=departmentNumber",
+			  "--D", "Users-limit-regex=6"],
+	  "requests": "limitalluserstograde6.txt"
+	},
+	{ "scenario": [],
+	  "commandLine": ["--D", "Users-limit-with=regex",
+			  "--D", "Users-limit-by=departmentNumber",
+			  "--D", "Users-limit-regex=6"],
+	  "requests": "unblacklistpejo.txt"
+	}
+    ]
+}

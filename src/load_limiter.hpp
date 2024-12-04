@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2019 Föreningen Sambruk
+ *  Copyright (C) 2017-2024 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -36,5 +36,19 @@ public:
 };
 
 std::shared_ptr<load_limiter> get_limiter(const std::string& type);
+
+/**
+ * Sets a user blacklist. The blacklist works like a list limiter,
+ * so the blacklisted users are listed in a file. If an attribute
+ * is given, the values in the file are matched against that attribute
+ * in the data source, otherwise the values are assumed to be UUIDs.
+ * 
+ * If a blacklist is used, it will be combined with the limiters
+ * returned by get_limiter (if called for a type that has "Users" as
+ * the endpoint), so that the returned limiter excludes users from
+ * the blacklist.
+ */
+void set_user_blacklist(const std::string &filename,
+                        const std::string &attrib);
 
 #endif // EGILSCIM_LOAD_LIMITER_HPP
