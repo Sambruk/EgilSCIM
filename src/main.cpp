@@ -41,9 +41,23 @@
 #include "sql.hpp"
 #include "generated_group_load.hpp"
 #include "thresholds.hpp"
+#include "print_cache.hpp"
 
 namespace po = boost::program_options;
 namespace filesystem = std::experimental::filesystem;
+
+// TODO: Add the rest of the options names here
+namespace options {
+    const char* CACHE_FILE = "cache-file";
+
+    const char* USER_BLACKLIST_FILE = "user-blacklist-file";
+    const char* USER_BLACKLIST_ATTRIBUTE = "user-blacklist-attribute";
+
+    const char* PRINT_CACHE = "print-cache";
+    const char* PRINT_CACHE_BY_ENDPOINT = "print-cache-by-endpoint";
+    const char* PRINT_CACHE_TYPE = "print-cache-type";
+    const char* PRINT_CACHE_WHERE = "print-cache-where";
+}
 
 void print_usage(const std::string& program_name,
                  const po::options_description& options) {
@@ -104,23 +118,6 @@ void write_status(const std::string& file,
 }
 
 /**
- * Splits a string with format "variable=value" into its parts.
- * Used on the command line for overriding config file variables.
- */
-void parse_override(const std::string& override_str,
-                    std::string& variable,
-                    std::string& value) {
-    auto pos = override_str.find('=');
-
-    if (pos == std::string::npos) {
-        throw std::runtime_error("Malformed variable override (" + override_str + ")");
-    }
-
-    variable = override_str.substr(0, pos);
-    value = override_str.substr(pos+1);
-}
-
-/**
  * Modifies a set of objects so they will be considered different from what's in the data source,
  * used by --force-update.
  */
@@ -150,7 +147,7 @@ void make_dirty(std::shared_ptr<rendered_object_list> objects, const std::vector
  * parameter will let the caller know if there was a cache file or not.
  */
 std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins& ppp, bool *cache_file_existed) {
-    auto cache_path = config_file::instance().get_path("cache-file");
+    auto cache_path = config_file::instance().get_path(options::CACHE_FILE);
 
     if (cache_path.empty()) {
         return nullptr;
@@ -187,12 +184,6 @@ std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins&
     return rendered_cache;
 }
 
-// TODO: Add the rest of the options names here
-namespace options {
-    const char* USER_BLACKLIST_FILE = "user-blacklist-file";
-    const char* USER_BLACKLIST_ATTRIBUTE = "user-blacklist-attribute";
-}
-
 int main(int argc, char *argv[]) {
     try {
         po::options_description cmdline_options("All options");
@@ -200,17 +191,19 @@ int main(int argc, char *argv[]) {
         po::options_description hidden("Hidden options");
 
         generic.add_options()
-            ("help,h",             "produce help message")
-            ("version,v",          "displays version of this program")
-            ("rebuild-cache,r",    "ignores cache file contents and instead queries SCIM server for list of objects")
-            ("skip-load",          "don't read from data source, causes delete for all objects in cache")
-            ("skip-thresholds",    "don't verify thresholds");
+            ("help,h",                         "produce help message")
+            ("version,v",                      "displays version of this program")
+            ("rebuild-cache,r",                "ignores cache file contents and instead queries SCIM server for list of objects")
+            ("skip-load",                      "don't read from data source, causes delete for all objects in cache")
+            ("skip-thresholds",                "don't verify thresholds")
+            (options::PRINT_CACHE,             "prints contents of cache file (see --print-cache-type and --print-cache-where)")
+            (options::PRINT_CACHE_BY_ENDPOINT, "uses the SCIM endpoints instead of EGIL types when printing the cache file");
 
         // Config file variables exposed as command line options
         std::vector<config_file_option> common_vars =
             { { "cert",             "client certificate",               true },
               { "key",              "client private key",               true },
-              { "cache-file",       "cache file",                       true },
+              { options::CACHE_FILE,"cache file",                       true },
               { "metadata-path",    "metadata file",                    true },
               { "metadata-entity",  "entity in metadata to connect to", false },
               { "metadata-server",
@@ -240,6 +233,10 @@ int main(int argc, char *argv[]) {
         generic.add_options()
             (options::USER_BLACKLIST_FILE, po::value<std::string>(), "a file of users which shall be blocked from loading")
             (options::USER_BLACKLIST_ATTRIBUTE, po::value<std::string>(), "attribute (in the data source) to match against user blacklist file");
+        
+        generic.add_options()
+            (options::PRINT_CACHE_TYPE, po::value<std::vector<std::string>>(), "only print given type(s)")
+            (options::PRINT_CACHE_WHERE, po::value<std::vector<std::string>>(), "only print objects where attributes match given values");
 
         hidden.add_options()
             ("config-file", po::value<std::vector<std::string>>(), "config file");
@@ -273,7 +270,7 @@ int main(int argc, char *argv[]) {
             std::cerr << e.what() << std::endl;
             return EXIT_FAILURE;
         }
-        
+
         config_file &config = config_file::instance();
 
         std::string config_file;
@@ -287,8 +284,6 @@ int main(int argc, char *argv[]) {
         }
 
         /** Load configuration file */
-        std::cout << "processing: " << config_file << std::endl;
-
         time_t start_time = time(nullptr);
             
         int err = 0;
@@ -322,6 +317,34 @@ int main(int argc, char *argv[]) {
                 parse_override(override_str, variable, value);
                 config.replace_variable(variable, value);
             }
+        }
+
+        if (vm.count(options::PRINT_CACHE)) {
+            bool by_endpoint = vm.count(options::PRINT_CACHE_BY_ENDPOINT);
+            auto cache_path = config_file::instance().get_path(options::CACHE_FILE);
+
+            std::shared_ptr<rendered_object_list> cache;
+            try {
+                cache = rendered_cache_file::get_contents(cache_path);
+            }
+            catch (const rendered_cache_file::bad_format &) {
+                std::cerr << "Unrecognized cache file format" << std::endl;
+                return EXIT_FAILURE;
+            }
+            catch (const std::runtime_error &e) {
+                std::cerr << "Failed to read cache file: " << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
+
+            std::vector<std::string> types, where;
+            if (vm.count(options::PRINT_CACHE_TYPE)) {
+                types = vm[options::PRINT_CACHE_TYPE].as<std::vector<std::string>>();
+            }
+            if (vm.count(options::PRINT_CACHE_WHERE)) {
+                where = vm[options::PRINT_CACHE_WHERE].as<std::vector<std::string>>();
+            }
+            print_cache(cache, by_endpoint, types, where);
+            return EXIT_SUCCESS;
         }
 
         add_scim_vars_for_virtual_groups();

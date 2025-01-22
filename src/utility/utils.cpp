@@ -218,3 +218,16 @@ std::string format_log_path(const std::string& path) {
     strftime(dest, MAXSIZE, path.c_str(), timeinfo);
     return dest;
 }
+
+void parse_override(const std::string& override_str,
+                    std::string& variable,
+                    std::string& value) {
+    auto pos = override_str.find('=');
+
+    if (pos == std::string::npos) {
+        throw std::runtime_error("Malformed variable override (" + override_str + ")");
+    }
+
+    variable = override_str.substr(0, pos);
+    value = override_str.substr(pos+1);
+}
