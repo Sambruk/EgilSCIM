@@ -2,6 +2,7 @@
 
 ## Unreleased
 #### Features
+  - Contents of the cache file can now be printed in JSON format (#54)
   - New functionality for blacklisting users (#223)
 
 ## v2.18 (2024-11-19)

@@ -1124,3 +1124,43 @@ we are sending the operation to. Instead you can use a file path that shows what
 the destination is. Note that if you wish to re-use the same configuration files
 for multiple destinations you can use the -D command line argument to set the
 `audit-log-file` variable.
+
+## Inspecing the cache file
+Contents of the cache file can be printed to standard output by running the
+EgilSCIMClient with the `--print-cache` argument. For instance:
+
+```
+EgilSCIMClient --print-cache master.conf
+```
+
+The cache file configured in the specified configuration file will be printed
+in JSON format to standard output. As usual you can override the path to the
+cache file with the `--cache-file` argument. You still need to specify the
+configuration file.
+
+If you don't want to print all objects in the cache file you can limit them
+by type and/or attribute values. For instance, to print all `Student` objects:
+
+```
+EgilSCIMClient --print-cache --print-cache-type Student master.conf
+```
+
+Or to print a specific student:
+
+```
+EgilSCIMClient --print-cache --print-cache-type Student --print-cache-where userName=babs@example.com master.conf
+```
+
+If you wish to print all types of users it can be helpful to specify SCIM
+endpoints rather than EGIL types:
+
+```
+EgilSCIMClient --print-cache --print-cache-by-endpoint --print-cache-type Users master.conf
+```
+
+If you wish to search for a sub-attribute you can specify a path in the JSON
+object by using '/' as the separator:
+
+```
+EgilSCIMClient --print-cache  --print-cache-where 'name/familyName=Johansson'  master.conf
+```

@@ -116,4 +116,14 @@ T most_common(InputIterator begin, InputIterator end) {
     return result;
 }
 
+/**
+ * Splits a string with format "variable=value" into its parts.
+ * Used on the command line for overriding config file variables.
+ * 
+ * Throws std::runtime_error if the string doesn't have the right syntax.
+ */
+void parse_override(const std::string& override_str,
+                    std::string& variable,
+                    std::string& value);
+
 #endif //SIMPLESCIM_UTILS_HPP
