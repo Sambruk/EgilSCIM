@@ -86,6 +86,7 @@ private:
     };
 
     void process_changes(const object_list& current,
+                         const rendered_object_list& pre_rendered,
                          const rendered_object_list& cache,
                          const post_processing::plugins& ppp,
                          statistics& stats,

@@ -1,0 +1,4 @@
+# Set the default behavior, in case core.autocrlf isn't set.
+* text=auto
+
+test/tests/**/*.txt text eol=lf

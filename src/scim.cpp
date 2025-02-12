@@ -103,6 +103,7 @@ void ScimActions::simplescim_scim_clear() const {
  * 'current' and 'cache' if the object has been updated.
  */
 void ScimActions::process_changes(const object_list& current,
+                                  const rendered_object_list& pre_rendered,
                                   const rendered_object_list &cache,
                                   const post_processing::plugins& ppp,
                                   statistics& stats,
@@ -115,13 +116,8 @@ void ScimActions::process_changes(const object_list& current,
         const std::string &uid = iter.first;
         const std::string readable = readable_id(iter.second.get());
 
-        std::shared_ptr<rendered_object> object;
-        try {
-            object = rend.render(ppp, *iter.second);
-        } catch (const std::runtime_error& e) {
-            std::cerr << "Failed to render object to JSON: " << e.what() << std::endl;
-        }
- 
+        std::shared_ptr<rendered_object> object = pre_rendered.get_object(uid);
+        // Note: object can be a nullptr here if it failed to render.
         std::shared_ptr<rendered_object> cached_object;
         bool create = false;
 
@@ -305,6 +301,38 @@ int ScimActions::perform(const data_server &current,
     std::string types_string = config_file::instance().get("scim-type-send-order");
     string_vector types = post_processing::filter_types(string_to_vector(types_string), ppp);
 
+    // Pre-render all objects (of types in send order) in current so we can estimate an upper limit for the new cache file
+    rendered_object_list pre_rendered;
+    for (const auto& type : types) {
+        std::shared_ptr<object_list> allOfType = current.get_by_type(type);
+        if (allOfType) {
+            for (const auto& iter : *allOfType) {
+                const std::string readable = readable_id(iter.second.get());
+
+                std::shared_ptr<rendered_object> object;
+                try {
+                    object = rend.render(ppp, *iter.second);
+                    pre_rendered.add_object(object);
+                }
+                catch (const std::runtime_error& e) {
+                    std::cerr << "Failed to render object (" << readable << ") to JSON : " << e.what() << std::endl;
+                }
+            }
+        }
+    }
+
+    size_t cache_size_upper_limit = rendered_cache_file::size_estimate(pre_rendered, cached);
+
+    /* Open new cache file */
+    std::ofstream cache_stream;
+    try {
+        rendered_cache_file::begin_rendered_cache_file(config_file::instance().get_path("cache-file"), cache_size_upper_limit, cache_stream);
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << std::string("Failed to prepare new cache file: ") + e.what() << std::endl;
+        return -1;
+    }
+
     std::map<std::string, statistics> stats;
 
     std::set<std::string> all_scim_uuids;
@@ -320,7 +348,7 @@ int ScimActions::perform(const data_server &current,
             allOfType = std::make_shared<object_list>();
         }
 
-        process_changes(*allOfType, cached, ppp, stats[type], rebuild_cache, all_scim_uuids);
+        process_changes(*allOfType, pre_rendered, cached, ppp, stats[type], rebuild_cache, all_scim_uuids);
     }
 
     auto types_reversed(types);
@@ -369,9 +397,16 @@ int ScimActions::perform(const data_server &current,
 
     /* Save new cache file */
     try {
-        rendered_cache_file::save(config_file::instance().get_path("cache-file"), scim_new_cache);
+        rendered_cache_file::save(cache_stream, scim_new_cache);
     } catch (const std::runtime_error& e) {
-        std::cerr << std::string("Failed to save cache file: ") + e.what() << std::endl;
+        std::cerr << std::string("Failed to write new cache file: ") + e.what() << std::endl;
+        return -1;
+    }
+
+    try {
+        rendered_cache_file::finalize_rendered_cache_file(cache_stream, config_file::instance().get_path("cache-file"));
+    } catch (const std::runtime_error& e) {
+        std::cerr << std::string("Failed to finalize cache file: ") + e.what() << std::endl;
         return -1;
     }
 
