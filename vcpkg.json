@@ -3,6 +3,7 @@
     "boost-program-options",
     "boost-property-tree",
     "boost-uuid",
+    "boost-interprocess",
     {
 		"name": "curl",
 		"features": ["openssl"]
