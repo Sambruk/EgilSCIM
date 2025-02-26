@@ -231,3 +231,7 @@ void parse_override(const std::string& override_str,
     variable = override_str.substr(0, pos);
     value = override_str.substr(pos+1);
 }
+
+std::string dummy_SCIM_object(const std::string& uuid, const std::string& dbg) {
+    return "{\"externalId\":\"" + uuid + "\",\"dbg\":\"" + dbg + "\"}";
+}
