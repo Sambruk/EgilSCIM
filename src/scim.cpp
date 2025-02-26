@@ -467,8 +467,8 @@ int ScimActions::create_func::operator()(const ScimActions &actions, bool& confl
         actions.scim_new_cache->add_object(std::make_shared<rendered_object>(create));
     else {
         if (conflict) {
-            // Put it in cache, but make sure we update in the next run
-            auto copied_object = std::make_shared<rendered_object>(create.get_id(), create.get_type(), std::to_string(time(NULL)) + " (create conflict)");
+            // Put it in cache, but with a dummy object to make sure we update in the next run
+            auto copied_object = std::make_shared<rendered_object>(create.get_id(), create.get_type(), dummy_SCIM_object(create.get_id(), "create conflict"));
             actions.scim_new_cache->add_object(copied_object);
         }
         return -1;
@@ -497,8 +497,8 @@ int ScimActions::update_func::operator()(const ScimActions &actions, bool& non_e
     /* Insert copied object into new cache */
     if (!response_json) {
         if (!non_existent) {
-            // Keep it in cache, but make sure we retry the update next run
-            auto copied_object = std::make_shared<rendered_object>(object.get_id(), object.get_type(), std::to_string(time(NULL)) + " (failed update)");
+            // Keep it in cache, but with a dummy object to make sure we retry the update next run
+            auto copied_object = std::make_shared<rendered_object>(object.get_id(), object.get_type(), dummy_SCIM_object(object.get_id(), "failed update"));
             actions.scim_new_cache->add_object(copied_object);
         }
         return -1;

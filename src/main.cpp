@@ -126,7 +126,7 @@ void make_dirty(std::shared_ptr<rendered_object_list> objects, const std::vector
         auto obj = objects->get_object(uuid);
 
         if (obj) {
-            auto new_obj = std::make_shared<rendered_object>(obj->get_id(), obj->get_type(), std::to_string(time(NULL)));
+            auto new_obj = std::make_shared<rendered_object>(obj->get_id(), obj->get_type(), dummy_SCIM_object(obj->get_id(), "force update"));
             objects->remove_object(uuid);
             objects->add_object(new_obj);
         }

@@ -126,4 +126,20 @@ void parse_override(const std::string& override_str,
                     std::string& variable,
                     std::string& value);
 
+/**
+ * Creates a JSON object for a dummy SCIM object.
+ * 
+ * This is used when we want to place something in the cache file to force an
+ * update. The object should be in JSON format so print-cache will work, and
+ * it will include an "externalId" attribute. It will also include a "dbg"
+ * attribute to give some context to why the odd object is in the cache file
+ * in case anyone is looking at it.
+ * 
+ * The whole returned object should be smaller than any real SCIM object in
+ * order for the cache file size estimate to work. Since all real SCIM objects
+ * should include a "scheme" and attributes other than externalId, this shouldn't
+ * be a problem as long as the dbg string isn't long.
+ */
+std::string dummy_SCIM_object(const std::string& uuid, const std::string& dbg);
+
 #endif //SIMPLESCIM_UTILS_HPP
