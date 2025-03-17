@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.19 (2025-03-17)
 #### Features
   - Contents of the cache file can now be printed in JSON format (#54)
   - New functionality for blacklisting users (#223)
