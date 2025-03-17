@@ -5,6 +5,9 @@
   - Contents of the cache file can now be printed in JSON format (#54)
   - New functionality for blacklisting users (#223)
   - Space for the cache file is now pre-allocated before SCIM operations start (#197)
+  
+#### Bugfixes
+  - When using the --rebuild-cache feature, a failure to GET objects will now terminate the client (#205)
 
 ## v2.18 (2024-11-19)
 #### Features
