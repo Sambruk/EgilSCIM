@@ -190,7 +190,10 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
 
     data_server &server = data_server::instance();
     auto student_groups = server.get_by_type(master_type);
-    auto employments = server.get_by_type(related_type.first);
+
+    if (!student_groups) {
+        student_groups = std::make_shared<object_list>();
+    }
 
     for (const auto &student_group : *student_groups) {
         base_object generated_object(type);
@@ -504,7 +507,7 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                             }
                         }
                         extras_set = true;
-                    } catch (const std::out_of_range& e) {
+                    } catch (const std::out_of_range&) {
                         // no match in extras for this Employment object
                     }
                 }
