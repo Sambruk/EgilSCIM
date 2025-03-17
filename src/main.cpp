@@ -442,6 +442,7 @@ int main(int argc, char *argv[]) {
                 all_scim_objects = scim_actions.get_all_objects_from_scim_server();
             } catch (const std::runtime_error& e) {
                 std::cerr << "Failed to get objects from SCIM server (" << e.what() << ")" << std::endl;
+                return EXIT_FAILURE;
             }
         }
 
