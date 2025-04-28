@@ -148,7 +148,7 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                     }
 
                     // Establish relation between group and user
-                    establish_relation(group, user.second, type, from_type);
+                    establish_relation(group, user.second, type, from_type, load_logger);
                 }
             }
 
