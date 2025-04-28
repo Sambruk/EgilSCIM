@@ -56,9 +56,15 @@ std::shared_ptr<object_list> filter_objects(std::shared_ptr<object_list> objects
 void establish_relation(std::shared_ptr<base_object> main_object,
                         std::shared_ptr<base_object> remote,
                         const std::string& main_type,
-                        const std::string& remote_type) {
+                        const std::string& remote_type,
+                        indented_logger& load_logger) {
     
     config_file &conf = config_file::instance();
+
+    if (conf.get_bool("load-log-include-relations")) {
+        load_logger.log("Relation (" + main_type + " -> " + remote_type + "): " + readable_id(main_object.get(), main_type) + " -> " + readable_id(remote.get(), remote_type));
+    }
+
     string_vector main_scim_vars = conf.get_vector_sorted_unique(main_type + "-scim-variables");
     string_vector remote_scim_vars = conf.get_vector_sorted_unique(remote_type + "-scim-variables");
 
@@ -138,7 +144,7 @@ void load_related(const std::string &type,
                                                                              relation.remote_attribute, values[i]);
                         if (remote_object) {
                             relation_found = true;
-                            establish_relation(main_object.second, remote_object, type, relation.type);
+                            establish_relation(main_object.second, remote_object, type, relation.type, load_logger);
                         }
                         else {
                             if (warn_missing && missing_local_values[relation.type].size() < MAX_MISSING_LOCAL_VALUES) {
@@ -182,7 +188,7 @@ void load_related(const std::string &type,
                     }
                     if (remote) {
                         relation_found = true;
-                        establish_relation(main_object.second, remote, type, relation.type);
+                        establish_relation(main_object.second, remote, type, relation.type, load_logger);
                     }
                     else {
                         if (warn_missing && missing_local_values[relation.type].size() < MAX_MISSING_LOCAL_VALUES) {

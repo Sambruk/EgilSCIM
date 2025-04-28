@@ -33,8 +33,26 @@ loaded. Generated objects (Activity and Employment) are also included
 with their UUIDs and information about which other objects they were generated
 from.
 
+To improve the readability of the load log it's recommended to specify the
+readable-id variable for all types, for example:
+
+```
+Teacher-readable-id = uid
+```
+
 The load log file path can contain date and time format specifiers, it works
 in the same way as for the HTTP log file.
+
+## Including relations in the load log file
+
+By default the load log file only includes information about the objects
+that are loaded, not all the relations established between objects. To include
+information about the established relations set `load-log-include-relations`
+to true:
+
+```
+load-log-include-relations = true
+```
 
 # Forcing an object to be sent to the SCIM server
 
