@@ -1,11 +1,15 @@
 ## Releases
 
+## Unreleased
+#### Bugfixes
+  - Fixed an access violation which could occur when loading from CSV or SQL auxilliary tables (#92)
+
 ## v2.19 (2025-03-17)
 #### Features
   - Contents of the cache file can now be printed in JSON format (#54)
   - New functionality for blacklisting users (#223)
   - Space for the cache file is now pre-allocated before SCIM operations start (#197)
-  
+
 #### Bugfixes
   - Fixed an access violation which could occur when generating activities if no groups had been loaded (#208)
   - When using the --rebuild-cache feature, a failure to GET objects will now terminate the client (#205)

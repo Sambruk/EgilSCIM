@@ -113,7 +113,10 @@ void add_multi_valued(std::shared_ptr<sql::plugin::iterator> itr,
     std::map<std::string, std::shared_ptr<base_object>> index;
 
     for (auto& iter : *objects) {
-        index[iter.second->get_values(key)[0]] = iter.second;
+        const auto key_values = iter.second->get_values(key);
+        if (!key_values.empty()) {
+            index[key_values[0]] = iter.second;
+        }
     }
 
     std::vector<std::optional<std::string>> row;
