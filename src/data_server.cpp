@@ -19,11 +19,13 @@
 
 #include "data_server.hpp"
 #include "config_file.hpp"
+#include "config.hpp"
 #include "generated_load.hpp"
 #include "simplescim_ldap.hpp"
 #include "csv_load.hpp"
 #include "sql_load.hpp"
 #include "json_data_file.hpp"
+#include "readable_id.hpp"
 
 /**
  * load all data from
@@ -114,7 +116,6 @@ bool data_server::is_orphan(const std::shared_ptr<base_object> object,
  */
 void data_server::filter_orphans() {
     config_file &config = config_file::instance();
-    string_vector types = config.get_vector("scim-type-load-order");
 
     for (const auto &data_for_type : data) {
         auto type = data_for_type.first;
@@ -125,6 +126,9 @@ void data_server::filter_orphans() {
             for (const auto &iter : *object_list) {
                 if (is_orphan(iter.second, attributes)) {
                     to_remove.push_back(iter.second->get_uid());
+                    if (config::load_log_include_skipped()) {
+                        load_logger.log("Skipping " + type + " " + readable_id(iter.second.get(), type) + " (considered orphan)");
+                    }
                 }
             }
             for (const auto &uid : to_remove) {
