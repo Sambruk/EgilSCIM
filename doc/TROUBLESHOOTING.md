@@ -54,6 +54,17 @@ to true:
 load-log-include-relations = true
 ```
 
+## Including skipped objects in the load log file
+
+By default, the load log file doesn't mention when objects are skipped due
+to load limiting, missing required relations or when they are filtered out
+because they are considered to be orphans. To include information about the
+skipped objects set `load-log-include-skipped` to true:
+
+```
+load-log-include-skipped = true
+```
+
 # Forcing an object to be sent to the SCIM server
 
 Sometimes you may wish to force the client to send an object to the SCIM server
