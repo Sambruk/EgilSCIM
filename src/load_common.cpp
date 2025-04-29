@@ -202,6 +202,9 @@ void load_related(const std::string &type,
             }
             if (require && !relation_found) {
                 to_remove.push_back(main_object.first);
+                if (config::load_log_include_skipped()) {
+                    load_logger.log("Skipping " + type + " " + readable_id(main_object.second.get(), type) + " due to missing a required relation (" + relation.type + ")");
+                }        
                 break; // don't go through the other relations
             }
         }
