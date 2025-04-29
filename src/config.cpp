@@ -47,4 +47,8 @@ char csv_quote() {
     return quote;
 }
 
+bool load_log_include_skipped() {
+    return config_file::instance().get_bool("load-log-include-skipped");
+}
+
 } // namespace config

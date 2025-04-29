@@ -20,6 +20,7 @@
 #include "simplescim_ldap.hpp"
 
 #include <set>
+#include "config.hpp"
 #include "utility/simplescim_error_string.hpp"
 #include "model/base_object.hpp"
 #include "model/object_list.hpp"
@@ -58,11 +59,15 @@ std::shared_ptr<object_list> ldap_to_object_list(ldap_wrapper& ldap,
           uid = obj->get_uid();
           transform->apply(obj.get());
 
-          if (!uid.empty() && limiter->include(obj.get())) {
-              auto acceptable_uuid = warn_if_bad_uuid(uid);
-              if (acceptable_uuid) {
-                  objects->add_object(uid, obj);
-                  load_logger.log("Found " + type + " " + readable_id(obj.get(), type));
+          if (!uid.empty()) {
+              if (limiter->include(obj.get())) {
+                  auto acceptable_uuid = warn_if_bad_uuid(uid);
+                  if (acceptable_uuid) {
+                      objects->add_object(uid, obj);
+                      load_logger.log("Found " + type + " " + readable_id(obj.get(), type));
+                  }
+              } else if (config::load_log_include_skipped()) {
+                load_logger.log("Skipping " + type + " " + readable_id(obj.get(), type) + " due to load limiting");
               }
           }
 

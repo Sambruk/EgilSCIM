@@ -25,6 +25,12 @@ namespace config {
 char csv_separator();
 char csv_quote();
 
+/** Should the load log include lines for when we skip objects?
+ *  For instance due to load limiting, orphans filtering or 
+ *  required relations.
+ */
+bool load_log_include_skipped();
+
 } // namespace config
 
 #endif // EGILSCIM_CONFIG_HPP
