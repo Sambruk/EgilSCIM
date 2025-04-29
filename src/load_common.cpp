@@ -19,6 +19,7 @@
 
 #include "load_common.hpp"
 #include "config_file.hpp"
+#include "config.hpp"
 #include "data_server.hpp"
 #include "json_data_file.hpp"
 #include "simplescim_ldap.hpp"
@@ -47,6 +48,8 @@ std::shared_ptr<object_list> filter_objects(std::shared_ptr<object_list> objects
         if (limiter->include(object.get())) {
             included_objects->add_object(uid, object);
             load_logger.log("Found " + type + " " + readable_id(object.get(), type));
+        } else if (config::load_log_include_skipped()) {
+            load_logger.log("Skipping " + type + " " + readable_id(object.get(), type) + " due to load limiting");
         }
     }
 
@@ -199,6 +202,9 @@ void load_related(const std::string &type,
             }
             if (require && !relation_found) {
                 to_remove.push_back(main_object.first);
+                if (config::load_log_include_skipped()) {
+                    load_logger.log("Skipping " + type + " " + readable_id(main_object.second.get(), type) + " due to missing a required relation (" + relation.type + ")");
+                }        
                 break; // don't go through the other relations
             }
         }

@@ -19,6 +19,7 @@
 
 #include "generated_group_load.hpp"
 #include "config_file.hpp"
+#include "config.hpp"
 #include "data_server.hpp"
 #include "load_limiter.hpp"
 #include "load_common.hpp"
@@ -93,6 +94,10 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
     auto limiter = get_limiter(type);
     auto generated = std::make_shared<object_list>();
 
+    // UUIDs for groups which were skipped due to load limiting,
+    // we don't want to try to generate these again from other users.
+    std::set<std::string> dont_try_again;
+
     auto from_types = conf.get_vector_sorted_unique(type + "-generate-from-types");
 
     auto attributes = parse_student_group_attributes(conf.get(type + "-generate-from-attributes"));
@@ -122,6 +127,10 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                     auto uuid_basis = std::regex_replace(from, attribute.match, attribute.uuid, std::regex_constants::format_no_copy);
                     auto uuid = uuid_util::instance().generate(uuid_basis);
 
+                    if (dont_try_again.count(uuid) > 0) {
+                        continue;
+                    }
+
                     // Do we need to create the group?
                     auto group = generated->get_object(uuid);
                     if (!group) {
@@ -143,6 +152,10 @@ std::shared_ptr<object_list> get_generated_student_group(const std::string& type
                                 " from " + from_type + " " + readable_id(user.second.get(), from_type));
                         }
                         else {
+                            dont_try_again.insert(uuid);
+                            if (config::load_log_include_skipped()) {
+                                load_logger.log("Skipping generated " + type + " " + readable_id(group.get(), type) + " due to load limiting");
+                            }
                             continue;
                         }
                     }
