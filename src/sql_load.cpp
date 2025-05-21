@@ -20,6 +20,7 @@
 #include "sql_load.hpp"
 #include "sql.hpp"
 #include "config_file.hpp"
+#include "config.hpp"
 #include "transformer.hpp"
 #include "load_limiter.hpp"
 #include "load_common.hpp"
@@ -66,6 +67,8 @@ std::shared_ptr<object_list> sql_to_object_list(std::shared_ptr<sql::plugin::ite
                                                 const std::string& type) {
     auto objects =  std::make_shared<object_list>();
     const auto attribute_names = itr->get_header();
+
+    const auto ignore_dups = config::ignore_duplicate_uuids();
     
     std::vector<std::optional<std::string>> row;
     while (itr->next(row)) {
@@ -78,6 +81,11 @@ std::shared_ptr<object_list> sql_to_object_list(std::shared_ptr<sql::plugin::ite
         }
 
         auto uid = object->get_uid();
+
+        if (!ignore_dups && objects->has_object(uid)) {
+            throw std::runtime_error("SQL results for type " + type + " contained duplicate UUID: " + uid);
+        }
+
         if (!uid.empty()) {
             auto acceptable_uuid = warn_if_bad_uuid(uid);
             if (acceptable_uuid) {
