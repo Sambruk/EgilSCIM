@@ -51,4 +51,8 @@ bool load_log_include_skipped() {
     return config_file::instance().get_bool("load-log-include-skipped");
 }
 
+bool ignore_duplicate_uuids() {
+    return config_file::instance().get_bool("ignore-duplicate-uuids");
+}
+
 } // namespace config
