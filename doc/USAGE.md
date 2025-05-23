@@ -932,9 +932,10 @@ will be transformed in-place.
 
 ## UUIDs
 
-The client will by default warn if an object is discovered to have a bad UUID.
+The client will by default warn if an object is discovered to have a bad UUID, or
+terminate if there are more than one object with the same UUID.
 
-This includes strings that cannot be parsed as a UUID according to RFC4122
+Bad UUID includes strings that cannot be parsed as a UUID according to RFC4122
 and UUIDs that contain upper case letters (according to RFC4122 we should
 only send along UUIDs in lower case to the SCIM server).
 
@@ -959,6 +960,15 @@ discard-objects-with-bad-uuids = true
 
 This is recommended to always use for new configurations so as to not
 accidentally send an object with bad UUID to a server.
+
+If the client aborts the run because duplicate UUIDs are detected you can
+disable that behaviour with the following setting:
+
+```
+ignore-duplicate-uuids = true
+```
+
+This setting is not recommended to use, all UUIDs should be unique in the data source.
 
 ## Thresholds
 

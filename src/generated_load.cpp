@@ -195,6 +195,8 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
         student_groups = std::make_shared<object_list>();
     }
 
+    const auto ignore_dups = config::ignore_duplicate_uuids();
+    
     for (const auto &student_group : *student_groups) {
         base_object generated_object(type);
         generated_object.add_attribute(pair_to_string(local_relation),
@@ -302,6 +304,11 @@ std::shared_ptr<object_list> get_generated_activity(const std::string &type,
         }
 
         std::string uuid = store_relation(generated_object, p1, p2);
+
+        if (!ignore_dups && generated->has_object(uuid)) {
+            throw std::runtime_error("two activities were generated with the same uuid, make sure that the attributes in " + type + "-GUID-generation-ids won't have the same values for several groups");
+        }
+
         generated->add_object(uuid, std::make_shared<base_object>(generated_object));
         load_logger.log(std::string("Generated ") + type + " " + readable_id(&generated_object, type) +
                         " from " + master_type + " " + readable_id(student_group.second.get(), master_type));
@@ -439,6 +446,8 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
     if (!master_list)
         return generated;
 
+    const auto ignore_dups = config::ignore_duplicate_uuids();
+
     for (const auto &a_master: *master_list) {
         auto a_master_readable_id = readable_id(a_master.second.get(), relational_key.first);
         string_vector relational_items = a_master.second->get_values(relational_key.second);
@@ -530,6 +539,10 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
 
                 // create an id for the relation
                 std::string id = store_relation(generated_object, part_type, master_id);
+                if (!ignore_dups && generated->has_object(id)) {
+                    throw std::runtime_error("two employments were generated with the same uuid, make sure that the attributes in " + type + "-generate-local-part and " + type + "-generate-remote-part together uniquely identify an employment");
+                }
+        
                 generated->add_object(id, std::make_shared<base_object>(generated_object));
                 load_logger.log(std::string("Generated ") + type + " " + readable_id(&generated_object, type) +
                                 " from " + relational_key.first + " " + readable_id(a_master.second.get(), relational_key.first) + " and " + part_type.first + " " + readable_id(related_object.get(), part_type.first));

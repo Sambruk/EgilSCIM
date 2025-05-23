@@ -103,6 +103,10 @@ public:
         return nullptr;
     }
 
+    bool has_object(const std::string& uid) const {
+        return objects.find(uid) != objects.end();
+    }
+
     void add_object(const std::string &uid, std::shared_ptr<base_object> object);
 
     void remove(const std::string& uuid);

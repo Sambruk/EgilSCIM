@@ -104,6 +104,8 @@ private:
     bool is_orphan(const std::shared_ptr<base_object> object,
                    const std::vector<std::string> &attributes);
 
+    void scan_for_duplicates();
+
     indented_logger load_logger;
 };
 

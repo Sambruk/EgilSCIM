@@ -19,6 +19,7 @@
 
 #include "csv_load.hpp"
 #include "config_file.hpp"
+#include "config.hpp"
 #include "transformer.hpp"
 #include "load_limiter.hpp"
 #include "data_server.hpp"
@@ -43,6 +44,8 @@ std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
     auto objects =  std::make_shared<object_list>();
     const auto attribute_names = file->get_header();
     
+    const auto ignore_dups = config::ignore_duplicate_uuids();
+
     for (size_t i = 0; i < file->size(); ++i) {
         auto object = vector_to_base_object(to_optionals((*file)[i]), attribute_names, type);
 
@@ -53,6 +56,11 @@ std::shared_ptr<object_list> csv_to_object_list(std::shared_ptr<csv_file> file,
         }
 
         auto uid = object->get_uid();
+
+        if (!ignore_dups && objects->has_object(uid)) {
+            throw std::runtime_error("csv file for type " + type + " contained duplicate UUID: " + uid);
+        }
+
         if (!uid.empty()) {
             auto acceptable_uuid = warn_if_bad_uuid(uid);
             if (acceptable_uuid) {

@@ -31,6 +31,9 @@ char csv_quote();
  */
 bool load_log_include_skipped();
 
+/** Should we skip detecting duplicate uuids? */
+bool ignore_duplicate_uuids();
+
 } // namespace config
 
 #endif // EGILSCIM_CONFIG_HPP
