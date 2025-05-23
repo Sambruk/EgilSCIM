@@ -90,6 +90,9 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
     } catch (std::string msg) {
         return false;
     }
+    if (!config::ignore_duplicate_uuids()) {
+        scan_for_duplicates();
+    }
     preload();
     return true;
 }
@@ -216,4 +219,32 @@ std::shared_ptr<base_object> data_server::get_by_id(const std::string &type, con
         return nullptr;
     }
     return list->get_object(uuid);
+}
+
+/** Goes through all data and checks if there are objects with
+ *  the same UUID but different types.
+ * 
+ *  Typically when we load a single type, the load function (e.g. for CSV)
+ *  will check for duplicates within the list of objects for that type.
+ * 
+ *  This function will go through all objects of all types and see if the same
+ *  UUID shows up more than once.
+ * 
+ *  If so a std::runtime_error is thrown.
+ */
+void data_server::scan_for_duplicates() {
+    // All the UUIDs we've seen, map from UUID to type
+    std::map<std::string, std::string> seen;
+    for (auto itr = data.begin(); itr != data.end(); ++itr) {
+        auto objs = itr->second;
+        for (auto objitr = objs->begin(); objitr != objs->end(); ++objitr) {
+            auto uuid = objitr->first;
+            if (seen.find(uuid) != seen.end()) {
+                throw std::runtime_error("duplicate uuids found in " + itr->first + " and " + seen[uuid]);
+            } 
+            else {
+                seen[uuid] = itr->first;
+            }
+        }
+    }
 }
