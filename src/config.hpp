@@ -34,6 +34,17 @@ bool load_log_include_skipped();
 /** Should we skip detecting duplicate uuids? */
 bool ignore_duplicate_uuids();
 
+/** Timeout setting (seconds) for the connection phase of the HTTP request */
+int http_connection_timeout();
+
+/** Timeout setting (seconds) for the whole HTTP request (including connection) */
+int http_request_timeout();
+
+/** The maximum number of timeouts we accept before we stop making
+  *  more requests.
+  */
+int http_max_acceptable_timeouts();
+
 } // namespace config
 
 #endif // EGILSCIM_CONFIG_HPP

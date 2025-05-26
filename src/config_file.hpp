@@ -94,6 +94,8 @@ public:
         return is_true(get(attrib, true));
     }
 
+    int get_int(const std::string &attrib, int default_value) const;
+
     std::string get_path(const std::string& variable, bool silent = false) const;
 
     std::vector<std::string> get_paths(const std::string& variable, bool silent = false) const;
