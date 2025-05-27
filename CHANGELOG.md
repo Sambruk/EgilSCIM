@@ -5,6 +5,7 @@
   - The load log file can now be configured to include relations (#94)
   - The load log file can now be configured to include skipped objects (#148)
   - Detection of duplicate UUIDs (#185)
+  - Configurable HTTP timeouts (#190)
 
 #### Bugfixes
   - Fixed an access violation which could occur when loading from CSV or SQL auxilliary tables (#92)
