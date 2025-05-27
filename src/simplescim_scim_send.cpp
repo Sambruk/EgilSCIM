@@ -154,7 +154,8 @@ static int simplescim_scim_send(CURL* curl,
                                 std::ofstream& http_log,
                                 int connection_timeout,
                                 int request_timeout,
-                                bool& timedout) {
+                                bool& timedout,
+                                bool& permanent_failure) {
 
     CURLcode errnum;
     curl_slist *chunk;
@@ -163,6 +164,7 @@ static int simplescim_scim_send(CURL* curl,
 
     body = "";
     timedout = false;
+    permanent_failure = false;
     
     /* Enable more elaborate error messages */
 
@@ -335,17 +337,11 @@ static int simplescim_scim_send(CURL* curl,
             timedout = true;
         }
 
-        // TODO: get rid of the throw std::string()
-        // This was probably done originally because the conditions below are considered
-        // to be of the type that should lead to program termination rather than retry
-        // on the next operation. While it's probably correct that these conditions should
-        // lead to termination it shouldn't be handled with a throw std::string().
-        // Possibly a throw of a proper and specific error type, but then the calling code
-        // also should be reviewed so it's dealt with properly.
+        // For certain errors we want to let the caller know there's no point in trying other requests
         if (errnum == CURLE_COULDNT_CONNECT || errnum == CURLE_SSL_CERTPROBLEM ||
             errnum == CURLE_SSL_CACERT_BADFILE || errnum == CURLE_SSL_CACERT ||
             errnum == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
-            throw std::string();
+            permanent_failure = true;
         }
         return -1;
     }
@@ -477,13 +473,18 @@ scim_sender::send_create(const std::string &url,
     long response_code;
     int err;
     
-    bool timedout;
+    bool timedout = false;
+    bool permanent_failure = false;
     err = simplescim_scim_send(curl, url, body, "POST", 
         response_data, &response_code, 
-        http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout);
+        http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout, permanent_failure);
 
     if (timedout) {
         register_timeout();
+    }
+
+    if (permanent_failure) {
+        set_aborted();
     }
 
     if (err == -1) {
@@ -518,14 +519,19 @@ scim_sender::send_update(const std::string &url,
     std::string response_data;
     long response_code;
     int err;
-    bool timedout;
+    bool timedout = false;
+    bool permanent_failure = false;
     err = simplescim_scim_send(curl, url, body, "PUT", 
         response_data, &response_code, 
-        http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout);
+        http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout, permanent_failure);
 
     if (timedout) {
         register_timeout();
-    }    
+    }
+
+    if (permanent_failure) {
+        set_aborted();
+    }
 
     if (err == -1) {
         return {};
@@ -570,13 +576,18 @@ long scim_sender::send_delete(const std::string &url) {
     long response_code;
     std::string response_data;
     int err;
-    bool timedout;
+    bool timedout = false;
+    bool permanent_failure = false;
     err = simplescim_scim_send(curl, url, "", "DELETE", 
         response_data, &response_code, http_log, 
-        config::http_connection_timeout(), config::http_request_timeout(), timedout);
+        config::http_connection_timeout(), config::http_request_timeout(), timedout, permanent_failure);
 
     if (timedout) {
         register_timeout();
+    }
+
+    if (permanent_failure) {
+        set_aborted();
     }
 
     if (err == -1) {
@@ -655,15 +666,20 @@ void simplescim_query_impl(const std::string& url, std::vector<pt::ptree>& resou
 void scim_sender::query(const std::string& url, std::vector<pt::ptree>& resources) {
     auto curl_getter =
         [this](const std::string& url, std::string& response_data, long *response_code) -> int {
-        bool timedout;
+        bool timedout = false;
+        bool permanent_failure = false;
         auto res = simplescim_scim_send(curl, url, "", "GET", 
             response_data, response_code, 
-            http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout);
+            http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout, permanent_failure);
 
         if (timedout) {
             register_timeout();
         }
-        
+
+        if (permanent_failure) {
+            set_aborted();
+        }
+            
         return res;
     };
     
