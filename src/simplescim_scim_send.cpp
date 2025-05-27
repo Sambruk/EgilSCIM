@@ -27,6 +27,7 @@
 
 #include "utility/simplescim_error_string.hpp"
 #include "config_file.hpp"
+#include "config.hpp"
 
 namespace pt = boost::property_tree;
 
@@ -150,7 +151,10 @@ static struct curl_slist *simplescim_scim_send_create_slist(const std::string &m
 static int simplescim_scim_send(CURL* curl,
                                 const std::string &url, const std::string &resource,
                                 const std::string &method, std::string& body, long *response_code,
-                                std::ofstream& http_log) {
+                                std::ofstream& http_log,
+                                int connection_timeout,
+                                int request_timeout,
+                                bool& timedout) {
 
     CURLcode errnum;
     curl_slist *chunk;
@@ -158,6 +162,7 @@ static int simplescim_scim_send(CURL* curl,
     long http_code;
 
     body = "";
+    timedout = false;
     
     /* Enable more elaborate error messages */
 
@@ -227,6 +232,19 @@ static int simplescim_scim_send(CURL* curl,
         return -1;
     }
 
+    errnum = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connection_timeout);
+
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_CONNECTTIMEOUT)", errnum);
+        return -1;
+    }
+
+    errnum = curl_easy_setopt(curl, CURLOPT_TIMEOUT, request_timeout);
+
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_TIMEOUT)", errnum);
+        return -1;
+    }
 
     /* Set HTTP method */
 
@@ -312,6 +330,18 @@ static int simplescim_scim_send(CURL* curl,
         simplescim_scim_send_print_curl_error("curl_easy_perform", errnum);
 
         curl_slist_free_all(chunk);
+
+        if (errnum == CURLE_OPERATION_TIMEDOUT) {
+            timedout = true;
+        }
+
+        // TODO: get rid of the throw std::string()
+        // This was probably done originally because the conditions below are considered
+        // to be of the type that should lead to program termination rather than retry
+        // on the next operation. While it's probably correct that these conditions should
+        // lead to termination it shouldn't be handled with a throw std::string().
+        // Possibly a throw of a proper and specific error type, but then the calling code
+        // also should be reviewed so it's dealt with properly.
         if (errnum == CURLE_COULDNT_CONNECT || errnum == CURLE_SSL_CERTPROBLEM ||
             errnum == CURLE_SSL_CACERT_BADFILE || errnum == CURLE_SSL_CACERT ||
             errnum == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
@@ -381,6 +411,8 @@ int scim_sender::send_init(std::string cert,
                            std::string key,
                            std::string pinnedpubkey,
                            std::string ca_bundle_path) {
+    number_of_timeouts = 0;
+    aborted = false;
     CURLcode errnum;
 
     errnum = curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -436,13 +468,23 @@ scim_sender::send_create(const std::string &url,
                          const std::string &body,
                          bool& conflict) {
     conflict = false;
+
+    if (is_aborted()) { // Don't actually do the request, return as if there's a failure
+        return {};
+    }
     
     std::string response_data;
     long response_code;
     int err;
     
+    bool timedout;
+    err = simplescim_scim_send(curl, url, body, "POST", 
+        response_data, &response_code, 
+        http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout);
 
-    err = simplescim_scim_send(curl, url, body, "POST", response_data, &response_code, http_log);
+    if (timedout) {
+        register_timeout();
+    }
 
     if (err == -1) {
         return {};
@@ -468,12 +510,22 @@ scim_sender::send_update(const std::string &url,
                          const std::string &body,
                          bool& non_existent) {
     non_existent = false;
+
+    if (is_aborted()) { // Don't actually do the request, return as if there's a failure
+        return {};
+    }
     
     std::string response_data;
     long response_code;
     int err;
+    bool timedout;
+    err = simplescim_scim_send(curl, url, body, "PUT", 
+        response_data, &response_code, 
+        http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout);
 
-    err = simplescim_scim_send(curl, url, body, "PUT", response_data, &response_code, http_log);
+    if (timedout) {
+        register_timeout();
+    }    
 
     if (err == -1) {
         return {};
@@ -501,16 +553,31 @@ scim_sender::send_update(const std::string &url,
  * For example:
  * https://example.com/Users/2819c223-7f76-453a-919d-413861904646
  *
- * On success, zero is returned. On error, -1 is returned
+ * On success, zero is returned. This means the server responded
+ * with HTTP code 204 (No Content).
+ * If we didn't successfully perform an HTTP request, -1 is returned
  * and simplescim_error_string is set to an appropriate
- * error message.
+ * error message. This could mean failed to connect or a timeout.
+ * If a successful HTTP request was performed but we received a 
+ * different response than HTTP 204, we will return the HTTP code
+ * (such as 404 Not found).
  */
 long scim_sender::send_delete(const std::string &url) {
+    if (is_aborted()) { // Don't actually do the request, return as if there's a failure
+        return -1;
+    }
+
     long response_code;
     std::string response_data;
     int err;
+    bool timedout;
+    err = simplescim_scim_send(curl, url, "", "DELETE", 
+        response_data, &response_code, http_log, 
+        config::http_connection_timeout(), config::http_request_timeout(), timedout);
 
-    err = simplescim_scim_send(curl, url, "", "DELETE", response_data, &response_code, http_log);
+    if (timedout) {
+        register_timeout();
+    }
 
     if (err == -1) {
         return -1;
@@ -588,8 +655,24 @@ void simplescim_query_impl(const std::string& url, std::vector<pt::ptree>& resou
 void scim_sender::query(const std::string& url, std::vector<pt::ptree>& resources) {
     auto curl_getter =
         [this](const std::string& url, std::string& response_data, long *response_code) -> int {
-        return simplescim_scim_send(curl, url, "", "GET", response_data, response_code, http_log);
+        bool timedout;
+        auto res = simplescim_scim_send(curl, url, "", "GET", 
+            response_data, response_code, 
+            http_log, config::http_connection_timeout(), config::http_request_timeout(), timedout);
+
+        if (timedout) {
+            register_timeout();
+        }
+        
+        return res;
     };
     
     simplescim_query_impl(url, resources, curl_getter);
+}
+
+void scim_sender::register_timeout() {
+    number_of_timeouts++;
+    if (number_of_timeouts > config::http_max_acceptable_timeouts()) {
+        set_aborted();
+    }
 }

@@ -39,6 +39,10 @@ public:
         return sender;
     }
 
+    scim_sender()
+    : number_of_timeouts(0), aborted(false) {
+    }
+
     /**
      * Initialises simplescim_scim_send.
      *
@@ -122,9 +126,12 @@ public:
      * For example:
      * https://example.com/Users/2819c223-7f76-453a-919d-413861904646
      *
-     * On success, zero is returned. On error, -1 is returned
+     * If we didn't successfully perform an HTTP request, -1 is returned
      * and simplescim_error_string is set to an appropriate
-     * error message.
+     * error message. This could mean failed to connect or a timeout.
+     * If a successful HTTP request was performed but we received a 
+     * different response than HTTP 204, we will return the HTTP code
+     * (such as 404 Not found).
      */
     long send_delete(const std::string &url);
 
@@ -138,8 +145,37 @@ public:
      */
     void query(const std::string& url, std::vector<boost::property_tree::ptree>& resources);
 
+    /** Sets the aborted state (see documentation for the aborted member below).
+     *  Note that this class is not thread safe, this should not be called while
+     *  another thread might be making requests.
+     */
+    void set_aborted() {
+        aborted = true;
+    }
+
+    /** Returns the aborted state. See set_aborted().
+     *  is_aborted is also not thread safe.
+     */
+    bool is_aborted() const {
+        return aborted;
+    }
+
 private:
+
+    void register_timeout();
+
     CURL *curl;
+
+    /// Number of timeouts we've had so far
+    int number_of_timeouts;
+
+    /** Aborted means we shouldn't do any more real requests, just return errors.
+     *  The aborted state is set if we've had too many timeouts when doing requests,
+     *  if a request has failed in a way that implies later requests will also fail,
+     *  or if surrounding code has asked us to go to the aborted state (typically
+     *  because the program is being shut down and wants to exit prematurely).
+     */
+    bool aborted;
 
     std::ofstream http_log;
 };
