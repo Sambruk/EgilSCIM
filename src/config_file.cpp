@@ -289,6 +289,20 @@ std::string config_file::require_path(const std::string &variable) const {
     return interpret_config_path(str);
 }
 
+int config_file::get_int(const std::string &attrib, int default_value) const {
+    if (has(attrib)) {
+        auto str = get(attrib);
+        try {
+            return stoi(str);
+        } catch(std::logic_error&) {
+            return default_value;
+        }
+    }
+    else {
+        return default_value;
+    }
+}
+
 //static size_t send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
 //    struct http_response *http_response;
 //

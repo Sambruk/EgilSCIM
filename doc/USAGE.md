@@ -1085,7 +1085,9 @@ You should still specify a path to a cache file (either on the command line
 or in the config file), so a new cache file can be created. Next time you
 run the client there shouldn't be a need for `--rebuild-cache` anymore.
 
-## TLS settings
+## HTTP settings
+
+### TLS
 
 For communication with the SCIM server, the minimum TLS version can be
 configured with the setting `min-tls-version`, e.g.:
@@ -1107,6 +1109,28 @@ them, see
 [libcurl's documentation about ciphers](https://curl.se/docs/ssl-ciphers.html)
 
 The default list of ciphers depends on your version of OpenSSL.
+
+### Timeouts
+
+HTTP timeouts can be configured with the following variables:
+
+```
+# Timeout for the connection phase of a request (in seconds)
+http-connection-timeout = 30
+
+# Timeout for the whole request (including connection phase) (in seconds)
+http-request-timeout = 120
+
+# Maximum number of timeouts we accept before we stop trying
+# For every SCIM operation we will only try once, but with the
+# setting below, if more than 3 operations have failed with
+# a timeout, the rest of the SCIM operations will simply assume
+# the HTTP request will timeout and skip that step.
+http-max-acceptable-timeouts = 3
+```
+
+The values given in the example above are the defaults which will be used
+if the variables haven't been configured.
 
 ## Audit logging
 

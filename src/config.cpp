@@ -55,4 +55,16 @@ bool ignore_duplicate_uuids() {
     return config_file::instance().get_bool("ignore-duplicate-uuids");
 }
 
+int http_connection_timeout() {
+    return config_file::instance().get_int("http-connection-timeout", 30);
+}
+
+int http_request_timeout() {
+    return config_file::instance().get_int("http-request-timeout", 120);
+}
+
+int http_max_acceptable_timeouts() {
+    return config_file::instance().get_int("http-max-acceptable-timeouts", 3);
+}
+
 } // namespace config
