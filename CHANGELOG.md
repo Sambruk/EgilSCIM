@@ -9,6 +9,7 @@
 
 #### Bugfixes
   - Fixed an access violation which could occur when loading from CSV or SQL auxilliary tables (#92)
+  - More reliable writing of the status file (#236)
 
 ## v2.19 (2025-03-17)
 #### Features
