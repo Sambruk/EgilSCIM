@@ -1,7 +1,7 @@
 /**
  *  This file is part of the EGIL SCIM client.
  *
- *  Copyright (C) 2017-2024 Föreningen Sambruk
+ *  Copyright (C) 2017-2025 Föreningen Sambruk
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -82,18 +82,39 @@ struct config_file_option {
               path(p) {}
 };
 
-// Writes the status JSON file
-void write_status(const std::string& file,
-                  time_t start_time,
-                  int duration,
-                  std::shared_ptr<rendered_object_list> synced_objects) {
+// Class responsible for writing the status file.
+// The file is written in the destructor to make sure
+// that we write the status file regardless of how we
+// exit main().
+class status_writer {
+public:
+    status_writer(const std::string& path, time_t start)
+    : file(path), start_time(start) {}
 
+    ~status_writer();
+
+    void set_synced_objects(std::shared_ptr<rendered_object_list> objects) {
+        synced_objects = objects;
+    }
+
+private:
+    std::string file;
+    time_t start_time;
+    std::shared_ptr<rendered_object_list> synced_objects; // can be nullptr
+};
+
+// Writes the status JSON file
+status_writer::~status_writer() {
+    time_t end_time = time(nullptr);
+    int duration = int(end_time-start_time);
     std::map<std::string, int> resourceCounts;
 
-    for (const auto &iter : *synced_objects) {
-        auto object = iter.second;
+    if (synced_objects) {
+        for (const auto &iter : *synced_objects) {
+            auto object = iter.second;
 
-        resourceCounts[object->get_type()]++;
+            resourceCounts[object->get_type()]++;
+        }
     }
 
     // TODO: Write JSON with boost::ptree instead?
@@ -347,6 +368,11 @@ int main(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         }
 
+        std::unique_ptr<status_writer> status;
+        if (config.has("status-file")) {
+            status = std::make_unique<status_writer>(config.get("status-file"), start_time);
+        }
+
         add_scim_vars_for_virtual_groups();
 
         if (config.get_bool("scim-auth-WEAK")) {
@@ -410,6 +436,13 @@ int main(int argc, char *argv[]) {
         /** Get objects from cache file */
         auto cache_file_existed = false;
         std::shared_ptr<rendered_object_list> cache = read_cache(ppp, &cache_file_existed);
+
+        // Until we have managed to create a new cache, use the historical information for the
+        // status file (in case e.g. we fail to create a new cache, or an unexpected exception
+        // makes us exit early).
+        if (status) {
+            status->set_synced_objects(cache);
+        }
 
         if (cache == nullptr) {
             print_error();
@@ -478,13 +511,8 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-        time_t end_time = time(nullptr);
-
-        if (config.has("status-file")) {
-            write_status(config.get("status-file"),
-                         start_time,
-                         int(end_time-start_time),
-                         scim_actions.get_new_cache());
+        if (status) {
+            status->set_synced_objects(scim_actions.get_new_cache());
         }
 
         print_status(config_file.c_str());
