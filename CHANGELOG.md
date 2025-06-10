@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.20 (2025-06-10)
 #### Features
   - The load log file can now be configured to include relations (#94)
   - The load log file can now be configured to include skipped objects (#148)
