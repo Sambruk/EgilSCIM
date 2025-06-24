@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### Bugfixes
+  - If a Teacher's attribute pointing to school units contain duplicates, don't attempt to generate the same Employment twice (#240)
+
 ## v2.20 (2025-06-10)
 #### Features
   - The load log file can now be configured to include relations (#94)

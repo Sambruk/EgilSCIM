@@ -457,9 +457,20 @@ std::shared_ptr<object_list> get_generated_employment(const std::string &type,
                       << std::endl;
         }
 
+        // Sometimes there can be duplicates in relational_items, but we don't want
+        // to generate duplicate Employments in these cases (partly because it doesn't
+        // make any sense, but also to avoid triggering the UUID duplicate detection below)
+        std::set<std::string> handled_relational_items;
+
         // for each entry create a new relational object and
         // decorate it with some more attributes from the config.
         for (const auto &relational_item : relational_items) {
+            // Make sure we only handle each unique relational_item once
+            if (handled_relational_items.count(relational_item) > 0) {
+                continue;
+            } else {
+                handled_relational_items.insert(relational_item);
+            }
             base_object generated_object(type);
             generated_object.add_attribute(pair_to_string(relational_key), {relational_item});
 
