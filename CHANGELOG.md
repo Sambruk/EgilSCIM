@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.20.1 (2025-06-24)
 #### Bugfixes
   - If a Teacher's attribute pointing to school units contain duplicates, don't attempt to generate the same Employment twice (#240)
 
