@@ -69,6 +69,38 @@ std::string json_string_escape(const std::string& str) {
     return o.str();
 }
 
+/**
+ * Arrays has a comma at the end, e.g.
+ * ["tag":"value","tag":"value","tag":"value",]
+ * that last one needs to go, it's wrong and
+ * boost::propertytree doesn't accept it
+ */
+void remove_trailing_commas(std::string &s) {
+
+    auto end = s.end();
+    bool inside_string = false;
+
+    for (auto iter = s.begin(); iter != end; ++iter) {
+
+        // let strings have commas so pop in and out of strings
+        if (*iter == '\"')
+            inside_string = !inside_string;
+
+        if (!inside_string && *iter == ',') {
+            auto walker = iter;
+            walker++; // move past the comma
+            // If the next character (ignoring whitespace)
+            // is ] or }, the comma needs to be erased (replaced with space)
+            while (walker != end && isspace(*walker)) {
+                walker++;
+            }
+            if (*walker == ']' || *walker == '}') {
+                    *iter = ' ';
+            }
+        }
+    }
+}
+
 struct scim_json_iter {
     value_map iter_value;
     size_t iter_idx = 0;
@@ -143,8 +175,6 @@ public:
             iteration_stack = iter->get_next();
         }
     }
-
-    void remove_trailing_commas();
 
     /**
      * Progresses the parser's input by one character.
@@ -251,8 +281,8 @@ public:
      * 
      * On success, a pointer to the parsed regular expression
      * is returned. On error, nullptr is returned and
-     * simplescim_error_string is set to an appropriate error
-     * message.
+     * simplescim_error_string is set to an appropriate
+     * error message.
      */
     std::shared_ptr<std::regex> parse_regex();
 
@@ -389,47 +419,9 @@ int scim_json_parser::parse() {
         return -1;
     }
 
-    remove_trailing_commas();
+    remove_trailing_commas(output_string);
     return 0;
 }
-
-/**
- * Arrays has a comma at the end, e.g.
- * ["tag":"value","tag":"value","tag":"value",]
- * that last one needs to go, it's wrong and
- * boost::propertytree doesn't accept it
- */
-void scim_json_parser::remove_trailing_commas() {
-
-    auto end = output_string.end();
-    bool found_block_end;
-    bool inside_string = false;
-
-    for (auto && iter = output_string.begin(); iter != end; iter++) {
-
-        // let strings have commas so
-        // pop in and out of strings
-        if (*iter == '\"')
-            inside_string = !inside_string;
-
-        if (!inside_string && *iter == ',') {
-            auto walker = iter;
-            // the next character can be whitespace of \"
-            // if it is ] or }, the comma needs to be erased
-            found_block_end = false;
-            while (walker != end && !found_block_end) {
-                if (*walker == '\"')
-                    break; // all good, move on
-                if (*walker == ']' || *walker == '}') {
-                    *iter = ' ';
-                    found_block_end = true;
-                }
-                walker++;
-            }
-        }
-    }
-}
-
 
 int scim_json_parser::parse_replacement() {
     int err;

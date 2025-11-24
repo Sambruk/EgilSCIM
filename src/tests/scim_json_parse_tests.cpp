@@ -72,6 +72,7 @@ TEST_CASE("Parse multiple JSON templates") {
 
 
 std::string json_string_escape(const std::string&);
+void remove_trailing_commas(std::string&);
 
 TEST_CASE("json_string_escape escapes required characters and preserves UTF-8") {
     // Build input containing characters that must be escaped:
@@ -101,4 +102,53 @@ TEST_CASE("json_string_escape escapes required characters and preserves UTF-8") 
     std::string expected = R"(Quote: \" Backslash: \\ Newline:\n Carriage:\r Tab:\t Backspace:\b Formfeed:\f Ctrl1:\u0001 End UTF8: åäö €)";
 
     REQUIRE(escaped == expected);
+}
+
+TEST_CASE("remove_trailing_commas") {
+    // Simple array with trailing comma
+    std::string arr = R"(["a",])";
+    remove_trailing_commas(arr);
+    REQUIRE(arr == R"(["a" ])");
+
+    // Simple object with trailing comma
+    std::string obj = R"({"k":"v",})";
+    remove_trailing_commas(obj);
+    REQUIRE(obj == R"({"k":"v" })");
+
+    // Trailing comma with whitespace between comma and closing bracket
+    std::string arr_ws = R"(["a",   ])";
+    remove_trailing_commas(arr_ws);
+    // comma replaced by single space, original spaces remain -> one extra space
+    REQUIRE(arr_ws == R"(["a"    ])");
+
+    // Nested structures: ensure only trailing commas before ] or } are affected
+    std::string nested = R"({"a":[1,2, ], "b":{ "x":"y", }})";
+    remove_trailing_commas(nested);
+    REQUIRE(nested == R"({"a":[1,2  ], "b":{ "x":"y"  }})");
+
+    std::string emails = R"({
+        "emails": [
+            {
+                "value": "foo@bar.com",
+                "type": "work",
+            },
+            {
+                "value": "baz@bar.com",
+                "type": "home",
+            },
+        ],
+    }")";
+    remove_trailing_commas(emails);
+    REQUIRE(emails == R"({
+        "emails": [
+            {
+                "value": "foo@bar.com",
+                "type": "work" 
+            },
+            {
+                "value": "baz@bar.com",
+                "type": "home" 
+            } 
+        ] 
+    }")");
 }
