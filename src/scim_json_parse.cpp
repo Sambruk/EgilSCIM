@@ -76,17 +76,34 @@ std::string json_string_escape(const std::string& str) {
  * boost::propertytree doesn't accept it
  */
 void remove_trailing_commas(std::string &s) {
-
     auto end = s.end();
-    bool inside_string = false;
 
     for (auto iter = s.begin(); iter != end; ++iter) {
-
-        // let strings have commas so pop in and out of strings
-        if (*iter == '\"')
-            inside_string = !inside_string;
-
-        if (!inside_string && *iter == ',') {
+        // If we encounter a quote, consume the whole string literal,
+        // correctly skipping escaped characters, end with iter pointing
+        // at the closing quote instead of the opening quote.
+        if (*iter == '"') {
+            ++iter; // skip the opening quote
+            while (iter != end) {
+                if (*iter == '\\') {
+                    // escaped char: skip backslash and the following char (if any)
+                    ++iter;
+                    if (iter == end) break;
+                    ++iter;
+                    continue;
+                }
+                if (*iter == '"') {
+                    // found closing unescaped quote; leave iter pointing at it
+                    break;
+                }
+                ++iter;
+            }
+            if (iter == end) {
+                // unterminated string, nothing more to do
+                return;
+            }
+        }
+        else if (*iter == ',') {
             auto walker = iter;
             walker++; // move past the comma
             // If the next character (ignoring whitespace)

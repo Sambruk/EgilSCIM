@@ -137,7 +137,7 @@ TEST_CASE("remove_trailing_commas") {
                 "type": "home",
             },
         ],
-    }")";
+    })";
     remove_trailing_commas(emails);
     REQUIRE(emails == R"({
         "emails": [
@@ -150,5 +150,14 @@ TEST_CASE("remove_trailing_commas") {
                 "type": "home" 
             } 
         ] 
-    }")");
+    })");
+
+    std::string unterminated_string = R"("foo,)";
+    remove_trailing_commas(unterminated_string);
+    REQUIRE(unterminated_string == "\"foo,");
+
+    std::string quotes_in_strings = R"({"a":["a b c","1 \"2 3", ],})";
+    remove_trailing_commas(quotes_in_strings);
+    auto correct = R"({"a":["a b c","1 \"2 3"  ] })";
+    REQUIRE(quotes_in_strings == correct);
 }
