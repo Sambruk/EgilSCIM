@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <iterator>
 #include <regex>
+#include <iomanip>
 
 #include "utility/simplescim_error_string.hpp"
 #include "model/base_object.hpp"
@@ -36,6 +37,37 @@ using optional_string = std::optional<std::string>;
 using str_iter = std::string::const_iterator;
 
 using value_map = std::map<std::string, string_vector>;
+
+/// Escapes a string for JSON output
+/** This can be used before expanding variables into JSON, typically
+  * variables are expanded as parts of JSON strings, so if the variable
+  * contains e.g. " it needs to be escaped.
+  * Control characters are escaped using \uXXXX notation.
+  * str is assumed to be in UTF-8.
+  */
+std::string json_string_escape(const std::string& str) {
+    std::ostringstream o;
+    for (auto c = str.cbegin(); c != str.cend(); c++) {
+        switch (*c) {
+        case '"': o << "\\\""; break;
+        case '\\': o << "\\\\"; break;
+        case '\b': o << "\\b"; break;
+        case '\f': o << "\\f"; break;
+        case '\n': o << "\\n"; break;
+        case '\r': o << "\\r"; break;
+        case '\t': o << "\\t"; break;
+        default:
+            if ('\x00' <= *c && *c <= '\x1f') {
+                o << "\\u"
+                    << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(*c);
+            }
+            else {
+                o << *c;
+            }
+        }
+    }
+    return o.str();
+}
 
 struct scim_json_iter {
     value_map iter_value;
@@ -90,8 +122,15 @@ public:
 
     std::shared_ptr<scim_json_iter> iteration_stack;
 
-    scim_json_parser(const std::string &j, const base_object &u) :
-            input_string(j), j_iter(input_string.begin()), user(u), line(1), col(1), iteration_stack(nullptr) {}
+    /// Indicates whether escaping is enabled by default.
+    /** If true, a variable expansion like ${foo} will escape foo's value,
+     *  in that case ${|foo} can be used to disable escaping for a specific variable.
+     *  If false, variables are not escaped unless the ${|foo} syntax is used.
+     */
+    bool escape_by_default;
+
+    scim_json_parser(const std::string &j, const base_object &u, bool default_escape) :
+            input_string(j), j_iter(input_string.begin()), user(u), line(1), col(1), iteration_stack(nullptr), escape_by_default(default_escape) {}
 
     /**
      * Deletes a simplescim_scim_json_parser object.
@@ -172,7 +211,7 @@ public:
      * and simplescim_error_string is set to an appropriate
      * error string.
      */
-    int replacement_simple(const std::string &var) {
+    int replacement_simple(const std::string &var, bool escape_variable) {
         int err;
 
         /* Get value */
@@ -180,6 +219,10 @@ public:
 
         if (!val) {
             return -1;
+        }
+
+        if (escape_variable) {
+            *val = json_string_escape(*val);
         }
 
         /* Write replacement */
@@ -391,10 +434,18 @@ void scim_json_parser::remove_trailing_commas() {
 int scim_json_parser::parse_replacement() {
     int err;
 
+    bool escape_variable = escape_by_default;
+
     /* Skip past '${' <ws>* */
     progress();
     progress();
     skip_ws();
+
+    if (*j_iter == '|') {
+        escape_variable = !escape_variable;
+        progress();
+        skip_ws();
+    }
 
     /* Get id (variable name or keyword) */
     std::string id = find_id();
@@ -432,7 +483,7 @@ int scim_json_parser::parse_replacement() {
         return 0;
     } else {
         /* Simple replacement */
-        err = replacement_simple(id);
+        err = replacement_simple(id, escape_variable);
 
         if (err == -1) {
             return -1;
@@ -940,10 +991,10 @@ void scim_json_parser::progress() {
     ++j_iter;
 }
 
-std::string scim_json_parse(const std::string &json, const base_object &object) {
+std::string scim_json_parse(const std::string &json, const base_object &object, bool default_escape) {
     int err;
 
-    scim_json_parser parser(json, object);
+    scim_json_parser parser(json, object, default_escape);
     err = parser.parse();
 
 

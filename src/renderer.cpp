@@ -65,7 +65,7 @@ std::shared_ptr<rendered_object> renderer::render(const post_processing::plugins
     std::string standard_type = actualSS12000type(type);
 
     std::string template_json = config_file::instance().get(type + "-scim-json-template");
-    std::string parsed_json = scim_json_parse(template_json, obj);
+    std::string parsed_json = scim_json_parse(template_json, obj, false);
     
     std::string extra_errors;
     if (has_errors_to_print()) {

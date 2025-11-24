@@ -30,7 +30,13 @@ class base_object;
  * On success, the parsed output JSON string is returned.
  * On error, "" is returned and simplescim_error_string
  * is set to an appropriate error message.
+ * 
+ * default_escape indicates whether variable expansions like ${foo}
+ * should be escaped for JSON by default. If default_escape is true,
+ * a normal variable expansion ${foo} will be escaped, and ${|foo}
+ * can be used to disable escaping for a specific variable. Otherwise
+ * ${foo} will not be escaped and ${|foo} can be used to enable escaping.
  */
-std::string scim_json_parse(const std::string &json, const base_object &object);
+std::string scim_json_parse(const std::string &json, const base_object &object, bool default_escape);
 
 #endif
