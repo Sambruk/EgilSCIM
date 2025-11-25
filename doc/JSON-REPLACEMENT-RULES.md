@@ -9,6 +9,45 @@ In input JSON strings, the following replacement rules apply:
 value `example`, `{"userName": "${uid}"}` would expand to
 `{"userName": "example"}`.
 
+### Escaping of special characters in JSON strings
+If the variable you're expanding with the `${}` syntax includes characters
+that have special meaning in JSON you may need to escape those. For instance
+if the attribute `displayName` has the value `Barbara "Babs" Jensen`, the
+quotes need to be escaped. For instance:
+
+```
+{ "displayName": "${displayName}" }
+```
+
+Should expand to:
+```
+{ "displayName": "Barbara \"Babs\" Jensen" }
+```
+
+(note the `\` characters which prevents the JSON string from terminating).
+
+If you think some of your values might include such special characters, the
+easiest solution is to configure the program to escape variable expansions
+by default:
+
+```
+escape-expansions-by-default = true
+```
+
+In this case, everytime the `${}` syntax is used, the values will be escaped
+if they include characters that need to be escaped in JSON strings.
+
+The escaping can also be controlled individually for each expansion, by using
+the `|` character in the variable expansion, like this:
+
+```
+{ "displayName": "${|displayName}" }
+```
+
+If you haven't configured the program to escape by default, the `|` character
+will enable escaping for that expansion. On the other hand, if you have configured
+default escaping, the `|` character will disable escaping.
+
 ## Conditional variable replacement
 
 ```

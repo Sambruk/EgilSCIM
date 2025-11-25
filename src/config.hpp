@@ -45,6 +45,13 @@ int http_request_timeout();
   */
 int http_max_acceptable_timeouts();
 
+/** Should variable expansions be escaped for JSON by default?
+ *  If true, a variable expansion like ${foo} will escape foo's value,
+ *  in that case ${|foo} can be used to disable escaping for a specific variable.
+ *  If false, variables are not escaped unless the ${|foo} syntax is used.
+ */
+bool escape_expansions_by_default();
+
 } // namespace config
 
 #endif // EGILSCIM_CONFIG_HPP
