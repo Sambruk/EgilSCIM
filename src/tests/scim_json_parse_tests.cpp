@@ -22,6 +22,7 @@ TEST_CASE("Parse multiple JSON templates") {
     obj.add_attribute("type", { "employee3" });
     obj.add_attribute("displayName", { "Åke \"Ankan\" Åström" });
     obj.add_attribute("tags", { "one", "two", "three" });
+    obj.add_attribute("names", { "Åke", "An\"kan", "Åström" }); // escaping in for loop plus correct removal of trailing comma
 
     auto test_cases = vector<pair<string,string>> {
         { "",
@@ -56,6 +57,9 @@ TEST_CASE("Parse multiple JSON templates") {
 
         { R"("tags": [${for $t in tags}"${$t}",${end}])",
           R"("tags": ["one","two","three" ])" },
+
+        { R"("names": [${for $n in names}"${|$n}",${end}])",
+            R"("names": ["Åke","An\"kan","Åström" ])" },
     };
 
     // TODO: remove this config file stuff once base_object doesn't
