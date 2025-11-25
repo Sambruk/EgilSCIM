@@ -108,10 +108,10 @@ void remove_trailing_commas(std::string &s) {
             walker++; // move past the comma
             // If the next character (ignoring whitespace)
             // is ] or }, the comma needs to be erased (replaced with space)
-            while (walker != end && isspace(*walker)) {
+            while (walker != end && isspace(static_cast<unsigned char>(*walker))) {
                 walker++;
             }
-            if (*walker == ']' || *walker == '}') {
+            if (walker != end && (*walker == ']' || *walker == '}')) {
                     *iter = ' ';
             }
         }
