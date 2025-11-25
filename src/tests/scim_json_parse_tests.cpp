@@ -10,7 +10,7 @@
 using namespace std;
 
 TEST_CASE("Parse empty JSON template") {
-    REQUIRE(scim_json_parse("", base_object("Student")) == "");
+    REQUIRE(scim_json_parse("", base_object("Student"), false) == "");
 }
 
 TEST_CASE("Parse multiple JSON templates") {
@@ -20,6 +20,9 @@ TEST_CASE("Parse multiple JSON templates") {
     obj.add_attribute("t", { "elev" });
     obj.add_attribute("entryDN", { "dc=foo,o=org,ou=personal,ou=pre" });
     obj.add_attribute("type", { "employee3" });
+    obj.add_attribute("displayName", { "Åke \"Ankan\" Åström" });
+    obj.add_attribute("tags", { "one", "two", "three" });
+    obj.add_attribute("names", { "Åke", "An\"kan", "Åström" }); // escaping in for loop plus correct removal of trailing comma
 
     auto test_cases = vector<pair<string,string>> {
         { "",
@@ -44,7 +47,19 @@ TEST_CASE("Parse multiple JSON templates") {
           R"("type": "Teacher")" },
         
         { R"("type": "${switch type case /employee[12]/: "Teacher" default: "Student"}")",
-          R"("type": "Student")" },        
+          R"("type": "Student")" },
+
+        { R"("displayName": "${|displayName}")",
+          R"("displayName": "Åke \"Ankan\" Åström")" },
+
+        { R"("displayName": "${displayName}")",
+          R"("displayName": "Åke "Ankan" Åström")" },
+
+        { R"("tags": [${for $t in tags}"${$t}",${end}])",
+          R"("tags": ["one","two","three" ])" },
+
+        { R"("names": [${for $n in names}"${|$n}",${end}])",
+            R"("names": ["Åke","An\"kan","Åström" ])" },
     };
 
     // TODO: remove this config file stuff once base_object doesn't
@@ -55,6 +70,98 @@ TEST_CASE("Parse multiple JSON templates") {
     for (auto test_case : test_cases) {
         auto templ = test_case.first;
         auto wanted = test_case.second;
-        REQUIRE(scim_json_parse(templ, obj) == wanted);   
+        REQUIRE(scim_json_parse(templ, obj, false) == wanted);   
     }
+}
+
+
+std::string json_string_escape(const std::string&);
+void remove_trailing_commas(std::string&);
+
+TEST_CASE("json_string_escape escapes required characters and preserves UTF-8") {
+    // Build input containing characters that must be escaped:
+    // - double quote
+    // - backslash
+    // - newline, carriage return, tab, backspace, formfeed
+    // - a control character (0x01) that should be encoded as \u0001
+    // - UTF-8 non-ASCII characters which must be preserved
+    std::string input;
+    input += "Quote: ";
+    input += '"';
+    input += " Backslash: ";
+    input += '\\';
+    input += " Newline:\n";
+    input += " Carriage:\r";
+    input += " Tab:\t";
+    input += " Backspace:\b";
+    input += " Formfeed:\f";
+    input += " Ctrl1:";
+    input += static_cast<char>(0x01);
+    input += " End UTF8: åäö €"; // UTF-8 non-ASCII characters
+
+    std::string escaped = json_string_escape(input);
+
+    // Expected string: control sequences replaced with their escape sequences,
+    // control 0x01 becomes \u0001, and UTF-8 text is preserved verbatim.
+    std::string expected = R"(Quote: \" Backslash: \\ Newline:\n Carriage:\r Tab:\t Backspace:\b Formfeed:\f Ctrl1:\u0001 End UTF8: åäö €)";
+
+    REQUIRE(escaped == expected);
+}
+
+TEST_CASE("remove_trailing_commas") {
+    // Simple array with trailing comma
+    std::string arr = R"(["a",])";
+    remove_trailing_commas(arr);
+    REQUIRE(arr == R"(["a" ])");
+
+    // Simple object with trailing comma
+    std::string obj = R"({"k":"v",})";
+    remove_trailing_commas(obj);
+    REQUIRE(obj == R"({"k":"v" })");
+
+    // Trailing comma with whitespace between comma and closing bracket
+    std::string arr_ws = R"(["a",   ])";
+    remove_trailing_commas(arr_ws);
+    // comma replaced by single space, original spaces remain -> one extra space
+    REQUIRE(arr_ws == R"(["a"    ])");
+
+    // Nested structures: ensure only trailing commas before ] or } are affected
+    std::string nested = R"({"a":[1,2, ], "b":{ "x":"y", }})";
+    remove_trailing_commas(nested);
+    REQUIRE(nested == R"({"a":[1,2  ], "b":{ "x":"y"  }})");
+
+    std::string emails = R"({
+        "emails": [
+            {
+                "value": "foo@bar.com",
+                "type": "work",
+            },
+            {
+                "value": "baz@bar.com",
+                "type": "home",
+            },
+        ],
+    })";
+    remove_trailing_commas(emails);
+    REQUIRE(emails == R"({
+        "emails": [
+            {
+                "value": "foo@bar.com",
+                "type": "work" 
+            },
+            {
+                "value": "baz@bar.com",
+                "type": "home" 
+            } 
+        ] 
+    })");
+
+    std::string unterminated_string = R"("foo,)";
+    remove_trailing_commas(unterminated_string);
+    REQUIRE(unterminated_string == "\"foo,");
+
+    std::string quotes_in_strings = R"({"a":["a b c","1 \"2 3", ],})";
+    remove_trailing_commas(quotes_in_strings);
+    auto correct = R"({"a":["a b c","1 \"2 3"  ] })";
+    REQUIRE(quotes_in_strings == correct);
 }

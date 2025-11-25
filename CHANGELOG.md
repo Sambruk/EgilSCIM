@@ -1,5 +1,12 @@
 ## Releases
 
+## Unreleased
+#### Features
+  - Variable expansions in JSON templates can now be escaped (#156)
+
+#### Bugfixes
+  - Improved handling of the removal of trailing commas in JSON (#212)
+
 ## v2.20.1 (2025-06-24)
 #### Bugfixes
   - If a Teacher's attribute pointing to school units contain duplicates, don't attempt to generate the same Employment twice (#240)

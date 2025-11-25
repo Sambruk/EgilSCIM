@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <iterator>
 #include <regex>
+#include <iomanip>
 
 #include "utility/simplescim_error_string.hpp"
 #include "model/base_object.hpp"
@@ -36,6 +37,86 @@ using optional_string = std::optional<std::string>;
 using str_iter = std::string::const_iterator;
 
 using value_map = std::map<std::string, string_vector>;
+
+/// Escapes a string for JSON output
+/** This can be used before expanding variables into JSON, typically
+  * variables are expanded as parts of JSON strings, so if the variable
+  * contains e.g. " it needs to be escaped.
+  * Control characters are escaped using \uXXXX notation.
+  * str is assumed to be in UTF-8.
+  */
+std::string json_string_escape(const std::string& str) {
+    std::ostringstream o;
+    for (auto c = str.cbegin(); c != str.cend(); c++) {
+        switch (*c) {
+        case '"': o << "\\\""; break;
+        case '\\': o << "\\\\"; break;
+        case '\b': o << "\\b"; break;
+        case '\f': o << "\\f"; break;
+        case '\n': o << "\\n"; break;
+        case '\r': o << "\\r"; break;
+        case '\t': o << "\\t"; break;
+        default:
+            if ('\x00' <= *c && *c <= '\x1f') {
+                o << "\\u"
+                    << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(*c);
+            }
+            else {
+                o << *c;
+            }
+        }
+    }
+    return o.str();
+}
+
+/**
+ * Arrays has a comma at the end, e.g.
+ * ["tag":"value","tag":"value","tag":"value",]
+ * that last one needs to go, it's wrong and
+ * boost::propertytree doesn't accept it
+ */
+void remove_trailing_commas(std::string &s) {
+    auto end = s.end();
+
+    for (auto iter = s.begin(); iter != end; ++iter) {
+        // If we encounter a quote, consume the whole string literal,
+        // correctly skipping escaped characters, end with iter pointing
+        // at the closing quote instead of the opening quote.
+        if (*iter == '"') {
+            ++iter; // skip the opening quote
+            while (iter != end) {
+                if (*iter == '\\') {
+                    // escaped char: skip backslash and the following char (if any)
+                    ++iter;
+                    if (iter == end) break;
+                    ++iter;
+                    continue;
+                }
+                if (*iter == '"') {
+                    // found closing unescaped quote; leave iter pointing at it
+                    break;
+                }
+                ++iter;
+            }
+            if (iter == end) {
+                // unterminated string, nothing more to do
+                return;
+            }
+        }
+        else if (*iter == ',') {
+            auto walker = iter;
+            walker++; // move past the comma
+            // If the next character (ignoring whitespace)
+            // is ] or }, the comma needs to be erased (replaced with space)
+            while (walker != end && isspace(static_cast<unsigned char>(*walker))) {
+                walker++;
+            }
+            if (walker != end && (*walker == ']' || *walker == '}')) {
+                    *iter = ' ';
+            }
+        }
+    }
+}
 
 struct scim_json_iter {
     value_map iter_value;
@@ -90,8 +171,15 @@ public:
 
     std::shared_ptr<scim_json_iter> iteration_stack;
 
-    scim_json_parser(const std::string &j, const base_object &u) :
-            input_string(j), j_iter(input_string.begin()), user(u), line(1), col(1), iteration_stack(nullptr) {}
+    /// Indicates whether escaping is enabled by default.
+    /** If true, a variable expansion like ${foo} will escape foo's value,
+     *  in that case ${|foo} can be used to disable escaping for a specific variable.
+     *  If false, variables are not escaped unless the ${|foo} syntax is used.
+     */
+    bool escape_by_default;
+
+    scim_json_parser(const std::string &j, const base_object &u, bool default_escape) :
+            input_string(j), j_iter(input_string.begin()), user(u), line(1), col(1), iteration_stack(nullptr), escape_by_default(default_escape) {}
 
     /**
      * Deletes a simplescim_scim_json_parser object.
@@ -104,8 +192,6 @@ public:
             iteration_stack = iter->get_next();
         }
     }
-
-    void remove_trailing_commas();
 
     /**
      * Progresses the parser's input by one character.
@@ -172,7 +258,7 @@ public:
      * and simplescim_error_string is set to an appropriate
      * error string.
      */
-    int replacement_simple(const std::string &var) {
+    int replacement_simple(const std::string &var, bool escape_variable) {
         int err;
 
         /* Get value */
@@ -180,6 +266,10 @@ public:
 
         if (!val) {
             return -1;
+        }
+
+        if (escape_variable) {
+            *val = json_string_escape(*val);
         }
 
         /* Write replacement */
@@ -208,8 +298,8 @@ public:
      * 
      * On success, a pointer to the parsed regular expression
      * is returned. On error, nullptr is returned and
-     * simplescim_error_string is set to an appropriate error
-     * message.
+     * simplescim_error_string is set to an appropriate
+     * error message.
      */
     std::shared_ptr<std::regex> parse_regex();
 
@@ -346,55 +436,25 @@ int scim_json_parser::parse() {
         return -1;
     }
 
-    remove_trailing_commas();
+    remove_trailing_commas(output_string);
     return 0;
 }
 
-/**
- * Arrays has a comma at the end, e.g.
- * ["tag":"value","tag":"value","tag":"value",]
- * that last one needs to go, it's wrong and
- * boost::propertytree doesn't accept it
- */
-void scim_json_parser::remove_trailing_commas() {
-
-    auto end = output_string.end();
-    bool found_block_end;
-    bool inside_string = false;
-
-    for (auto && iter = output_string.begin(); iter != end; iter++) {
-
-        // let strings have commas so
-        // pop in and out of strings
-        if (*iter == '\"')
-            inside_string = !inside_string;
-
-        if (!inside_string && *iter == ',') {
-            auto walker = iter;
-            // the next character can be whitespace of \"
-            // if it is ] or }, the comma needs to be erased
-            found_block_end = false;
-            while (walker != end && !found_block_end) {
-                if (*walker == '\"')
-                    break; // all good, move on
-                if (*walker == ']' || *walker == '}') {
-                    *iter = ' ';
-                    found_block_end = true;
-                }
-                walker++;
-            }
-        }
-    }
-}
-
-
 int scim_json_parser::parse_replacement() {
     int err;
+
+    bool escape_variable = escape_by_default;
 
     /* Skip past '${' <ws>* */
     progress();
     progress();
     skip_ws();
+
+    if (*j_iter == '|') {
+        escape_variable = !escape_variable;
+        progress();
+        skip_ws();
+    }
 
     /* Get id (variable name or keyword) */
     std::string id = find_id();
@@ -432,7 +492,7 @@ int scim_json_parser::parse_replacement() {
         return 0;
     } else {
         /* Simple replacement */
-        err = replacement_simple(id);
+        err = replacement_simple(id, escape_variable);
 
         if (err == -1) {
             return -1;
@@ -940,10 +1000,10 @@ void scim_json_parser::progress() {
     ++j_iter;
 }
 
-std::string scim_json_parse(const std::string &json, const base_object &object) {
+std::string scim_json_parse(const std::string &json, const base_object &object, bool default_escape) {
     int err;
 
-    scim_json_parser parser(json, object);
+    scim_json_parser parser(json, object, default_escape);
     err = parser.parse();
 
 

@@ -122,7 +122,7 @@ Users /Users POST
 	            "urn:scim:schemas:extension:sis:school:1.0:User"],
 	"externalId": "aeb9dfad-c824-49e2-89d6-84cf5e33feef",
 	"userName": "lini@skola.kommunen.se",
-	"displayName": "Lisa Nilsson",
+	"displayName": "Lisa \"Li\" Nilsson",
 	"name": {
 		"familyName": "Nilsson",
 		"givenName": "Lisa"

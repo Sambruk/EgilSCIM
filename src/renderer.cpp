@@ -21,6 +21,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include "config_file.hpp"
+#include "config.hpp"
 #include "scim_json_parse.hpp"
 #include "utility/simplescim_error_string.hpp"
 #include "readable_id.hpp"
@@ -65,7 +66,7 @@ std::shared_ptr<rendered_object> renderer::render(const post_processing::plugins
     std::string standard_type = actualSS12000type(type);
 
     std::string template_json = config_file::instance().get(type + "-scim-json-template");
-    std::string parsed_json = scim_json_parse(template_json, obj);
+    std::string parsed_json = scim_json_parse(template_json, obj, config::escape_expansions_by_default());
     
     std::string extra_errors;
     if (has_errors_to_print()) {

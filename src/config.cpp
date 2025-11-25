@@ -67,4 +67,8 @@ int http_max_acceptable_timeouts() {
     return config_file::instance().get_int("http-max-acceptable-timeouts", 3);
 }
 
+bool escape_expansions_by_default() {
+    return config_file::instance().get_bool("escape-expansions-by-default");
+}
+
 } // namespace config
