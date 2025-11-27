@@ -19,6 +19,7 @@
 
 #include "generated_load.hpp"
 #include "generated_group_load.hpp"
+#include "generated_organisation_load.hpp"
 #include "config_file.hpp"
 #include "config.hpp"
 #include "data_server.hpp"
@@ -605,6 +606,9 @@ std::shared_ptr<object_list> get_generated(const std::string &type,
     }
     else if (type == "StudentGroup") {
         list = get_generated_student_group(type, load_logger);
+    }
+    else if (type == "Organisation") {
+        list = get_generated_organisation(type, load_logger);
     }
     else {
         std::cerr << type << " can't be generated" << std::endl;
