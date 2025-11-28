@@ -24,7 +24,18 @@
 #include "model/object_list.hpp"
 #include "utility/indented_logger.hpp"
 
+/// Generates an Organisation object from a static UUID and displayName
+/** The UUID and displayName is configured in the configuration file so
+ *  the organisation object doesn't need to exist in the data source.
+ */
 std::shared_ptr<object_list> get_generated_organisation(const std::string& type,
     indented_logger& load_logger);
+
+/** Configures some default configuration variables for the Organisation type 
+ *  Since the Organisation object typically works the same way in every
+ *  installation, we can make the configuration a bit more convenient
+ *  by supplying a default JSON template e.g.
+ */
+void setup_default_organisation_config_variables();
 
 #endif // EGILSCIMCLIENT_GENERATED_ORGANISATION_LOAD_HPP

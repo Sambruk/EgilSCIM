@@ -42,6 +42,7 @@
 #include "generated_group_load.hpp"
 #include "thresholds.hpp"
 #include "print_cache.hpp"
+#include "generated_organisation_load.hpp"
 
 namespace po = boost::program_options;
 namespace filesystem = std::experimental::filesystem;
@@ -339,6 +340,8 @@ int main(int argc, char *argv[]) {
                 config.replace_variable(variable, value);
             }
         }
+
+        setup_default_organisation_config_variables();
 
         if (vm.count(options::PRINT_CACHE)) {
             bool by_endpoint = vm.count(options::PRINT_CACHE_BY_ENDPOINT);

@@ -38,3 +38,27 @@ std::shared_ptr<object_list> get_generated_organisation(const std::string& type,
 
     return generated;
 }
+
+void setup_default_organisation_config_variables() {
+    auto default_template = R"(
+{
+  "schemas": ["urn:scim:schemas:extension:sis:school:1.0:Organisation"],
+  "externalId": "${uuid}",
+  "displayName": "${displayName}"
+}
+)";
+    config_file& conf = config_file::instance();
+    std::vector<std::tuple<std::string, std::string>> defaults({
+        { "Organisation-scim-url-endpoint", "Organisations" },
+        { "Organisation-unique-identifier", "uuid" },
+        { "Organisation-scim-json-template", default_template},
+        });
+
+    for (auto& t : defaults) {
+        auto& var = std::get<0>(t);
+        auto& value = std::get<1>(t);
+        if (!conf.has(var)) {
+            conf.insert(var, value);
+        }
+    }
+}
