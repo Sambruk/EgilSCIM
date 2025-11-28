@@ -61,9 +61,12 @@ int config_file::load_template(const std::string &ss12000type, const std::string
     config_parser parser(std::begin(content), std::end(content));
     err = parser.parse();
     if (!err) {
-        auto json_template = get(ss12000type + "-scim-json-template");
-        auto var_set = JSONTemplateParser::find_variables(json_template.begin(),
-                                                          json_template.end());
+        std::set<std::string> var_set;
+        auto json_template = get(ss12000type + "-scim-json-template", true);
+        if (!json_template.empty()) {
+            var_set = JSONTemplateParser::find_variables(json_template.begin(),
+                json_template.end());
+        }
         
         auto extra = get_vector(ss12000type + "-hidden-attributes", true);
         if (!extra.empty())

@@ -489,6 +489,29 @@ are generated from StudentGroups and Teachers).
 There are commented examples for both Activity and Employment in the standard example in the
 `master_config` directory.
 
+## Generated Organisation object
+
+There's usually only one Organisation object for an EGIL installation. To make configuration
+easier for installations with just one Organisation object, it can be generated instead of
+read from the data source. A typical Organisation.conf then looks like this:
+
+```
+Organisation-is-generated = true
+Organisation-static-uuid = d80428c4-8788-47d7-aca7-761681fbe66a
+Organisation-display-name = Grönköpings kommun
+```
+
+Just make sure to generate your own unique UUID for your installation and specify the correct
+name of your organisation. The UUID you specify here should typically also be hard coded in
+the JSON template for SchoolUnit (see the supplied standard example in master_config).
+
+Default values will be supplied for `Organisation-scim-url-endpoint`, `Organisation-unique-identifier` 
+and `Organisation-scim-json-template`, there's usually no need to configure those.
+
+If you do wish to specify your own JSON template for the Organisation object, it's good to know that
+the default value for `Organisation-unique-identifier` is `uuid`. So either use `uuid` in your
+template or specify a `Organisation-unique-identifier` which matches your JSON template.
+
 ### Associating Activity objects with national test activities
 When provisioning to the Swedish National Agency for Education (Skolverket) for the
 national assessments (DNP) student groups of type "Undervisning" should be associated
