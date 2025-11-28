@@ -3,6 +3,7 @@
 ## Unreleased
 #### Features
   - Variable expansions in JSON templates can now be escaped (#156)
+  - Organisation object can now be generated (no need to read from data source) (#142)
 
 #### Bugfixes
   - Improved handling of the removal of trailing commas in JSON (#212)
