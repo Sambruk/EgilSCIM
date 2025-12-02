@@ -4,6 +4,7 @@
 #### Features
   - Variable expansions in JSON templates can now be escaped (#156)
   - Organisation object can now be generated (no need to read from data source) (#142)
+  - User-Agent header is now used in HTTP requests, and the user agent comment can be configured (#242)
 
 #### Bugfixes
   - Improved handling of the removal of trailing commas in JSON (#212)

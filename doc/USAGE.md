@@ -1155,6 +1155,27 @@ http-max-acceptable-timeouts = 3
 The values given in the example above are the defaults which will be used
 if the variables haven't been configured.
 
+### User Agent
+The client will by default use a User-Agent header such as `EgilSCIM/x.y.z`
+(where x.y.z is the version of EgilSCIM).
+
+Optionally you can configure a comment to be added at the end of the user agent.
+The configuration variable for specifying a user agent comment is named
+`user-agent-comment`. So for instance with the following setting:
+
+```
+user-agent-comment = Grönköpings kommun
+```
+
+the user agent will be sent as:
+
+```
+EgilSCIM/x.y.z (Grönköpings kommun)
+```
+
+This can for instance help the service provider find your requests in their
+access logs more easily.
+
 ## Audit logging
 
 The audit log can be enabled by setting a path to a file to write to, for instance:
