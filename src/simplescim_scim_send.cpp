@@ -28,6 +28,7 @@
 #include "utility/simplescim_error_string.hpp"
 #include "config_file.hpp"
 #include "config.hpp"
+#include "EgilSCIM_config.h"
 
 namespace pt = boost::property_tree;
 
@@ -101,6 +102,20 @@ static long to_curl_ssl_version(const std::string& min_tls_version) {
     else {
         return itr->second;
     }
+}
+
+// Build User-Agent header from compiled version and optional comment from config
+static std::string build_user_agent() {
+    std::string ua = std::string("EgilSCIM/") +
+        std::to_string(EgilSCIM_VERSION_MAJOR) + "." +
+        std::to_string(EgilSCIM_VERSION_MINOR) + "." +
+        std::to_string(EgilSCIM_VERSION_PATCH);
+
+    std::string comment = config_file::instance().get("user-agent-comment", true);
+    if (!comment.empty()) {
+        ua += " (" + comment + ")";
+    }
+    return ua;
 }
 
 static struct curl_slist *simplescim_scim_send_create_slist(const std::string &method) {
@@ -320,6 +335,16 @@ static int simplescim_scim_send(CURL* curl,
 
     if (errnum != CURLE_OK) {
         simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_WRITEDATA)", errnum);
+        curl_slist_free_all(chunk);
+        return -1;
+    }
+
+    /* Set User-Agent */
+    auto user_agent = build_user_agent();
+    errnum = curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent.c_str());
+
+    if (errnum != CURLE_OK) {
+        simplescim_scim_send_print_curl_error("curl_easy_setopt(CURLOPT_USERAGENT)", errnum);
         curl_slist_free_all(chunk);
         return -1;
     }
