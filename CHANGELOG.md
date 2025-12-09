@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.21 (2025-12-09)
 #### Features
   - Variable expansions in JSON templates can now be escaped (#156)
   - Organisation object can now be generated (no need to read from data source) (#142)
