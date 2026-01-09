@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### Bugfixes
+  - Command line arguments can now be in Unicode on Windows (#232)
+
 ## v2.21 (2025-12-09)
 #### Features
   - Variable expansions in JSON templates can now be escaped (#156)

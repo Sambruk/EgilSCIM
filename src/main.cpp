@@ -44,6 +44,10 @@
 #include "print_cache.hpp"
 #include "generated_organisation_load.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace po = boost::program_options;
 namespace filesystem = std::experimental::filesystem;
 
@@ -206,7 +210,7 @@ std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins&
     return rendered_cache;
 }
 
-int main(int argc, char *argv[]) {
+static int run_main(int argc, char *argv[]) {
     try {
         po::options_description cmdline_options("All options");
         po::options_description generic("Options");
@@ -400,9 +404,7 @@ int main(int argc, char *argv[]) {
             try {
                 sqlp = std::make_shared<sql::plugin>(config.get_path("sql-plugin-path"),
                                                      config.get("sql-plugin-name"));
-            }
-            catch (std::runtime_error &e)
-            {
+            } catch (std::runtime_error& e) {
                 std::cerr << e.what() << std::endl;
                 return EXIT_FAILURE;
             }
@@ -541,3 +543,59 @@ int main(int argc, char *argv[]) {
 
     return EXIT_SUCCESS;
 }
+
+#ifdef _WIN32
+
+static std::string utf8_from_wide(const wchar_t* w) {
+    if (!w) {
+        return std::string();
+    }
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, w, -1, nullptr, 0, nullptr, nullptr);
+    if (size_needed <= 0) {
+        return std::string();
+    }
+    std::vector<char> buffer(size_needed);
+    int ret = WideCharToMultiByte(CP_UTF8, 0, w, -1, &buffer[0], size_needed, nullptr, nullptr);
+    if (ret <= 0) {
+        // Shouldn't happen since we already queried the needed size, but to avoid warnings...
+        return std::string();
+    }
+    return std::string(&buffer[0]);
+}
+
+int wmain(int argc, wchar_t *wargv[]) {
+    // Convert wide arguments to UTF-8 and build a char* argv for run_main
+    std::vector<std::string> utf8_args;
+    utf8_args.reserve(argc);
+    for (int i = 0; i < argc; ++i) {
+        utf8_args.push_back(utf8_from_wide(wargv[i]));
+    }
+
+    std::vector<char*> argv_utf8;
+    argv_utf8.reserve(argc);
+    for (auto &s : utf8_args) {
+        argv_utf8.push_back(_strdup(s.c_str()));
+    }
+
+    // Cleanup of argv_utf8 with scope guard
+    auto cleanup = [&] {
+        for (char* p : argv_utf8) {
+            std::free(p);
+        }
+    };
+
+    struct ScopeGuard {
+        decltype(cleanup)& f;
+        ~ScopeGuard() { f(); }
+    } guard{ cleanup };
+
+    return run_main(argc, argv_utf8.data());
+}
+
+#else
+
+int main(int argc, char *argv[]) {
+    return run_main(argc, argv);
+}
+
+#endif
