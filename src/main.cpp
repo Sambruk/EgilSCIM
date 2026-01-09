@@ -547,17 +547,24 @@ static int run_main(int argc, char *argv[]) {
 #ifdef _WIN32
 
 static std::string utf8_from_wide(const wchar_t* w) {
-    if (!w) return std::string();
+    if (!w) {
+        return std::string();
+    }
     int size_needed = WideCharToMultiByte(CP_UTF8, 0, w, -1, nullptr, 0, nullptr, nullptr);
-    if (size_needed <= 0) return std::string();
-    std::string result;
-    result.resize(size_needed - 1);
-    WideCharToMultiByte(CP_UTF8, 0, w, -1, &result[0], size_needed, nullptr, nullptr);
-    return result;
+    if (size_needed <= 0) {
+        return std::string();
+    }
+    std::vector<char> buffer(size_needed);
+    int ret = WideCharToMultiByte(CP_UTF8, 0, w, -1, &buffer[0], size_needed, nullptr, nullptr);
+    if (ret <= 0) {
+        // Shouldn't happen since we already queried the needed size, but to avoid warnings...
+        return std::string();
+    }
+    return std::string(&buffer[0]);
 }
 
 int wmain(int argc, wchar_t *wargv[]) {
-    // Convert wide arguments to UTF-8 in-place into char* array for run_main
+    // Convert wide arguments to UTF-8 and build a char* argv for run_main
     std::vector<std::string> utf8_args;
     utf8_args.reserve(argc);
     for (int i = 0; i < argc; ++i) {
@@ -567,8 +574,20 @@ int wmain(int argc, wchar_t *wargv[]) {
     std::vector<char*> argv_utf8;
     argv_utf8.reserve(argc);
     for (auto &s : utf8_args) {
-        argv_utf8.push_back(const_cast<char*>(s.c_str()));
+        argv_utf8.push_back(_strdup(s.c_str()));
     }
+
+    // Cleanup of argv_utf8 with scope guard
+    auto cleanup = [&] {
+        for (char* p : argv_utf8) {
+            std::free(p);
+        }
+    };
+
+    struct ScopeGuard {
+        decltype(cleanup)& f;
+        ~ScopeGuard() { f(); }
+    } guard{ cleanup };
 
     return run_main(argc, argv_utf8.data());
 }
