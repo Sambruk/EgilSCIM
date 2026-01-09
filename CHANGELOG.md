@@ -1,6 +1,6 @@
 ## Releases
 
-# Unreleased
+## Unreleased
 #### Bugfixes
   - Command line arguments can now be in Unicode on Windows (#232)
 
