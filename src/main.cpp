@@ -20,7 +20,7 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental/filesystem>
+#include <filesystem>
 #include <vector>
 #include <string>
 #include <time.h>
@@ -49,7 +49,7 @@
 #endif
 
 namespace po = boost::program_options;
-namespace filesystem = std::experimental::filesystem;
+namespace filesystem = std::filesystem;
 
 // TODO: Add the rest of the options names here
 namespace options {
@@ -179,7 +179,7 @@ std::shared_ptr<rendered_object_list> read_cache(const post_processing::plugins&
         return nullptr;
     }
 
-    *cache_file_existed = std::experimental::filesystem::exists(cache_path);
+    *cache_file_existed = std::filesystem::exists(cache_path);
 
     try {
         return rendered_cache_file::get_contents(cache_path);

@@ -18,7 +18,7 @@
  */
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental/filesystem>
+#include <filesystem>
 
 #include "cache_file.hpp"
 #include "utility/simplescim_error_string.hpp"
@@ -277,7 +277,7 @@ std::shared_ptr<object_list> cache_file::get_objects_from_file(const char *filen
 
     cache_file_filename = filename;
 
-    if (!std::experimental::filesystem::exists(filename)) {
+    if (!std::filesystem::exists(filename)) {
         return std::make_shared<object_list>();
     }
 
