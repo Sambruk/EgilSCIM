@@ -19,7 +19,6 @@
 
 #include <iostream>
 #include <boost/program_options.hpp>
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <filesystem>
 #include <vector>
 #include <string>
