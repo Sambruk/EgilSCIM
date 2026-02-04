@@ -48,11 +48,9 @@ int config_file::load_templates() {
     return err;
 }
 
-using namespace std::experimental;
-
 int config_file::load_template(const std::string &ss12000type, const std::string &file) {
     int err = 0;
-    std::string content = read(filesystem::canonical(file, filename.parent_path()));
+    std::string content = read(std::experimental::filesystem::canonical(file, filename.parent_path()));
 
     if (content.empty()) {
         std::cerr << ss12000type << "-scim-conf requested but the file is missing" << std::endl;
@@ -140,7 +138,7 @@ int config_file::load_variables() {
 }
 
 int config_file::load(const std::string &file_name) {
-    filename = filesystem::canonical(file_name);
+    filename = std::experimental::filesystem::canonical(file_name);
     int err = load_variables();
 
     if (!err) {
@@ -242,7 +240,7 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
 }
 
 std::string config_file::interpret_config_path(const std::string& path) const {
-    return filesystem::absolute(path, filename.parent_path()).u8string();
+    return std::experimental::filesystem::absolute(path, filename.parent_path()).u8string();
 }
 
 std::string config_file::get_path(const std::string& variable, bool silent) const {

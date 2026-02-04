@@ -25,14 +25,13 @@
 #else
 #include <dlfcn.h>
 #endif
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental/filesystem>
+#include <filesystem>
 
 namespace {
 
 // Returns the expected full path to a plugin.
 std::string library_path(const std::string& path, const std::string& plugin_name) {
-    auto result = std::experimental::filesystem::path(path);
+    auto result = std::filesystem::path(path);
 #ifdef _WIN32
     result.append(plugin_name + ".dll");
 #else

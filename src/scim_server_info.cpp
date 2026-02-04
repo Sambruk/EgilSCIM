@@ -20,9 +20,9 @@
 #include "scim_server_info.hpp"
 #include "config_file.hpp"
 #include "fedtlsauth/metadata_parser.hpp"
-#include <experimental/filesystem>
+#include <filesystem>
 
-using namespace std::experimental;
+namespace filesystem = std::filesystem;
 
 SCIMServerInfo::SCIMServerInfo(const config_file& config) {
     if (config.has("metadata-path")) {
