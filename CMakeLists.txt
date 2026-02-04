@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(EgilSCIMClient CXX)
 
 set(EgilSCIM_VERSION_MAJOR 2)
-set(EgilSCIM_VERSION_MINOR 21)
+set(EgilSCIM_VERSION_MINOR 22)
 set(EgilSCIM_VERSION_PATCH 0)
 
 configure_file(

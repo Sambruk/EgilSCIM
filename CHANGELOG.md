@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.22 (2026-02-04)
 #### Bugfixes
   - Command line arguments can now be in Unicode on Windows (#232)
 
