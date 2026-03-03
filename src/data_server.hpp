@@ -28,6 +28,7 @@
 #include "ldap_wrapper.hpp"
 #include "csv_store.hpp"
 #include "sql.hpp"
+#include "external_process.hpp"
 
 class data_server {
     // Loaded data, arranged by type
@@ -35,6 +36,7 @@ class data_server {
 
     std::unique_ptr<ldap_wrapper> ldap;
     std::unique_ptr<csv_store> csv;
+    std::unique_ptr<external_process_manager> ext_proc;
 
     data_server(const data_server &other) = default;
 
@@ -50,6 +52,7 @@ public:
         data.clear();
         ldap.reset();
         csv.reset();
+        ext_proc.reset();
     }
 
     bool empty() {
