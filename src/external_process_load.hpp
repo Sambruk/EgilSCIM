@@ -34,12 +34,30 @@ std::shared_ptr<object_list> external_process_get(const external_process_manager
                                                    indented_logger& load_logger);
 
 /**
- * Parses a JSON array string into an object_list.
- * Each element in the array should be a JSON object with string or
- * array-of-string properties.
+ * A sink that receives individual JSON object strings, parses each one
+ * into a base_object, and adds it to an object_list.
+ *
+ * Designed to be used as the inner sink of a json_array_splitter, so
+ * that each write() call receives exactly one complete JSON object.
+ *
+ * On parse errors or duplicate UUIDs, sets a failure flag and stores
+ * an error message instead of throwing. Once failed, ignores
+ * subsequent objects.
  */
-std::shared_ptr<object_list> json_to_object_list(const std::string& json,
-                                                  const std::string& type);
+class json_parser_sink : public process_sink {
+public:
+    json_parser_sink(std::shared_ptr<object_list> objects, const std::string& type);
+    void write(const char* data, size_t len) override;
+    bool failed() const { return failed_; }
+    const std::string& error_message() const { return error_message_; }
+
+private:
+    std::shared_ptr<object_list> objects_;
+    std::string type_;
+    bool ignore_dups_;
+    bool failed_ = false;
+    std::string error_message_;
+};
 
 /**
  * A sink that splits a stream of bytes containing a JSON array of objects

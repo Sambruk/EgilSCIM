@@ -128,7 +128,27 @@ TEST_CASE("Parse sessions - missing required field") {
     REQUIRE(errors.content.empty());
 }
 
-TEST_CASE("JSON to object list - simple objects") {
+namespace {
+
+// Helper: feed a JSON array string through the splitter+parser pipeline
+std::pair<std::shared_ptr<object_list>, std::string> parse_json_array(const std::string& json,
+                                                                       const std::string& type) {
+    auto objects = std::make_shared<object_list>();
+    json_parser_sink parser(objects, type);
+    json_array_splitter splitter(parser);
+    splitter.write(json.data(), json.size());
+    std::string error;
+    if (splitter.failed()) {
+        error = "Invalid JSON array structure";
+    } else if (parser.failed()) {
+        error = parser.error_message();
+    }
+    return {objects, error};
+}
+
+} // anonymous namespace
+
+TEST_CASE("JSON parsing - simple objects") {
     config_file::instance().replace_variable("SchoolUnit-unique-identifier", "id");
 
     std::string json = R"([
@@ -144,7 +164,8 @@ TEST_CASE("JSON to object list - simple objects") {
         }
     ])";
 
-    auto objects = json_to_object_list(json, "SchoolUnit");
+    auto [objects, error] = parse_json_array(json, "SchoolUnit");
+    REQUIRE(error.empty());
     REQUIRE(objects->size() == 2);
 
     auto obj1 = objects->get_object("f80e5b0b-af6b-4797-8726-738a06fffc2c");
@@ -158,7 +179,7 @@ TEST_CASE("JSON to object list - simple objects") {
     REQUIRE(obj2->get_values("name") == string_vector{"Lillskolan"});
 }
 
-TEST_CASE("JSON to object list - multi-valued attributes") {
+TEST_CASE("JSON parsing - multi-valued attributes") {
     config_file::instance().replace_variable("StudentGroup-unique-identifier", "id");
 
     std::string json = R"([
@@ -169,7 +190,8 @@ TEST_CASE("JSON to object list - multi-valued attributes") {
         }
     ])";
 
-    auto objects = json_to_object_list(json, "StudentGroup");
+    auto [objects, error] = parse_json_array(json, "StudentGroup");
+    REQUIRE(error.empty());
     REQUIRE(objects->size() == 1);
 
     auto obj = objects->get_object("f80e5b0b-af6b-4797-8726-738a06fffc2c");
@@ -181,12 +203,13 @@ TEST_CASE("JSON to object list - multi-valued attributes") {
     REQUIRE(members[2] == "student3");
 }
 
-TEST_CASE("JSON to object list - empty array") {
-    auto objects = json_to_object_list("[]", "SchoolUnit");
+TEST_CASE("JSON parsing - empty array") {
+    auto [objects, error] = parse_json_array("[]", "SchoolUnit");
+    REQUIRE(error.empty());
     REQUIRE(objects->size() == 0);
 }
 
-TEST_CASE("JSON to object list - nested object attribute is ignored") {
+TEST_CASE("JSON parsing - nested object attribute is ignored") {
     config_file::instance().replace_variable("SchoolUnit-unique-identifier", "id");
 
     std::string json = R"([
@@ -200,7 +223,8 @@ TEST_CASE("JSON to object list - nested object attribute is ignored") {
         }
     ])";
 
-    auto objects = json_to_object_list(json, "SchoolUnit");
+    auto [objects, error] = parse_json_array(json, "SchoolUnit");
+    REQUIRE(error.empty());
     REQUIRE(objects->size() == 1);
 
     auto obj = objects->get_object("f80e5b0b-af6b-4797-8726-738a06fffc2c");
@@ -209,6 +233,13 @@ TEST_CASE("JSON to object list - nested object attribute is ignored") {
     REQUIRE_FALSE(obj->has_attribute_or_relation("address"));
 }
 
-TEST_CASE("JSON to object list - invalid JSON") {
-    REQUIRE_THROWS_AS(json_to_object_list("not json", "SchoolUnit"), std::runtime_error);
+TEST_CASE("JSON parsing - invalid JSON") {
+    auto [objects, error] = parse_json_array("not json", "SchoolUnit");
+    REQUIRE_FALSE(error.empty());
+}
+
+TEST_CASE("JSON parsing - invalid object in array") {
+    auto [objects, error] = parse_json_array(R"([{"valid":"obj"}, not valid])", "SchoolUnit");
+    // The splitter should fail on "not valid" since it's not a '{'-started object
+    REQUIRE_FALSE(error.empty());
 }
