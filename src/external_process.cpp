@@ -41,9 +41,11 @@ external_process_manager::~external_process_manager() {
         try {
             cleanup_sessions();
         } catch (const std::exception& e) {
-            std::cerr << "Exception during session cleanup: " << e.what() << std::endl;
+            auto msg = std::string("Exception during session cleanup: ") + e.what() + "\n";
+            error_sink_.write(msg.c_str(), msg.size());
         } catch (...) {
-            std::cerr << "Unknown exception during session cleanup" << std::endl;
+            auto msg = std::string("Unknown exception during session cleanup\n");
+            error_sink_.write(msg.c_str(), msg.size());
         }
     }
 }
@@ -91,15 +93,12 @@ void external_process_manager::init_sessions() {
 
         auto cmd = build_command_line(session.init, "", session.secret);
 
-        auto result = run_process(cmd, session.temp_dir, false);
+        null_sink discard_stdout;
+        auto exit_code = run_process(cmd, session.temp_dir, discard_stdout, error_sink_);
 
-        if (!result.stderr_content.empty()) {
-            std::cerr << result.stderr_content;
-        }
-
-        if (result.exit_code != 0) {
+        if (exit_code != 0) {
             throw std::runtime_error("Init command for session \"" + session.name +
-                                     "\" failed with exit code " + std::to_string(result.exit_code));
+                                     "\" failed with exit code " + std::to_string(exit_code));
         }
     }
 }
@@ -115,17 +114,17 @@ void external_process_manager::cleanup_sessions() {
             auto cmd = build_command_line(session.cleanup, "", session.secret);
 
             try {
-                auto result = run_process(cmd, session.temp_dir, false);
-                if (!result.stderr_content.empty()) {
-                    std::cerr << result.stderr_content;
-                }
-                if (result.exit_code != 0) {
-                    std::cerr << "Cleanup command for session \"" << session.name
-                              << "\" failed with exit code " << result.exit_code << std::endl;
+                null_sink discard_stdout;
+                auto exit_code = run_process(cmd, session.temp_dir, discard_stdout, error_sink_);
+                if (exit_code != 0) {
+                    auto msg = "Cleanup command for session \"" + session.name +
+                               "\" failed with exit code " + std::to_string(exit_code) + "\n";
+                    error_sink_.write(msg.c_str(), msg.size());
                 }
             } catch (const std::exception& e) {
-                std::cerr << "Cleanup command for session \"" << session.name
-                          << "\" threw exception: " << e.what() << std::endl;
+                auto msg = "Cleanup command for session \"" + session.name +
+                           "\" threw exception: " + e.what() + "\n";
+                error_sink_.write(msg.c_str(), msg.size());
             }
         }
 
@@ -133,8 +132,9 @@ void external_process_manager::cleanup_sessions() {
         std::error_code ec;
         std::filesystem::remove_all(session.temp_dir, ec);
         if (ec) {
-            std::cerr << "Failed to remove temp directory " << session.temp_dir
-                      << ": " << ec.message() << std::endl;
+            auto msg = "Failed to remove temp directory " + session.temp_dir.string() +
+                       ": " + ec.message() + "\n";
+            error_sink_.write(msg.c_str(), msg.size());
         }
     }
 }
@@ -148,11 +148,13 @@ const external_process_session& external_process_manager::get_session(const std:
     throw std::runtime_error("External process session not found: " + name);
 }
 
-process_result external_process_manager::run_command(const std::string& session_name,
-                                                      const std::string& extra_args) const {
+int external_process_manager::run_command(const std::string& session_name,
+                                          const std::string& extra_args,
+                                          process_sink& stdout_sink,
+                                          process_sink& stderr_sink) const {
     const auto& session = get_session(session_name);
     auto cmd = build_command_line(session.command, extra_args, session.secret);
-    return run_process(cmd, session.temp_dir, true);
+    return run_process(cmd, session.temp_dir, stdout_sink, stderr_sink);
 }
 
 std::string external_process_manager::build_command_line(const std::string& base_command,
@@ -183,22 +185,20 @@ struct handle_closer {
 };
 using unique_handle = std::unique_ptr<void, handle_closer>;
 
-std::string read_pipe(HANDLE pipe) {
-    std::string result;
+void read_pipe_to_sink(HANDLE pipe, process_sink& sink) {
     char buffer[4096];
     DWORD bytes_read;
     while (ReadFile(pipe, buffer, sizeof(buffer), &bytes_read, nullptr) && bytes_read > 0) {
-        result.append(buffer, bytes_read);
+        sink.write(buffer, bytes_read);
     }
-    return result;
 }
 
 } // anonymous namespace
 
-process_result external_process_manager::run_process(const std::string& command_line,
-                                                      const std::filesystem::path& working_dir,
-                                                      bool capture_stdout) const {
-    process_result result;
+int external_process_manager::run_process(const std::string& command_line,
+                                          const std::filesystem::path& working_dir,
+                                          process_sink& stdout_sink,
+                                          process_sink& stderr_sink) const {
 
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(sa);
@@ -260,17 +260,12 @@ process_result external_process_manager::run_process(const std::string& command_
 
     // Read stdout and stderr concurrently to avoid deadlock
     auto stderr_future = std::async(std::launch::async, [&]() {
-        return read_pipe(stderr_read);
+        read_pipe_to_sink(stderr_read, stderr_sink);
     });
 
-    if (capture_stdout) {
-        result.stdout_content = read_pipe(stdout_read);
-    } else {
-        // Drain stdout to avoid blocking the child
-        read_pipe(stdout_read);
-    }
+    read_pipe_to_sink(stdout_read, stdout_sink);
 
-    result.stderr_content = stderr_future.get();
+    stderr_future.get();
 
     // Close stdin now that we're done reading
     h_stdin_write.reset();
@@ -278,9 +273,8 @@ process_result external_process_manager::run_process(const std::string& command_
     WaitForSingleObject(pi.hProcess, INFINITE);
     DWORD exit_code;
     GetExitCodeProcess(pi.hProcess, &exit_code);
-    result.exit_code = static_cast<int>(exit_code);
 
-    return result;
+    return static_cast<int>(exit_code);
 }
 
 #else // Unix
@@ -310,10 +304,10 @@ std::vector<std::string> split_command_line(const std::string& cmd) {
 
 } // anonymous namespace
 
-process_result external_process_manager::run_process(const std::string& command_line,
-                                                      const std::filesystem::path& working_dir,
-                                                      bool capture_stdout) const {
-    process_result result;
+int external_process_manager::run_process(const std::string& command_line,
+                                          const std::filesystem::path& working_dir,
+                                          process_sink& stdout_sink,
+                                          process_sink& stderr_sink) const {
 
     int stdout_pipe[2], stderr_pipe[2], stdin_pipe[2];
     if (pipe(stdout_pipe) != 0 || pipe(stderr_pipe) != 0 || pipe(stdin_pipe) != 0) {
@@ -367,26 +361,21 @@ process_result external_process_manager::run_process(const std::string& command_
     // We close it after reading is complete.
 
     // Read stdout and stderr concurrently to avoid deadlock
-    auto read_fd = [](int fd) -> std::string {
-        std::string content;
+    auto read_fd_to_sink = [](int fd, process_sink& sink) {
         char buffer[4096];
         ssize_t n;
         while ((n = read(fd, buffer, sizeof(buffer))) > 0) {
-            content.append(buffer, n);
+            sink.write(buffer, n);
         }
         close(fd);
-        return content;
     };
 
-    auto stderr_future = std::async(std::launch::async, read_fd, stderr_pipe[0]);
+    auto stderr_future = std::async(std::launch::async, read_fd_to_sink,
+                                     stderr_pipe[0], std::ref(stderr_sink));
 
-    if (capture_stdout) {
-        result.stdout_content = read_fd(stdout_pipe[0]);
-    } else {
-        read_fd(stdout_pipe[0]);
-    }
+    read_fd_to_sink(stdout_pipe[0], stdout_sink);
 
-    result.stderr_content = stderr_future.get();
+    stderr_future.get();
 
     // Close stdin now that we're done reading — the child should be
     // finishing up. If it was waiting on stdin, this unblocks it.
@@ -395,12 +384,9 @@ process_result external_process_manager::run_process(const std::string& command_
     int status;
     waitpid(pid, &status, 0);
     if (WIFEXITED(status)) {
-        result.exit_code = WEXITSTATUS(status);
-    } else {
-        result.exit_code = -1;
+        return WEXITSTATUS(status);
     }
-
-    return result;
+    return -1;
 }
 
 #endif

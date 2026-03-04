@@ -36,6 +36,7 @@ class data_server {
 
     std::unique_ptr<ldap_wrapper> ldap;
     std::unique_ptr<csv_store> csv;
+    stderr_sink ext_proc_errors;
     std::unique_ptr<external_process_manager> ext_proc;
 
     data_server(const data_server &other) = default;

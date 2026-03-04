@@ -44,7 +44,7 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
             load_logger.open(load_log_file.c_str());
         }
 
-        ext_proc = std::make_unique<external_process_manager>();
+        ext_proc = std::make_unique<external_process_manager>(ext_proc_errors);
         if (config.has("external-process-sessions")) {
             ext_proc->parse_sessions(config.get("external-process-sessions"));
             ext_proc->init_sessions();

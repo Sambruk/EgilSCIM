@@ -24,6 +24,45 @@
 #include <vector>
 #include <filesystem>
 #include <memory>
+#include <iostream>
+
+/**
+ * Interface for receiving output data from an external process.
+ */
+class process_sink {
+public:
+    virtual ~process_sink() = default;
+    virtual void write(const char* data, size_t len) = 0;
+};
+
+/**
+ * Sink that forwards all data to std::cerr.
+ */
+class stderr_sink : public process_sink {
+public:
+    void write(const char* data, size_t len) override {
+        std::cerr.write(data, len);
+    }
+};
+
+/**
+ * Sink that accumulates all data in a string.
+ */
+class string_sink : public process_sink {
+public:
+    void write(const char* data, size_t len) override {
+        content.append(data, len);
+    }
+    std::string content;
+};
+
+/**
+ * Sink that discards all data.
+ */
+class null_sink : public process_sink {
+public:
+    void write(const char*, size_t) override {}
+};
 
 /**
  * Configuration for a single external process session.
@@ -38,21 +77,18 @@ struct external_process_session {
 };
 
 /**
- * Result of running an external process command.
- */
-struct process_result {
-    std::string stdout_content;
-    std::string stderr_content;
-    int exit_code = -1;
-};
-
-/**
  * Manages external process sessions: temp directories, init/cleanup lifecycle,
  * and command execution.
  */
 class external_process_manager {
 public:
-    external_process_manager() = default;
+    /**
+     * Constructs the manager with an error sink for reporting errors
+     * from init/cleanup commands and the destructor. The caller must
+     * ensure the sink outlives the manager.
+     */
+    explicit external_process_manager(process_sink& error_sink)
+        : error_sink_(error_sink) {}
     ~external_process_manager();
 
     external_process_manager(const external_process_manager&) = delete;
@@ -78,12 +114,15 @@ public:
     void cleanup_sessions();
 
     /**
-     * Runs the command for the named session with extra arguments and
-     * returns the captured stdout (JSON data), stderr, and exit code.
+     * Runs the command for the named session with extra arguments.
+     * Output from the process is forwarded to the provided sinks.
+     * Returns the exit code of the child process.
      * Throws std::runtime_error if the session name is not found.
      */
-    process_result run_command(const std::string& session_name,
-                               const std::string& extra_args) const;
+    int run_command(const std::string& session_name,
+                    const std::string& extra_args,
+                    process_sink& stdout_sink,
+                    process_sink& stderr_sink) const;
 
     /**
      * Gets a session by name. Throws std::runtime_error if not found.
@@ -101,6 +140,7 @@ public:
 private:
     std::vector<external_process_session> sessions_;
     bool cleaned_up_ = false;
+    process_sink& error_sink_;
 
     /**
      * Runs an external command as a child process.
@@ -112,24 +152,21 @@ private:
      *
      * The child process runs with working_dir as its working directory.
      *
-     * If capture_stdout is true, the child's stdout is captured and
-     * returned in process_result::stdout_content. If false, stdout
-     * is inherited (shown in the terminal).
-     *
-     * The child's stderr is always captured and returned in
-     * process_result::stderr_content.
+     * Output from the child's stdout and stderr is forwarded to the
+     * provided sinks as data arrives. Both are read concurrently
+     * to avoid deadlock.
      *
      * Stdin is kept open for the duration of the process and closed
      * after stdout and stderr have been fully read.
      *
-     * Blocks until the child process exits. The exit code is returned
-     * in process_result::exit_code.
+     * Blocks until the child process exits. Returns the exit code.
      *
      * Throws std::runtime_error if the process could not be started.
      */
-    process_result run_process(const std::string& command_line,
-                               const std::filesystem::path& working_dir,
-                               bool capture_stdout) const;
+    int run_process(const std::string& command_line,
+                    const std::filesystem::path& working_dir,
+                    process_sink& stdout_sink,
+                    process_sink& stderr_sink) const;
 };
 
 #endif // EGILSCIMCLIENT_EXTERNAL_PROCESS_HPP

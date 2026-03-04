@@ -33,12 +33,12 @@ TEST_CASE("Parse sessions JSON") {
             "name": "Session 2",
             "init": "x_init",
             "secret": "/run/secrets/token",
-            "command": "y_client",
-            "cleanup": "y_cleanup"
+            "command": "y_client"
         }
     ])";
 
-    external_process_manager manager;
+    string_sink errors;
+    external_process_manager manager(errors);
     manager.parse_sessions(json);
 
     auto& session1 = manager.get_session("Session 1");
@@ -54,32 +54,78 @@ TEST_CASE("Parse sessions JSON") {
     REQUIRE(session2.name == "Session 2");
     REQUIRE(session2.command == "y_client");
     REQUIRE(session2.init == "x_init");
-    REQUIRE(session2.cleanup == "y_cleanup");
+    REQUIRE(session2.cleanup.empty());
     REQUIRE(session2.secret == "/run/secrets/token");
 
     // Cleanup removes temp dirs
     manager.cleanup_sessions();
     REQUIRE(!std::filesystem::exists(session1.temp_dir));
     REQUIRE(!std::filesystem::exists(session2.temp_dir));
+    REQUIRE(errors.content.empty());
+}
+
+TEST_CASE("Parse sessions - all optional fields are parsed") {
+    std::string json = R"([{
+        "name": "S",
+        "command": "cmd",
+        "init": "do_init",
+        "cleanup": "do_cleanup",
+        "secret": "mysecret"
+    }])";
+    string_sink errors;
+    {
+        external_process_manager manager(errors);
+        manager.parse_sessions(json);
+
+        auto& s = manager.get_session("S");
+        REQUIRE(s.init == "do_init");
+        REQUIRE(s.cleanup == "do_cleanup");
+        REQUIRE(s.secret == "mysecret");
+        // Destructor will attempt cleanup with nonexistent do_cleanup command.
+        // Errors go to the string_sink, not stderr.
+        // We expect an error because do_cleanup doesn't exist.
+    }
+    REQUIRE_FALSE(errors.content.empty());
+}
+
+// Verify the error sink actually captured the cleanup failure
+// after the manager from the previous test was destroyed.
+// (Not possible to check across TEST_CASEs in Catch2, so we
+// use a scope to force destruction and then check.)
+TEST_CASE("Cleanup with nonexistent command reports error") {
+    string_sink errors;
+    {
+        external_process_manager manager(errors);
+        manager.parse_sessions(R"([{"name": "S", "command": "cmd", "cleanup": "nonexistent_cleanup"}])");
+        // manager destructor runs here, attempting cleanup
+    }
+    REQUIRE_FALSE(errors.content.empty());
 }
 
 TEST_CASE("Run command - session not found") {
-    external_process_manager manager;
+    string_sink errors;
+    external_process_manager manager(errors);
     manager.parse_sessions(R"([{"name": "S1", "command": "cmd"}])");
 
-    REQUIRE_THROWS_AS(manager.run_command("nonexistent", ""), std::runtime_error);
+    string_sink out, err;
+    REQUIRE_THROWS_AS(manager.run_command("nonexistent", "", out, err), std::runtime_error);
     manager.cleanup_sessions();
+    REQUIRE(errors.content.empty());
 }
 
 TEST_CASE("Parse sessions - invalid JSON") {
-    external_process_manager manager;
+    string_sink errors;
+    external_process_manager manager(errors);
     REQUIRE_THROWS_AS(manager.parse_sessions("not valid json"), std::runtime_error);
+    REQUIRE(errors.content.empty());
 }
 
 TEST_CASE("Parse sessions - missing required field") {
-    external_process_manager manager;
+    string_sink errors;
+    external_process_manager manager(errors);
     // Missing "command" field
     REQUIRE_THROWS(manager.parse_sessions(R"([{"name": "S1"}])"));
+    REQUIRE(errors.content.empty());
 }
 
 TEST_CASE("JSON to object list - simple objects") {
@@ -117,7 +163,7 @@ TEST_CASE("JSON to object list - multi-valued attributes") {
 
     std::string json = R"([
         {
-            "id": "aaa-bbb-ccc",
+            "id": "f80e5b0b-af6b-4797-8726-738a06fffc2c",
             "name": "Group A",
             "members": ["student1", "student2", "student3"]
         }
@@ -126,7 +172,7 @@ TEST_CASE("JSON to object list - multi-valued attributes") {
     auto objects = json_to_object_list(json, "StudentGroup");
     REQUIRE(objects->size() == 1);
 
-    auto obj = objects->get_object("aaa-bbb-ccc");
+    auto obj = objects->get_object("f80e5b0b-af6b-4797-8726-738a06fffc2c");
     REQUIRE(obj != nullptr);
     auto members = obj->get_values("members");
     REQUIRE(members.size() == 3);

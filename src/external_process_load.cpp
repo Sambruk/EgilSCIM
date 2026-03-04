@@ -129,19 +129,17 @@ std::shared_ptr<object_list> external_process_get(const external_process_manager
     auto settings_json = config_file::instance().get(type + "-external-process");
     auto settings = parse_type_settings(settings_json);
 
-    auto result = manager.run_command(settings.session, settings.args);
+    string_sink stdout_data;
+    stderr_sink err_sink;
+    auto exit_code = manager.run_command(settings.session, settings.args, stdout_data, err_sink);
 
-    if (!result.stderr_content.empty()) {
-        std::cerr << result.stderr_content;
-    }
-
-    if (result.exit_code != 0) {
+    if (exit_code != 0) {
         throw std::runtime_error("External process for type " + type + " (session \"" +
                                  settings.session + "\") failed with exit code " +
-                                 std::to_string(result.exit_code));
+                                 std::to_string(exit_code));
     }
 
-    auto objects = json_to_object_list(result.stdout_content, type);
+    auto objects = json_to_object_list(stdout_data.content, type);
 
     auto transform = get_transformer(type);
     transform_objects(objects, transform);
