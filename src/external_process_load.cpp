@@ -120,6 +120,69 @@ std::shared_ptr<object_list> json_to_object_list(const std::string& json,
     return objects;
 }
 
+json_array_splitter::json_array_splitter(process_sink& inner)
+    : inner_(inner) {}
+
+void json_array_splitter::write(const char* data, size_t len) {
+    if (failed_ || done_) return;
+
+    for (size_t i = 0; i < len; ++i) {
+        char c = data[i];
+
+        if (!seen_array_start_) {
+            if (std::isspace(static_cast<unsigned char>(c))) continue;
+            if (c == '[') {
+                seen_array_start_ = true;
+                continue;
+            }
+            failed_ = true;
+            return;
+        }
+
+        if (brace_depth_ == 0) {
+            // Between objects: expect whitespace, comma, '{', or ']'
+            if (std::isspace(static_cast<unsigned char>(c)) || c == ',') continue;
+            if (c == ']') {
+                done_ = true;
+                return;
+            }
+            if (c == '{') {
+                brace_depth_ = 1;
+                current_object_ = "{";
+                continue;
+            }
+            failed_ = true;
+            return;
+        }
+
+        // Inside an object
+        current_object_ += c;
+
+        if (in_string_) {
+            if (escape_next_) {
+                escape_next_ = false;
+            } else if (c == '\\') {
+                escape_next_ = true;
+            } else if (c == '"') {
+                in_string_ = false;
+            }
+            continue;
+        }
+
+        if (c == '"') {
+            in_string_ = true;
+        } else if (c == '{') {
+            ++brace_depth_;
+        } else if (c == '}') {
+            --brace_depth_;
+            if (brace_depth_ == 0) {
+                inner_.write(current_object_.data(), current_object_.size());
+                current_object_.clear();
+            }
+        }
+    }
+}
+
 std::shared_ptr<object_list> external_process_get(const external_process_manager& manager,
                                                    const std::string& type,
                                                    indented_logger& load_logger) {
