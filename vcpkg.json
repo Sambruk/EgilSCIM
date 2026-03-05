@@ -1,5 +1,6 @@
 {
   "dependencies": [
+    "boost-json",
     "boost-program-options",
     "boost-property-tree",
     "boost-uuid",

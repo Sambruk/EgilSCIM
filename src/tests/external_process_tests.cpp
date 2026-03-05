@@ -243,3 +243,39 @@ TEST_CASE("JSON parsing - invalid object in array") {
     // The splitter should fail on "not valid" since it's not a '{'-started object
     REQUIRE_FALSE(error.empty());
 }
+
+TEST_CASE("JSON parsing - numeric, boolean and null attributes") {
+    config_file::instance().replace_variable("TestType-unique-identifier", "id");
+
+    std::string json = R"([
+        {
+            "id": "f80e5b0b-af6b-4797-8726-738a06fffc2c",
+            "name": "Test",
+            "count": 42,
+            "active": true,
+            "deleted": false,
+            "optional": null,
+            "null_string": "null",
+            "tags": ["alpha", 7, true, null]
+        }
+    ])";
+
+    auto [objects, error] = parse_json_array(json, "TestType");
+    REQUIRE(error.empty());
+    REQUIRE(objects->size() == 1);
+
+    auto obj = objects->get_object("f80e5b0b-af6b-4797-8726-738a06fffc2c");
+    REQUIRE(obj != nullptr);
+    REQUIRE(obj->get_values("name") == string_vector{"Test"});
+    REQUIRE(obj->get_values("count") == string_vector{"42"});
+    REQUIRE(obj->get_values("active") == string_vector{"true"});
+    REQUIRE(obj->get_values("deleted") == string_vector{"false"});
+    REQUIRE_FALSE(obj->has_attribute_or_relation("optional"));
+    REQUIRE(obj->get_values("null_string") == string_vector{"null"});
+
+    auto tags = obj->get_values("tags");
+    REQUIRE(tags.size() == 3);
+    REQUIRE(tags[0] == "alpha");
+    REQUIRE(tags[1] == "7");
+    REQUIRE(tags[2] == "true");
+}

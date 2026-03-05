@@ -303,10 +303,10 @@ data type you wish to read objects for and you can specify command line argument
 for each data type to configure which objects to read and how.
 
 The command is expected to write the objects it has read to standard output in the
-format of a JSON array. Each element in the array should be an object. Each object
-must follow the simple data model used by objects internally in EgilSCIMClient, 
-in other words all attributes must be strings or arrays of strings (but you can
-use any attribute names).
+format of a JSON array. Each element in the array should be an object. Attributes
+can be strings, numbers, booleans, or arrays of simple types. All values are
+converted to strings internally. Null attributes are ignored. Nested objects are
+also ignored. You can use any attribute names.
 
 For instance, if you have a command which you can run like this:
 

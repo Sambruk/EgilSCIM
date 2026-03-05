@@ -26,10 +26,20 @@
 #include <sstream>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/json/src.hpp>
 
 namespace pt = boost::property_tree;
 
 namespace {
+
+std::string value_to_string(const boost::json::value& v) {
+    if (v.is_string()) return std::string(v.get_string());
+    if (v.is_int64()) return std::to_string(v.get_int64());
+    if (v.is_uint64()) return std::to_string(v.get_uint64());
+    if (v.is_double()) return std::to_string(v.get_double());
+    if (v.is_bool()) return v.get_bool() ? "true" : "false";
+    return {};
+}
 
 struct type_ep_settings {
     std::string session;
@@ -62,31 +72,36 @@ void json_parser_sink::write(const char* data, size_t len) {
     if (failed_) return;
 
     try {
-        std::stringstream json_stream;
-        json_stream.write(data, len);
-        pt::ptree obj_node;
-        pt::read_json(json_stream, obj_node);
+        auto obj_val = boost::json::parse(boost::json::string_view(data, len));
+        if (!obj_val.is_object()) {
+            failed_ = true;
+            error_message_ = "Expected JSON object from external process";
+            return;
+        }
+        auto& obj = obj_val.get_object();
 
         attrib_map attributes;
         attributes["ss12000type"] = string_vector({type_});
 
-        for (auto& prop : obj_node) {
-            auto& key = prop.first;
-            auto& value_node = prop.second;
+        for (auto& kv : obj) {
+            auto key = std::string(kv.key());
+            auto& val = kv.value();
 
-            if (value_node.empty() && !value_node.data().empty()) {
-                // Simple string value
-                attributes[key] = string_vector({value_node.data()});
-            } else if (!value_node.empty() && value_node.data().empty()
-                       && value_node.front().first.empty()) {
-                // Array of strings (array items have empty keys in ptree)
+            if (val.is_null()) {
+                continue;
+            } else if (val.is_array()) {
                 string_vector values;
-                for (auto& item : value_node) {
-                    values.push_back(item.second.data());
+                for (auto& item : val.get_array()) {
+                    if (!item.is_null() && !item.is_object() && !item.is_array()) {
+                        values.push_back(value_to_string(item));
+                    }
                 }
                 attributes[key] = std::move(values);
+            } else if (val.is_object()) {
+                continue;
+            } else {
+                attributes[key] = string_vector({value_to_string(val)});
             }
-            // Skip nested objects (children with named keys) and nulls
         }
 
         auto object = std::make_shared<base_object>(std::move(attributes));
