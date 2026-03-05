@@ -24,6 +24,7 @@
 #include "simplescim_ldap.hpp"
 #include "csv_load.hpp"
 #include "sql_load.hpp"
+#include "external_process_load.hpp"
 #include "json_data_file.hpp"
 #include "readable_id.hpp"
 
@@ -41,6 +42,12 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
         auto load_log_file = format_log_path(config_file::instance().get_path("load-log-file", true));
         if (load_log_file != "" && !load_logger.is_open()) {
             load_logger.open(load_log_file.c_str());
+        }
+
+        ext_proc = std::make_unique<external_process_manager>(ext_proc_errors);
+        if (config.has("external-process-sessions")) {
+            ext_proc->parse_sessions(config.get("external-process-sessions"));
+            ext_proc->init_sessions();
         }
         
         bool filtered_orphans = false;
@@ -77,6 +84,9 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
             else if (sql_plugin && config.has(type + "-sql")) {
                 l = sql_get(sql_plugin, type, load_logger);
             }
+            else if (config.has(type + "-external-process")) {
+                l = external_process_get(*ext_proc, type, load_logger);
+            }
             if (l) {
                 add(type, l);
             }
@@ -87,6 +97,8 @@ bool data_server::load(std::shared_ptr<sql::plugin> sql_plugin) {
         if (!filtered_orphans) {
             filter_orphans();
         }
+
+        ext_proc->cleanup_sessions();
     } catch (std::string msg) {
         return false;
     }

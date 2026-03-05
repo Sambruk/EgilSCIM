@@ -51,8 +51,8 @@ value, it is a part of the value and is not interpreted as a comment.
 
 EgilSCIM has a set of required variable names that must be assigned
 meaningful values. The set of required variable names may change in
-future versions of EgilSCIM and depends on whether LDAP, CSV and/or
-SQL is used as data source.
+future versions of EgilSCIM and depends on which type of data source
+is read from (LDAP, CSV, SQL or general external processes).
 
 The following variables should be configured regardless of data source:
 
@@ -294,6 +294,134 @@ return a table with the proper column name. For instance:
 ```
 SELECT id AS uid, email FROM emails
 ```
+
+## Loading objects from an external process
+You can also specify a command to execute in order to read data from your data source.
+In this way you can read from any data source as long as you have a suitable command
+which can read from that data source. The command will be called once for each
+data type you wish to read objects for and you can specify command line arguments
+for each data type to configure which objects to read and how.
+
+The command is expected to write the objects it has read to standard output as
+JSON objects. Attributes can be strings, numbers, booleans, or arrays of simple
+types. All values are converted to strings internally. Null attributes are
+ignored. Nested objects are also ignored. You can use any attribute names.
+
+Three output formats are supported:
+
+* **JSON array**: Objects wrapped in `[` and `]`, optionally separated by commas.
+* **NDJSON** (Newline Delimited JSON): One JSON object per line.
+* **Concatenated JSON**: JSON objects written back-to-back without any delimiter.
+
+For instance, a command outputting a JSON array:
+
+```
+read_from_database --school-units --school-type=GR
+```
+
+which outputs something like this:
+
+```
+[
+ {
+  "id": "f80e5b0b-af6b-4797-8726-738a06fffc2c",
+  "schoolUnitCode": "12345678",
+  "name": "Storskolan"
+ },
+ {
+  "id": "322dfc6d-fba0-4ce8-8c73-cbe3d46f97e9",
+  "schoolUnitCode": "11223344",
+  "name": "Lillskolan"
+ }
+]
+```
+
+then you can configure EgilSCIMClient to use that command as a data source.
+
+### Sessions
+In the most simple use of external processes you just need to specify the command and
+its arguments. However in order to support tools that need initialization or to store state 
+between calls, the external process is configured with something called "sessions". Each
+session has a name and specifies how to start the external process. Every time the external
+process runs in that session it will run in the same temporary directory. All sessions
+are defined in one block, if you just have one simple session it can look like this:
+
+```
+external-process-sessions = <?
+[
+  {
+    "name": "Session 1",
+	"command": "x_client -f"
+  }
+]
+?>
+```
+
+Given this session you can read objects for a specific data type like this:
+
+```
+SchoolUnit-external-process = <?
+{
+  "session": "Session 1",
+  "args": "--school-units"
+}
+?>
+```
+
+In other words you specify which session to use and any additional command line arguments
+to give to the external process. In this case EgilSCIMClient will create a temporary
+directory for the "Session 1" session, and when it's time to read the SchoolUnit objects
+it will execute the command `x_client -f --school-units`, and read the SchoolUnit objects
+from the standard output of that process.
+
+For more advanced sessions you can specify an initialization command, a secret and a cleanup
+command. For instance:
+
+```
+external-process-sessions = <?
+[
+  {
+    "name": "Session 1",
+	"init": "x_init -b",
+	"secret": "/run/secrets/elevregister1",
+	"command": "x_client -f",
+	"cleanup": "x_cleanup"
+  }
+]
+?>
+```
+
+The `init` command will run at start up, in the same temporary directory. The `cleanup` command
+runs after all data has been loaded, also in the sessions temporary directory (note that 
+EgilSCIMClient will remove the temp directory after cleanup, so you don't need to specify a 
+cleanup command just to remove temporary files from the session). The `secret` will be passed to 
+all commands (`init`, `command` and `cleanup`) as the command line parameter `--secret`. In other 
+words, in the session above, when we run the external process, we would run something like this:
+
+```
+x_client -f --school-units --secret=/run/secrets/elevregister1
+```
+
+Note that if a secret is configured it is added last in the command line, so the commands should
+not use positional arguments at the end of the argument list. You can choose whether you specify
+the actual secret directly in the `secret` attribute or if you specify the path to a file containing
+the secret. Using files with the proper access rights should be considered more secure and can be
+used together with Docker secrets if you don't want to store secrets in plain text on disk.
+
+### Requirements for the external process
+The commands (`init`, `command` and `cleanup`) should signal whether they were successful or not
+with standard exit status (0 = success, non-zero = failure).
+
+Data should be written to standard output, as a JSON array of objects, in UTF-8 encoding.
+
+Error messages should be printed to standard error.
+
+To allow EgilSCIMClient to terminate gracefully in the middle of loading, the external process
+should ideally terminate early if stdin is closed (in other words, EOF on stdin should be
+interpreted as a request to terminate early). In the event of an early termination the `cleanup`
+command will still be called, but it may be given only a brief timeout of a few seconds
+before it gets killed. If your external process starts sub-processes, early termination should
+also take care of stopping those children.
 
 ## Defining relations between objects
 

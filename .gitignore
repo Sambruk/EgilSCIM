@@ -20,6 +20,9 @@ TAGS
 cmake-build-debug/*
 
 test/test_server_go/EGILTestServer/EGILTestServer
+test/test_server_go/EGILTestServer/EGILTestServer.exe
+test/test_external_process/test_external_process
+test/test_external_process/test_external_process.exe
 
 *.pem
 

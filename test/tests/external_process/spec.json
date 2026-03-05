@@ -1,0 +1,17 @@
+{
+    "description": "Initial sync with StudentGroups from external process",
+    "config": "configs/external_process/master.conf",
+    "steps": [
+	{ "scenario": [],
+	  "requests": null
+	},
+	{ "scenario": [ "scenarios/base" ],
+	  "requests": "../base/init.txt"
+	},
+	{ "scenario": [],
+	  "commandLine": ["--D", "StudentGroup-external-process={\"session\": \"test\", \"args\": \"nonexistent\"}"],
+	  "requests": null,
+	  "expectErrors": true
+	}
+    ]
+}

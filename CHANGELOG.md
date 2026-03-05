@@ -1,5 +1,9 @@
 ## Releases
 
+## v2.23 (unreleased)
+#### Features
+  - External processes can now be used as a data source (#251)
+
 ## v2.22 (2026-02-04)
 #### Bugfixes
   - Command line arguments can now be in Unicode on Windows (#232)
