@@ -302,13 +302,18 @@ which can read from that data source. The command will be called once for each
 data type you wish to read objects for and you can specify command line arguments
 for each data type to configure which objects to read and how.
 
-The command is expected to write the objects it has read to standard output in the
-format of a JSON array. Each element in the array should be an object. Attributes
-can be strings, numbers, booleans, or arrays of simple types. All values are
-converted to strings internally. Null attributes are ignored. Nested objects are
-also ignored. You can use any attribute names.
+The command is expected to write the objects it has read to standard output as
+JSON objects. Attributes can be strings, numbers, booleans, or arrays of simple
+types. All values are converted to strings internally. Null attributes are
+ignored. Nested objects are also ignored. You can use any attribute names.
 
-For instance, if you have a command which you can run like this:
+Three output formats are supported:
+
+* **JSON array**: Objects wrapped in `[` and `]`, optionally separated by commas.
+* **NDJSON** (Newline Delimited JSON): One JSON object per line.
+* **Concatenated JSON**: JSON objects written back-to-back without any delimiter.
+
+For instance, a command outputting a JSON array:
 
 ```
 read_from_database --school-units --school-type=GR

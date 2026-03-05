@@ -60,17 +60,24 @@ private:
 };
 
 /**
- * A sink that splits a stream of bytes containing a JSON array of objects
- * into individual JSON objects, forwarding each complete object to an
- * inner sink.
+ * A sink that splits a stream of bytes containing JSON objects into
+ * individual objects, forwarding each complete object to an inner sink.
  *
- * Expects the input to be a JSON array (starting with '[', ending with ']').
+ * Supports three input formats:
+ * - JSON array: [{"a":1}, {"b":2}]
+ * - NDJSON (newline-delimited JSON): one object per line
+ * - Concatenated JSON objects: {"a":1}{"b":2}
+ *
  * Uses brace counting to find object boundaries, tracking whether
  * the parser is inside a string to avoid miscounting braces within
  * string values. Handles backslash escapes inside strings.
  *
- * If the input is not a valid array of objects, the splitter enters
- * a failed state and ignores all subsequent data.
+ * If the input starts with '[', the splitter expects a JSON array
+ * and treats ']' as the end of the data. Otherwise ']' at depth 0
+ * is considered invalid.
+ *
+ * If the input contains invalid data, the splitter enters a failed
+ * state and ignores all subsequent data.
  */
 class json_array_splitter : public process_sink {
 public:
@@ -81,7 +88,8 @@ public:
 private:
     process_sink& inner_;
     bool failed_ = false;
-    bool seen_array_start_ = false;
+    bool seen_first_char_ = false;
+    bool is_array_ = false;
     bool done_ = false;
     bool in_string_ = false;
     bool escape_next_ = false;

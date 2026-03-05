@@ -65,12 +65,31 @@ TEST_CASE("Splitter - empty array") {
     REQUIRE(inner.content.empty());
 }
 
-TEST_CASE("Splitter - not an array") {
+TEST_CASE("Splitter - completely empty") {
+    string_sink inner;
+    json_array_splitter splitter(inner);
+    std::string input = "";
+    splitter.write(input.data(), input.size());
+    REQUIRE_FALSE(splitter.failed());
+    REQUIRE(inner.content.empty());
+}
+
+TEST_CASE("Splitter - only whitespace") {
+    string_sink inner;
+    json_array_splitter splitter(inner);
+    std::string input = "   \t\n  ";
+    splitter.write(input.data(), input.size());
+    REQUIRE_FALSE(splitter.failed());
+    REQUIRE(inner.content.empty());
+}
+
+TEST_CASE("Splitter - single object without array") {
     string_sink inner;
     json_array_splitter splitter(inner);
     std::string input = R"({"a":"b"})";
     splitter.write(input.data(), input.size());
-    REQUIRE(splitter.failed());
+    REQUIRE_FALSE(splitter.failed());
+    REQUIRE(inner.content == R"({"a":"b"})");
 }
 
 TEST_CASE("Splitter - chunked input") {
@@ -113,4 +132,47 @@ TEST_CASE("Splitter - escaped backslash before quote") {
     splitter.write(input.data(), input.size());
     REQUIRE_FALSE(splitter.failed());
     REQUIRE(inner.content == R"({"val":"path\\"})");
+}
+
+TEST_CASE("Splitter - NDJSON") {
+    string_sink inner;
+    json_array_splitter splitter(inner);
+    std::string input = "{\"a\":\"1\"}\n{\"b\":\"2\"}\n{\"c\":\"3\"}\n";
+    splitter.write(input.data(), input.size());
+    REQUIRE_FALSE(splitter.failed());
+    REQUIRE(inner.content == R"({"a":"1"}{"b":"2"}{"c":"3"})");
+}
+
+TEST_CASE("Splitter - concatenated objects without delimiter") {
+    string_sink inner;
+    json_array_splitter splitter(inner);
+    std::string input = R"({"a":"1"}{"b":"2"}{"c":"3"})";
+    splitter.write(input.data(), input.size());
+    REQUIRE_FALSE(splitter.failed());
+    REQUIRE(inner.content == R"({"a":"1"}{"b":"2"}{"c":"3"})");
+}
+
+TEST_CASE("Splitter - concatenated objects without delimiter, multiline objects") {
+    string_sink inner;
+    json_array_splitter splitter(inner);
+    std::string input = "{\n  \"a\": \"1\"\n}\n{\n  \"b\": \"2\"\n}\n";
+    splitter.write(input.data(), input.size());
+    REQUIRE_FALSE(splitter.failed());
+    REQUIRE(inner.content == "{\n  \"a\": \"1\"\n}{\n  \"b\": \"2\"\n}");
+}
+
+TEST_CASE("Splitter - bracket outside array fails") {
+    string_sink inner;
+    json_array_splitter splitter(inner);
+    std::string input = R"({"a":"1"}])";
+    splitter.write(input.data(), input.size());
+    REQUIRE(splitter.failed());
+}
+
+TEST_CASE("Splitter - comma outside array fails") {
+    string_sink inner;
+    json_array_splitter splitter(inner);
+    std::string input = R"({"a":"1"},{"b":"2"})";
+    splitter.write(input.data(), input.size());
+    REQUIRE(splitter.failed());
 }

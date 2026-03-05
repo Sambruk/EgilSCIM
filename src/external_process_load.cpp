@@ -142,10 +142,16 @@ void json_array_splitter::write(const char* data, size_t len) {
     for (size_t i = 0; i < len; ++i) {
         char c = data[i];
 
-        if (!seen_array_start_) {
+        if (!seen_first_char_) {
             if (std::isspace(static_cast<unsigned char>(c))) continue;
+            seen_first_char_ = true;
             if (c == '[') {
-                seen_array_start_ = true;
+                is_array_ = true;
+                continue;
+            }
+            if (c == '{') {
+                brace_depth_ = 1;
+                current_object_ = "{";
                 continue;
             }
             failed_ = true;
@@ -153,9 +159,9 @@ void json_array_splitter::write(const char* data, size_t len) {
         }
 
         if (brace_depth_ == 0) {
-            // Between objects: expect whitespace, comma, '{', or ']'
-            if (std::isspace(static_cast<unsigned char>(c)) || c == ',') continue;
-            if (c == ']') {
+            if (std::isspace(static_cast<unsigned char>(c))) continue;
+            if (is_array_ && c == ',') continue;
+            if (is_array_ && c == ']') {
                 done_ = true;
                 return;
             }
