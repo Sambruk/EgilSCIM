@@ -192,6 +192,15 @@ struct handle_closer {
 };
 using unique_handle = std::unique_ptr<void, handle_closer>;
 
+std::wstring wide_from_utf8(const std::string& s) {
+    if (s.empty()) return {};
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), nullptr, 0);
+    if (size_needed <= 0) return {};
+    std::wstring result(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), result.data(), size_needed);
+    return result;
+}
+
 void read_pipe_to_sink(HANDLE pipe, process_sink& sink) {
     char buffer[4096];
     DWORD bytes_read;
@@ -235,7 +244,7 @@ int external_process_manager::run_process(const std::string& command_line,
     SetHandleInformation(stderr_read, HANDLE_FLAG_INHERIT, 0);
     SetHandleInformation(stdin_write, HANDLE_FLAG_INHERIT, 0);
 
-    STARTUPINFOA si = {};
+    STARTUPINFOW si = {};
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESTDHANDLES;
     si.hStdOutput = stdout_write;
@@ -244,12 +253,11 @@ int external_process_manager::run_process(const std::string& command_line,
 
     PROCESS_INFORMATION pi = {};
 
-    // CreateProcessA needs a mutable command line string
-    std::string cmd_copy = command_line;
-    auto wd = working_dir.string();
+    auto cmd_wide = wide_from_utf8(command_line);
+    auto wd_wide = wide_from_utf8(working_dir.string());
 
-    if (!CreateProcessA(nullptr, cmd_copy.data(), nullptr, nullptr, TRUE,
-                        CREATE_NO_WINDOW, nullptr, wd.c_str(), &si, &pi)) {
+    if (!CreateProcessW(nullptr, cmd_wide.data(), nullptr, nullptr, TRUE,
+                        CREATE_NO_WINDOW, nullptr, wd_wide.c_str(), &si, &pi)) {
         throw std::runtime_error("Failed to start external process: " + command_line +
                                  " (error " + std::to_string(GetLastError()) + ")");
     }
