@@ -294,7 +294,7 @@ std::vector<std::string> split_command_line(const std::string& cmd) {
     std::string current;
 
     for (char c : cmd) {
-        if (c == ' ') {
+        if (std::isspace(static_cast<unsigned char>(c))) {
             if (!current.empty()) {
                 tokens.push_back(std::move(current));
                 current.clear();
