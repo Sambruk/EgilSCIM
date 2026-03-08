@@ -1,0 +1,4 @@
+- [ ] CHANGELOG.md updated
+- [ ] Docs updated/added for any new functionality, behavior changes, or UI changes (per docs/STYLE_GUIDE.md)
+- [ ] Unit tests run without errors
+- [ ] Test suite runs without errors
