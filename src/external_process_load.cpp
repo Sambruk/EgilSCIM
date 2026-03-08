@@ -96,7 +96,9 @@ void json_parser_sink::write(const char* data, size_t len) {
                         values.push_back(value_to_string(item));
                     }
                 }
-                attributes[key] = std::move(values);
+                if (!values.empty()) {
+                    attributes[key] = std::move(values);
+                }
             } else if (val.is_object()) {
                 continue;
             } else {
