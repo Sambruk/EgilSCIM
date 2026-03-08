@@ -4,7 +4,7 @@ testroot="${BASH_SOURCE%/*}/.."
 cert=$(mktemp /tmp/testcert.XXXXXX)
 key=$(mktemp /tmp/testkey.XXXXXX)
 # Add test_external_process to PATH so external process tests can find it
-TEST_EP_PATH_ABS=$(cd ${testroot}/test_external_process && pwd)
+TEST_EP_PATH_ABS=$(cd "${testroot}/test_external_process" && pwd)
 export PATH="${TEST_EP_PATH_ABS}:${PATH}"
 
 openssl req -x509 -newkey rsa:4096 -keyout $key -out $cert -days 1 -nodes -subj '/CN=localhost' &> /dev/null
