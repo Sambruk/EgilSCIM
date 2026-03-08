@@ -412,7 +412,8 @@ used together with Docker secrets if you don't want to store secrets in plain te
 The commands (`init`, `command` and `cleanup`) should signal whether they were successful or not
 with standard exit status (0 = success, non-zero = failure).
 
-Data should be written to standard output, as a JSON array of objects, in UTF-8 encoding.
+Data should be written to standard output, as a list of JSON objects (in one of the supported
+formats described above), in UTF-8 encoding.
 
 Error messages should be printed to standard error.
 
