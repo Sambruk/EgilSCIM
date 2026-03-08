@@ -126,7 +126,7 @@ TEST_CASE("Splitter - escaped backslash before quote") {
     string_sink inner;
     json_array_splitter splitter(inner);
     // The value ends with a literal backslash: "path\\"
-    // In JSON: "path\\\\" means the string value is path\\
+    // In JSON: "path\\\\" means the string value is path\\ .
     // The closing quote is NOT escaped because \\\\ is two escaped backslashes.
     std::string input = R"([{"val":"path\\"}])";
     splitter.write(input.data(), input.size());
