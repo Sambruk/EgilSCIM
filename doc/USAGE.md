@@ -415,7 +415,14 @@ with standard exit status (0 = success, non-zero = failure).
 Data should be written to standard output, as a list of JSON objects (in one of the supported
 formats described above), in UTF-8 encoding.
 
-Error messages should be printed to standard error.
+Error messages, and only error messages, should be printed to standard error.
+
+Note that if the external process for `init` or `command` exits with a status that indicates 
+failure the loading process will terminate. The loading process will not terminate due to
+error messages written to standard error. So for instance if a single object in the data source
+is malformed, you can write an error message to inform the operator of the issue, but you can
+choose to skip loading that object and still return a successful exit status if you wish to
+continue the run and load the rest of the objects.
 
 To allow EgilSCIMClient to terminate gracefully in the middle of loading, the external process
 should ideally terminate early if stdin is closed (in other words, EOF on stdin should be
