@@ -1,5 +1,6 @@
-#Rules for contributing to this project
-Documentation required for behavior/UI changes
+# Rules for contributing to this project
+## Documentation
+Documentation is required for behavior and UI changes.
 
 For any PR that adds new functionality, changes behavior, or changes how EgilSCIMClient is configured require documentation updates. 
 If docs aren’t updated, request changes and specify what docs are missing.
