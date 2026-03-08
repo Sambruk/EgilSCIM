@@ -60,6 +60,13 @@ void external_process_manager::parse_sessions(const std::string& json) {
         for (auto& session_node : root) {
             external_process_session session;
             session.name = session_node.second.get<std::string>("name");
+
+            for (const auto& existing : sessions_) {
+                if (existing.name == session.name) {
+                    throw std::runtime_error("Duplicate external process session name: \"" + session.name + "\"");
+                }
+            }
+
             session.command = session_node.second.get<std::string>("command");
             session.init = session_node.second.get<std::string>("init", "");
             session.cleanup = session_node.second.get<std::string>("cleanup", "");

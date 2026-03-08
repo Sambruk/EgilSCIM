@@ -128,6 +128,15 @@ TEST_CASE("Parse sessions - missing required field") {
     REQUIRE(errors.content.empty());
 }
 
+TEST_CASE("Parse sessions - duplicate name") {
+    string_sink errors;
+    external_process_manager manager(errors);
+    REQUIRE_THROWS_AS(
+        manager.parse_sessions(R"([{"name": "S1", "command": "cmd1"}, {"name": "S1", "command": "cmd2"}])"),
+        std::runtime_error);
+    REQUIRE(errors.content.empty());
+}
+
 namespace {
 
 // Helper: feed a JSON array string through the splitter+parser pipeline
