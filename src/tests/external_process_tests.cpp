@@ -248,7 +248,9 @@ TEST_CASE("JSON parsing - invalid JSON") {
 }
 
 TEST_CASE("JSON parsing - invalid object in array") {
-    auto [objects, error] = parse_json_array(R"([{"valid":"obj"}, not valid])", "SchoolUnit");
+    config_file::instance().replace_variable("SchoolUnit-unique-identifier", "id");
+
+    auto [objects, error] = parse_json_array(R"([{"id": "f80e5b0b-af6b-4797-8726-738a06fffc2c", "valid":"obj"}, not valid])", "SchoolUnit");
     // The splitter should fail on "not valid" since it's not a '{'-started object
     REQUIRE_FALSE(error.empty());
 }
