@@ -176,3 +176,13 @@ TEST_CASE("Splitter - comma outside array fails") {
     splitter.write(input.data(), input.size());
     REQUIRE(splitter.failed());
 }
+
+TEST_CASE("Splitter - truncated object is detected as incomplete") {
+    string_sink inner;
+    json_array_splitter splitter(inner);
+    std::string input = R"([{"a":"1"}, {"b":)";
+    splitter.write(input.data(), input.size());
+    REQUIRE_FALSE(splitter.failed());
+    REQUIRE(splitter.incomplete());
+    REQUIRE(inner.content == R"({"a":"1"})");
+}

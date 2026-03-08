@@ -84,6 +84,7 @@ public:
     explicit json_array_splitter(process_sink& inner);
     void write(const char* data, size_t len) override;
     bool failed() const { return failed_; }
+    bool incomplete() const { return brace_depth_ != 0; }
 
 private:
     process_sink& inner_;

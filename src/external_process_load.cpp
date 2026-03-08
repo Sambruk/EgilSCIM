@@ -224,7 +224,12 @@ std::shared_ptr<object_list> external_process_get(const external_process_manager
     }
 
     if (splitter.failed()) {
-        throw std::runtime_error("Failed to parse JSON array from external process for type " + type);
+        throw std::runtime_error("Failed to parse JSON from external process for type " + type);
+    }
+
+    if (splitter.incomplete()) {
+        throw std::runtime_error("External process for type " + type +
+                                 " produced truncated JSON output");
     }
 
     if (parser.failed()) {
