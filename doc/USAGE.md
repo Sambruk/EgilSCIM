@@ -201,7 +201,7 @@ the following additions:
  * Unix-style line endings are allowed
  * The separator character can be configured (with the `csv-separator` variable)
  * The quote character can be configured (with the `csv-quote` variable)
- * UTF-8 encoded text is allowed
+ * UTF-8 encoded text is allowed (with or without BOM)
 
 If you wish to use the tab character as a separator character it needs to be
 set with a special escape sequence:

@@ -9,6 +9,10 @@ std::shared_ptr<csv_file> load(const std::string& str) {
     return std::make_shared<csv_file>(is);
 }
 
+std::string utf8_bom() {
+    return std::string("\xEF\xBB\xBF", 3);
+}
+
 }
 
 TEST_CASE("Simple") {
@@ -108,6 +112,19 @@ TEST_CASE("Improper (non-escaped)") {
         "1,2\r";
 
     REQUIRE_THROWS_AS(load(csv), csv_file::format_error);
+}
+
+TEST_CASE("UTF-8 BOM") {
+    std::string csv =
+        "a,b,c\n"\
+        "0,1,2\n";
+
+    auto without_bom = load(csv);
+    auto with_bom = load(utf8_bom() + csv);
+
+    REQUIRE(with_bom->get_header() == without_bom->get_header());
+    REQUIRE(with_bom->size() == without_bom->size());
+    REQUIRE((*with_bom)[0] == (*without_bom)[0]);
 }
 
 TEST_CASE("Escaped") {

@@ -41,6 +41,26 @@ csv_file::csv_file(std::istream& is, char separator, char quote)
 
 namespace {
 
+void skip_utf8_bom(std::istream& is) {
+    char bom[3];
+    is.read(bom, sizeof(bom));
+
+    auto has_bom =
+        is.gcount() == static_cast<std::streamsize>(sizeof(bom)) &&
+        static_cast<unsigned char>(bom[0]) == 0xEF &&
+        static_cast<unsigned char>(bom[1]) == 0xBB &&
+        static_cast<unsigned char>(bom[2]) == 0xBF;
+
+    if (has_bom) {
+        return;
+    }
+
+    is.clear();
+    for (auto i = is.gcount(); i > 0; --i) {
+        is.putback(bom[i - 1]);
+    }
+}
+
 bool end_of_record(std::istream& is) {
     return (is.peek() == EOF || is.peek() == '\r' || is.peek() == '\n');
 }
@@ -136,6 +156,7 @@ csv_file::row parse_record(std::istream& is, const char SEPARATOR, const char QU
 }
 
 void csv_file::load(std::istream& is) {
+    skip_utf8_bom(is);
     header = parse_record(is, SEPARATOR, QUOTE);
 
     while (is.good() && is.peek() != EOF) {
