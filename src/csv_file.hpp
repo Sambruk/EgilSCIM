@@ -31,7 +31,7 @@
  *
  *    - Unix style line endings
  *    - Configurable separator and quote character
- *    - UTF-8 encoded text
+ *    - UTF-8 encoded text, with or without BOM
  *
  * The whole file is loaded and kept in memory.
  */

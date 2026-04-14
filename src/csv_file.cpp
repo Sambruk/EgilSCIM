@@ -41,6 +41,14 @@ csv_file::csv_file(std::istream& is, char separator, char quote)
 
 namespace {
 
+static const std::string UTF8_BOM("\xEF\xBB\xBF", 3);
+
+void strip_utf8_bom(std::string& s) {
+    if (s.size() >= 3 && s.substr(0, 3) == UTF8_BOM) {
+        s.erase(0, 3);
+    }
+}
+
 bool end_of_record(std::istream& is) {
     return (is.peek() == EOF || is.peek() == '\r' || is.peek() == '\n');
 }
@@ -105,15 +113,10 @@ std::string parse_field(std::istream& is, const char SEPARATOR, const char QUOTE
         return "";
     }
 
-    std::string result;
     if (is.peek() == QUOTE) {
-        result = parse_escaped_field(is, QUOTE);
+        return parse_escaped_field(is, QUOTE);
     }
-    else {
-        result = parse_non_escaped_field(is, SEPARATOR, QUOTE);
-    }
-
-    return result;
+    return parse_non_escaped_field(is, SEPARATOR, QUOTE);
 }
 
 csv_file::row parse_record(std::istream& is, const char SEPARATOR, const char QUOTE) {
@@ -137,6 +140,18 @@ csv_file::row parse_record(std::istream& is, const char SEPARATOR, const char QU
 
 void csv_file::load(std::istream& is) {
     header = parse_record(is, SEPARATOR, QUOTE);
+    if (!header.empty()) {
+        // Somewhat ugly hack to support UTF-8 BOM. If there's a BOM in the file, 
+        // it will be at the start of the first header field.
+        // Strip it if it's there, but otherwise leave the header field unchanged.
+        // Note that in the unlikely event that the file has a BOM and the first
+        // header field is quoted, we'll get an exception in parse_record above
+        // (because the BOM bytes will appear before the opening quote), but that's 
+        // an acceptable limitation (which means we don't need to make any assumptions
+        // about the istream supporting putback or seek, which would be needed if
+        // we wanted to get rid of the BOM before parse_record).
+        strip_utf8_bom(header[0]);
+    }
 
     while (is.good() && is.peek() != EOF) {
         auto record_number = data.size() + 1;
