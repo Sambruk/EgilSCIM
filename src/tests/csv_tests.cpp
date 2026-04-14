@@ -125,6 +125,15 @@ TEST_CASE("UTF-8 BOM") {
     REQUIRE(with_bom->get_header() == without_bom->get_header());
     REQUIRE(with_bom->size() == without_bom->size());
     REQUIRE((*with_bom)[0] == (*without_bom)[0]);
+
+    // BOM + quoted first header field: the BOM bytes appear before the quote,
+    // so the parser sees a non-escaped field that contains a quote, which is a
+    // format error. This limitation is accepted.
+    csv =
+        "\"a\",b,c\n"\
+        "0,1,2\n";
+
+    REQUIRE_THROWS_AS(load(utf8_bom() + csv), csv_file::format_error);
 }
 
 TEST_CASE("Escaped") {
