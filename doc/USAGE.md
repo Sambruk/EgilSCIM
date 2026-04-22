@@ -961,6 +961,26 @@ StudentGroup-orphan-if-missing = Student Teacher
 
 Only groups that are missing _both_ Student and Teacher relations will then be filtered out.
 
+### Blacklisting users
+If you want to prevent a specific list of users from being loaded you can of course do that
+with the load limiting described above (by combining a "list" limiter with a logical "not"
+limiter). However to make it easier to complement any configuration with a blacklist there's
+a parallel method of doing this. Behind the scenes the blacklist will be combined with
+whatever load limiting has been configured.
+
+The blacklist is specified on the command line:
+
+```
+--user-blacklist-file=/tmp/blacklist.txt
+```
+
+The file works like a file used by the `list` load limiter. By default users are identified
+by their UUID, but you can also specify an attribute:
+
+```
+--user-blacklist-attribute=cn
+```
+
 ## Transforming attributes
 
 Sometimes the attributes in the data source don't have the format we require. Some tranformations
