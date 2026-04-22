@@ -297,7 +297,7 @@ SELECT id AS uid, email FROM emails
 
 ### UUIDs in SQL
 Just like when loading from CSV files you can choose to generate UUIDs if the
-SQL table doesn't include them, see [UUIDs in CSV files](#uuids-in-csv-file).
+SQL table doesn't include them, see [UUIDs in CSV files](#uuids-in-csv-files).
 
 If you do read UUIDs from SQL, and you can influence the database schema, it's
 recommended to use a UUID datatype (such as uniqueidentifier) for the column
