@@ -297,10 +297,10 @@ SELECT id AS uid, email FROM emails
 
 ### UUIDs in SQL
 Just like when loading from CSV files you can choose to generate UUIDs if the
-SQL table doesn't include them, see (UUIDs in CSV files)[#uuids-in-csv-files].
+SQL table doesn't include them, see [UUIDs in CSV files](#uuids-in-csv-file).
 
 If you do read UUIDs from SQL, and you can influence the database schema, it's
-recommended to use a UUID datatype (such as uniqueIdentifier) for the column
+recommended to use a UUID datatype (such as uniqueidentifier) for the column
 that stores the UUIDs so the database guarantees correct format.
 
 ## Loading objects from an external process
@@ -441,7 +441,7 @@ also take care of stopping those children.
 
 ### UUIDs from external processes
 Just like when loading from CSV files you can choose to generate UUIDs if the
-data from the external process doesn't include them, see (UUIDs in CSV files)[#uuids-in-csv-files].
+data from the external process doesn't include them, see [UUIDs in CSV files](#uuids-in-csv-files).
 
 ## Defining relations between objects
 
