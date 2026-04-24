@@ -1,6 +1,6 @@
 ## Releases
 
-## v2.23 (unreleased)
+## v2.23 (2026-04-24)
 #### Features
   - External processes can now be used as a data source (#251)
   - Handles CSV files in UTF-8 with BOM (#253)
