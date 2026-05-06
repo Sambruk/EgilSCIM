@@ -56,7 +56,6 @@ file(GLOB_RECURSE SOURCES
         "${PROJECT_SOURCE_DIR}/${srcroot}/*.hpp"
 )
 list(FILTER SOURCES EXCLUDE REGEX ".*/${srcroot}/tests/.*")
-list(FILTER SOURCES EXCLUDE REGEX ".*/${srcroot}/utility/gsl(/.*|$)")
 list(FILTER SOURCES EXCLUDE REGEX ".*/main\.cpp$")
 
 file(GLOB TEST_SOURCES "${PROJECT_SOURCE_DIR}/${srcroot}/tests/*.cpp")
