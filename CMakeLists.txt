@@ -35,7 +35,7 @@ else()
     include_directories(${CURL_INCLUDE_DIRS})
 endif ()
 
-find_package(Boost REQUIRED COMPONENTS program_options uuid interprocess)
+find_package(Boost CONFIG REQUIRED COMPONENTS program_options uuid interprocess)
 if (NOT Boost_FOUND)
     message(FATAL_ERROR "please install boost")
 else ()
