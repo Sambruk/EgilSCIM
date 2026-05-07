@@ -42,7 +42,10 @@ int config_file::load_templates() {
         if (type_end != std::string::npos) {
             std::string::const_iterator iter = std::begin(variable.first);
             std::string type = {iter, iter + type_end};
-            load_template(type, variable.second);
+            err = load_template(type, variable.second);
+            if (err) {
+                break;
+            }
         }
     }
     return err;
@@ -142,7 +145,7 @@ int config_file::load(const std::string &file_name) {
     int err = load_variables();
 
     if (!err) {
-        load_templates();
+        err = load_templates();
     }
 
     std::string val = get("scim-test-run", true);
