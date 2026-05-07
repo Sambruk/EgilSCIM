@@ -54,7 +54,7 @@ class config_parser {
 	size_t col;
 
 public:
-	using insert_fn = std::function<int(const std::string&, const std::string&)>;
+	using insert_fn = std::function<void(const std::string&, const std::string&)>;
 
 	/**
 	 * Constructor for the config_parser.
