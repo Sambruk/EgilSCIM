@@ -14,20 +14,20 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-2022]
         build_type: [Release]
         include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
+          - os: windows-2022
             cmake_preset: windows
           - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
             cmake_preset: unix
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Setup MSVC
+      if: matrix.os == 'windows-2022'
+      uses: ilammy/msvc-dev-cmd@v1
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -45,14 +45,19 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get update && sudo apt-get install -y libldap2-dev
 
+    - name: Show CMake version and generators
+      run: |
+        cmake --version
+        cmake --help
+
     - name: Configure CMake
-      run: cmake -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} --preset=${{ matrix.cmake_preset }}
+      run: cmake --preset=${{ matrix.cmake_preset }}
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Tests on Windows
-      if: matrix.os == 'windows-latest'
+      if: matrix.os == 'windows-2022'
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
       run: .\${{ matrix.build_type }}\tests.exe
 
@@ -62,7 +67,7 @@ jobs:
       run: ./tests
 
     - name: Upload Windows artifacts
-      if: matrix.os == 'windows-latest'
+      if: matrix.os == 'windows-2022'
       uses: actions/upload-artifact@v4
       with:
         name: EgilSCIMClient-${{ matrix.os }}

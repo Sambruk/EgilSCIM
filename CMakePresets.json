@@ -4,6 +4,7 @@
     {
       "name": "windows",
       "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
