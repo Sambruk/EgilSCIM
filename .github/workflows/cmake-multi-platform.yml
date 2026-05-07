@@ -46,7 +46,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y libldap2-dev
 
     - name: Configure CMake
-      run: cmake -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} --preset=${{ matrix.cmake_preset }}
+      run: cmake --preset=${{ matrix.cmake_preset }}
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
