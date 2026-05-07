@@ -18,16 +18,16 @@ jobs:
         build_type: [Release]
         include:
           - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
             cmake_preset: windows
           - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
             cmake_preset: unix
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Setup MSVC
+      if: matrix.os == 'windows-latest'
+      uses: ilammy/msvc-dev-cmd@v1
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
