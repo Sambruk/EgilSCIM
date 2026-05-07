@@ -58,13 +58,14 @@ int config_file::load_template(const std::string &ss12000type, const std::string
         std::cerr << ss12000type << "-scim-conf requested but the file is missing" << std::endl;
         return -1;
     }
-    config_parser parser(std::begin(content), std::end(content));
+    config_parser parser(std::begin(content), std::end(content),
+                         [this](const std::string& k, const std::string& v) { return insert(k, v); });
     try {
         parser.parse();
     }
     catch (const config_parse_error& e) {
         std::cerr << "Failed to parse " << ss12000type << "-scim-conf" << std::endl;
-        simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", file.c_str(),
+        simplescim_error_string_set_prefix("%s:%zu:%zu", file.c_str(),
                                                e.line(), e.col());
         simplescim_error_string_set_message("%s", e.what());
         return -1;
@@ -134,14 +135,15 @@ int config_file::load_variables() {
 
     /* Parse file contents. */
     try {
-        config_parser(std::begin(input), std::end(input)).parse();
+        config_parser(std::begin(input), std::end(input),
+                      [this](const std::string& k, const std::string& v) { return insert(k, v); }).parse();
     }
     catch (const config_parse_error& e) {
-        clear();
         std::cerr << "Failed to parse config file" << std::endl;
-        simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", filename.c_str(),
+        simplescim_error_string_set_prefix("%s:%zu:%zu", filename.u8string().c_str(),
                                                e.line(), e.col());
         simplescim_error_string_set_message("%s", e.what());
+        clear();
         return -1;
     }
     return 0;

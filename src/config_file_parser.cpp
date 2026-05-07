@@ -26,8 +26,7 @@
 #include <algorithm>
 #include <set>
 #include <vector>
-#include "utility/simplescim_error_string.hpp"
-#include "config_file.hpp"
+#include "utility/utils.hpp"
 
 
 int config_parser::is_varid(char c) {
@@ -197,7 +196,7 @@ void config_parser::rule_assign() {
 	rule_value(val);
 
 
-	config_file::instance().insert(var, val);
+	inserter_(var, val);
 }
 
 int config_parser::advance_to(const char c) {
@@ -232,10 +231,10 @@ void config_parser::syntax_error(const std::string &str) {
 
 void config_parser::syntax_error_expected(const std::string &str) {
 	if (isprint(*cur)) {
-        auto msg = string_format("expected %s, found '%c'", str.c_str(), *cur);
+        auto msg = string_format("syntax error: expected %s, found '%c'", str.c_str(), *cur);
         throw config_parse_error(line, col, msg);
 	} else {
-		auto msg = string_format("expected %s, found 0x%02X", str.c_str(), *cur);
+		auto msg = string_format("syntax error: expected %s, found 0x%02X", str.c_str(), *cur);
         throw config_parse_error(line, col, msg);
 	}
 }

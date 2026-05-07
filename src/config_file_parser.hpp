@@ -22,6 +22,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <functional>
 
 /**
  * Exception thrown by config_parser when a syntax error is encountered.
@@ -51,9 +52,19 @@ class config_parser {
 	iter end;
 	size_t line;
 	size_t col;
+
 public:
-	explicit config_parser(iter first, iter last) : start(first), cur(first), end(last),
-	                                                line(0), col(0) {};
+	using insert_fn = std::function<int(const std::string&, const std::string&)>;
+
+	/**
+	 * Constructor for the config_parser.
+	 * @param first Iterator to the beginning of the input string.
+	 * @param last Iterator to the end of the input string.
+	 * @param inserter Function to insert parsed key-value pairs.
+	 */
+	explicit config_parser(iter first, iter last,
+							insert_fn inserter) : start(first), cur(first), end(last),
+	                                                line(0), col(0), inserter_(inserter) {};
 
 	~config_parser() = default;
 
@@ -109,7 +120,8 @@ private:
 	void syntax_error(const std::string &str);
 
 	void syntax_error_expected(const std::string &str);
-
+	
+	insert_fn inserter_;
 };
 
 #endif
