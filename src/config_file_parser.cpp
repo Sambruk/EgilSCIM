@@ -53,9 +53,7 @@ int config_parser::is_varid(char c) {
 	return (int) lookup_table[(unsigned char) c];
 }
 
-int config_parser::parse() {
-	int err;
-
+void config_parser::parse() {
 	/** Zero or more lines */
 	while (cur != end) {
 		/** Optional white space */
@@ -63,32 +61,21 @@ int config_parser::parse() {
 
 		/** Optional variable assignment */
 		if (is_varid(*cur)) {
-			err = rule_assign();
-
-			if (err == -1) {
-				return -1;
-			}
+			rule_assign();
 		}
 
 		/** Optional comment */
 		if (*cur == '#') {
-			err = rule_comment();
-
-			if (err == -1) {
-				return -1;
-			}
+			rule_comment();
 		}
 
 		/** Obligatory newline */
 		if (*cur != '\n') {
 			syntax_error_expected("end-of-line, there should be a new line after ?>");
-			return -1;
 		}
 
 		next_line();
 	}
-
-	return 0;
 }
 
 void config_parser::next_line() {
@@ -101,7 +88,7 @@ void config_parser::rule_skip_ws() {
 	advance(std::string(cur, end).find_first_not_of(" \t"));
 }
 
-int config_parser::rule_varid(std::string &varp) {
+void config_parser::rule_varid(std::string &varp) {
 	std::string var;
 	size_t var_len = 0;
 
@@ -112,17 +99,14 @@ int config_parser::rule_varid(std::string &varp) {
 
 	if (var_len == 0) {
 		syntax_error("empty variable name");
-		return -1;
 	}
 
 	varp.assign(cur, cur + var_len);
 
 	advance(var_len);
-
-	return 0;
 }
 
-int config_parser::rule_value(std::string &valp) {
+void config_parser::rule_value(std::string &valp) {
 	size_t val_len = 0;
 
 	/** Multi line value or single line value */
@@ -140,7 +124,6 @@ int config_parser::rule_value(std::string &valp) {
 				line = tmp_line;
 				col = tmp_col;
 				syntax_error("unexpected end-of-file");
-				return -1;
 			}
 
 			/** Multi line value terminated by '?>' */
@@ -175,7 +158,6 @@ int config_parser::rule_value(std::string &valp) {
 		if (cur + val_len == end) {
 			col += val_len;
 			syntax_error("unexpected end-of-file");
-			return -1;
 		}
 
 		valp.assign(cur, cur + val_len);
@@ -186,25 +168,16 @@ int config_parser::rule_value(std::string &valp) {
 		valp.erase(valp.find_last_not_of(" \n\r\t") + 1);
 
 	}
-
-	return 0;
 }
 
-int config_parser::rule_assign() {
-	int err;
-
+void config_parser::rule_assign() {
 	/** Obligatory variable name */
 	if (!is_varid(*cur)) {
 		syntax_error_expected("variable name");
-		return -1;
 	}
 
 	std::string var;
-	err = rule_varid(var);
-
-	if (err == -1) {
-		return -1;
-	}
+	rule_varid(var);
 
 	/** Optional white space */
 	rule_skip_ws();
@@ -212,7 +185,6 @@ int config_parser::rule_assign() {
 	/** Obligatory variable assignment character */
 	if (*cur != '=') {
 		syntax_error_expected("'='");
-		return -1;
 	}
 
 	advance();
@@ -222,19 +194,10 @@ int config_parser::rule_assign() {
 
 	/* Obligatory value */
 	std::string val;
-	err = rule_value(val);
+	rule_value(val);
 
-	if (err == -1) {
-		return -1;
-	}
 
-	err = config_file::instance().insert(var, val);
-
-	if (err == -1) {
-		return -1;
-	}
-
-	return 0;
+	config_file::instance().insert(var, val);
 }
 
 int config_parser::advance_to(const char c) {
@@ -250,52 +213,30 @@ void config_parser::advance(size_t dist) {
 	col += dist;
 }
 
-int config_parser::rule_comment() {
+void config_parser::rule_comment() {
 	/** Obligatory line comment initialiser character */
 	if (*cur != '#') {
 		syntax_error_expected("'#'");
-		return -1;
 	}
 
 	advance();
 
 	if (advance_to('\n') == -1 || cur == end) {
 		syntax_error("unexpected end-of-file");
-		return -1;
 	}
-
-	return 0;
 }
 
 void config_parser::syntax_error(const std::string &str) {
-	/** Set prefix */
-	auto config = config_file::instance().file_name_str();
-	simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", config.c_str(),
-	                                   line, col);
-
-	/** Set message */
-	simplescim_error_string_set_message("%s", str.c_str());
+    throw config_parse_error(line, col, "syntax error: " + str);
 }
 
 void config_parser::syntax_error_expected(const std::string &str) {
-	/** Set prefix */
-	auto config = config_file::instance().file_name_str();
-	simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", config.c_str(),
-	                                   line, col);
-
-	/** Set message */
 	if (isprint(*cur)) {
-		simplescim_error_string_set_message(
-				"expected %s, found '%c'",
-				str.c_str(),
-				*cur
-		);
+        auto msg = string_format("expected %s, found '%c'", str.c_str(), *cur);
+        throw config_parse_error(line, col, msg);
 	} else {
-		simplescim_error_string_set_message(
-				"expected %s, found 0x%02X",
-				str.c_str(),
-				*cur
-		);
+		auto msg = string_format("expected %s, found 0x%02X", str.c_str(), *cur);
+        throw config_parse_error(line, col, msg);
 	}
 }
 
