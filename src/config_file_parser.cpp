@@ -123,7 +123,10 @@ void config_parser::rule_value(std::string &valp) {
 	size_t val_len = 0;
 
 	/** Multi line value or single line value */
-	if (*cur == '<' && *(cur + 1) == '?') {
+	if (*cur == '<') {
+		if (cur + 1 == end || *(cur + 1) != '?') {
+			syntax_error_expected("'<?' to start a multi line value");
+        }
 		size_t tmp_line, tmp_col;
 
 		advance(2);
@@ -133,7 +136,7 @@ void config_parser::rule_value(std::string &valp) {
 
 		/** Determine length of multi line value */
 		for (;;) {
-			if (*(cur + val_len) == '\0') {
+			if (cur + val_len == end) {
 				line = tmp_line;
 				col = tmp_col;
 				syntax_error("unexpected end-of-file");
