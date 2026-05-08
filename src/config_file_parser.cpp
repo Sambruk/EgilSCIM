@@ -173,9 +173,9 @@ void config_parser::rule_value(std::string &valp) {
 		rule_skip_ws();
 	} else {
 		/** Determine single line value length */
-		while (*(cur + val_len) != '\n'
-		       && *(cur + val_len) != '#'
-		       && (cur + val_len) != end) {
+		while ((cur + val_len) != end 
+				&& *(cur + val_len) != '\n'
+				&& *(cur + val_len) != '#') {
 			++val_len;
 		}
 
