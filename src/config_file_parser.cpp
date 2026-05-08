@@ -143,8 +143,16 @@ void config_parser::rule_value(std::string &valp) {
 			}
 
 			/** Multi line value terminated by '?>' */
-			if (*(cur + val_len) == '?' && *(cur + val_len + 1) == '>') {
-				break;
+			if (*(cur + val_len) == '?') {
+				if (cur + val_len + 1 == end) {
+					line = tmp_line;
+					col = tmp_col;
+					syntax_error("unexpected end-of-file");
+                }
+				else if (*(cur + val_len + 1) == '>') {
+					break;
+				}
+                // else just regular ? in multi line value, continue searching for '?>'
 			}
 
 			if (*(cur + val_len) == '\n') {
