@@ -286,3 +286,20 @@ TEST_CASE("Config file parser: exception carries line and column of error") {
         REQUIRE(e.line() == 1);   // zero-based: second line
     }
 }
+
+// ===========================================================================
+// Regression tests for specific problems
+// ===========================================================================
+TEST_CASE("Config file parser: trailing whitespace without newline at end of file") {
+    // Even if there is only whitespace after the last assignment, it must be
+    // followed by a newline before end-of-file
+    string input = "key=value   \n  ";   // no trailing newline
+    auto expected = std::map<std::string, std::string>{ {"key", "value"} };
+    REQUIRE(parse(input) == expected);
+}
+
+TEST_CASE("Config file parser: empty variable before end-of-file") {
+    string input = "key=";   // no trailing newline
+    auto expected = std::map<std::string, std::string>{ {"key", ""} };
+    REQUIRE(parse(input) == expected);
+}

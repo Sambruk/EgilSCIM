@@ -58,15 +58,27 @@ void config_parser::parse() {
 		/** Optional white space */
 		rule_skip_ws();
 
+		if (cur == end) {
+			break;
+        }
+
 		/** Optional variable assignment */
 		if (is_varid(*cur)) {
 			rule_assign();
 		}
 
+		if (cur == end) {
+			break;
+        }
+
 		/** Optional comment */
 		if (*cur == '#') {
 			rule_comment();
 		}
+
+		if (cur == end) {
+			break;
+        }
 
 		/** Obligatory newline */
 		if (*cur != '\n') {
@@ -84,7 +96,9 @@ void config_parser::next_line() {
 }
 
 void config_parser::rule_skip_ws() {
-	advance(std::string(cur, end).find_first_not_of(" \t"));
+	while (cur != end && (*cur == ' ' || *cur == '\t')) {
+		advance();
+    }
 }
 
 void config_parser::rule_varid(std::string &varp) {
@@ -181,6 +195,10 @@ void config_parser::rule_assign() {
 	/** Optional white space */
 	rule_skip_ws();
 
+	if (cur == end) {
+		syntax_error("unexpected end-of-file");
+    }
+
 	/** Obligatory variable assignment character */
 	if (*cur != '=') {
 		syntax_error_expected("'='");
@@ -193,8 +211,12 @@ void config_parser::rule_assign() {
 
 	/* Obligatory value */
 	std::string val;
-	rule_value(val);
 
+    // Don't attempt to get the value if we are at the end of the file, but do allow an empty value even at the end of the file. 
+	// This allows for a file that ends with "key=value" without a newline at the end, which is a common case.
+	if (cur != end) {
+		rule_value(val);
+	}
 
 	inserter_(var, val);
 }
