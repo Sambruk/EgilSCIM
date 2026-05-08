@@ -311,4 +311,5 @@ TEST_CASE("Config file parser: end of file in the middle of multi-line value") {
     string input = "key=<?value without closing";
     REQUIRE_THROWS_AS(parse(input), config_parse_error);
     string input2 = "key=<?value without closing?";
+    REQUIRE_THROWS_AS(parse(input), config_parse_error);
 }
