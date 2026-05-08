@@ -123,10 +123,7 @@ void config_parser::rule_value(std::string &valp) {
 	size_t val_len = 0;
 
 	/** Multi line value or single line value */
-	if (*cur == '<') {
-		if (cur + 1 == end || *(cur + 1) != '?') {
-			syntax_error_expected("'<?' to start a multi line value");
-        }
+	if (*cur == '<' && ((cur + 1) != end && *(cur + 1) == '?')) {
 		size_t tmp_line, tmp_col;
 
 		advance(2);
@@ -179,11 +176,6 @@ void config_parser::rule_value(std::string &valp) {
 			++val_len;
 		}
 
-		if (cur + val_len == end) {
-			col += val_len;
-			syntax_error("unexpected end-of-file");
-		}
-
 		valp.assign(cur, cur + val_len);
 
 		advance(val_len);
@@ -224,7 +216,7 @@ void config_parser::rule_assign() {
 	std::string val;
 
     // Don't attempt to get the value if we are at the end of the file, but do allow an empty value even at the end of the file. 
-	// This allows for a file that ends with "key=value" without a newline at the end, which is a common case.
+	// This allows for a file that ends with "key=" without a newline at the end.
 	if (cur != end) {
 		rule_value(val);
 	}
@@ -245,17 +237,19 @@ void config_parser::advance(size_t dist) {
 	col += dist;
 }
 
+void config_parser::rule_skip_rest_of_line() {
+	while (cur != end && *cur != '\n') {
+		advance();
+	}
+}
+
 void config_parser::rule_comment() {
 	/** Obligatory line comment initialiser character */
 	if (*cur != '#') {
 		syntax_error_expected("'#'");
 	}
 
-	advance();
-
-	if (advance_to('\n') == -1 || cur == end) {
-		syntax_error("unexpected end-of-file");
-	}
+	rule_skip_rest_of_line();
 }
 
 void config_parser::syntax_error(const std::string &str) {
@@ -263,11 +257,11 @@ void config_parser::syntax_error(const std::string &str) {
 }
 
 void config_parser::syntax_error_expected(const std::string &str) {
-	if (isprint(*cur)) {
+	if (isprint(static_cast<unsigned char>(*cur))) {
         auto msg = string_format("syntax error: expected %s, found '%c'", str.c_str(), *cur);
         throw config_parse_error(line, col, msg);
 	} else {
-		auto msg = string_format("syntax error: expected %s, found 0x%02X", str.c_str(), *cur);
+		auto msg = string_format("syntax error: expected %s, found 0x%02X", str.c_str(), static_cast<unsigned char>(*cur));
         throw config_parse_error(line, col, msg);
 	}
 }

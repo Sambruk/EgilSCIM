@@ -215,20 +215,19 @@ TEST_CASE("Config file parser: mix of assignments, blank lines and comments") {
 }
 
 // ===========================================================================
-// Error: missing newline at end of file
+// Missing newline at end of file
 // ===========================================================================
 
-TEST_CASE("Config file parser: missing newline at end of file throws") {
-    // Every line, including the last, must be terminated by '\n'.
-    // A file that does not end with '\n' is a syntax error.
+TEST_CASE("Config file parser: missing newline at end of file, after assignment, is ok") {
     string input = "key=value";   // no trailing newline
-    REQUIRE_THROWS_AS(parse(input), config_parse_error);
+    auto expected = std::map<std::string, std::string>{{"key", "value"}};
+    REQUIRE(parse(input) == expected);
 }
 
-TEST_CASE("Config file parser: comment not terminated by newline throws") {
-    // A comment must be followed by '\n' before end-of-file
+TEST_CASE("Config file parser: comment not terminated by end of file is ok") {
+    // A comment doesn't need to be followed by '\n' before end-of-file
     string input = "# unterminated comment";
-    REQUIRE_THROWS_AS(parse(input), config_parse_error);
+    REQUIRE_NOTHROW(parse(input));
 }
 
 // ===========================================================================
@@ -291,15 +290,25 @@ TEST_CASE("Config file parser: exception carries line and column of error") {
 // Regression tests for specific problems
 // ===========================================================================
 TEST_CASE("Config file parser: trailing whitespace without newline at end of file") {
-    // Even if there is only whitespace after the last assignment, it must be
-    // followed by a newline before end-of-file
-    string input = "key=value   \n  ";   // no trailing newline
+    string input = "key=value   \n  ";   // last line has trailing whitespace but no newline before end of file
     auto expected = std::map<std::string, std::string>{ {"key", "value"} };
     REQUIRE(parse(input) == expected);
 }
 
-TEST_CASE("Config file parser: empty variable before end-of-file") {
+TEST_CASE("Config file parser: variable with empty value before end-of-file") {
     string input = "key=";   // no trailing newline
     auto expected = std::map<std::string, std::string>{ {"key", ""} };
     REQUIRE(parse(input) == expected);
+}
+
+TEST_CASE("Config file parser: single line value containing only < followed by end-of-file") {
+    string input = "key=<";   // no trailing newline
+    auto expected = std::map<std::string, std::string>{ {"key", "<"} };
+    REQUIRE(parse(input) == expected);
+}
+
+TEST_CASE("Config file parser: end of file in the middle of multi-line value") {
+    string input = "key=<?value without closing";
+    REQUIRE_THROWS_AS(parse(input), config_parse_error);
+    string input2 = "key=<?value without closing?";
 }

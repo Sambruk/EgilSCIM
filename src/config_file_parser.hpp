@@ -112,6 +112,8 @@ private:
 
 	int advance_to(char c);
 
+	void rule_skip_rest_of_line();
+
 	void next_line();
 
 	/* <comment> ::= '#' [^\n]* */
