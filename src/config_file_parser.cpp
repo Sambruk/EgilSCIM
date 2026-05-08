@@ -106,7 +106,7 @@ void config_parser::rule_varid(std::string &varp) {
 	size_t var_len = 0;
 
 	/* Determine variable name length */
-	while (is_varid(*(cur + var_len))) {
+	while (cur + var_len < end && is_varid(*(cur + var_len))) {
 		++var_len;
 	}
 
