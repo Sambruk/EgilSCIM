@@ -21,6 +21,7 @@
 #define SIMPLESCIM_UTILS_HPP
 
 #include <cstdlib>
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <map>
@@ -141,5 +142,26 @@ void parse_override(const std::string& override_str,
  * be a problem as long as the dbg string isn't long.
  */
 std::string dummy_SCIM_object(const std::string& uuid, const std::string& dbg);
+
+/**
+ * Formats a string with printf-like syntax and returns it as a std::string.
+ * Encoding errors will cause an empty string to be returned (no exception will be thrown).
+ * When we move to C++20 we can replace this with std::format.
+ */
+template<typename... Args>
+std::string string_format(const char* fmt, Args... args)
+{
+    int size = std::snprintf(nullptr, 0, fmt, args...) + 1;
+    if (size <= 0) {
+        return "";
+    }
+
+    std::string buf(size, '\0');
+
+    std::snprintf(buf.data(), size, fmt, args...);
+
+    buf.pop_back(); // remove terminating '\0'
+    return buf;
+}
 
 #endif //SIMPLESCIM_UTILS_HPP

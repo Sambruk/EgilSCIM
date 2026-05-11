@@ -26,8 +26,8 @@
 #include <algorithm>
 #include <set>
 #include <vector>
-#include "utility/simplescim_error_string.hpp"
-#include "config_file.hpp"
+#include <cassert>
+#include "utility/utils.hpp"
 
 
 int config_parser::is_varid(char c) {
@@ -53,80 +53,86 @@ int config_parser::is_varid(char c) {
 	return (int) lookup_table[(unsigned char) c];
 }
 
-int config_parser::parse() {
-	int err;
-
+void config_parser::parse() {
 	/** Zero or more lines */
 	while (cur != end) {
 		/** Optional white space */
 		rule_skip_ws();
 
+		if (cur == end) {
+			break;
+        }
+
 		/** Optional variable assignment */
 		if (is_varid(*cur)) {
-			err = rule_assign();
-
-			if (err == -1) {
-				return -1;
-			}
+			rule_assign();
 		}
+
+		if (cur == end) {
+			break;
+        }
 
 		/** Optional comment */
 		if (*cur == '#') {
-			err = rule_comment();
-
-			if (err == -1) {
-				return -1;
-			}
+			rule_comment();
 		}
 
+		if (cur == end) {
+			break;
+        }
+
 		/** Obligatory newline */
-		if (*cur != '\n') {
-			syntax_error_expected("end-of-line, there should be a new line after ?>");
-			return -1;
+		if (*cur != '\n' && *cur != '\r') {
+           syntax_error_expected("end-of-line", *cur);
 		}
 
 		next_line();
 	}
-
-	return 0;
 }
 
 void config_parser::next_line() {
-	++cur;
+    assert(cur != end && (*cur == '\n' || *cur == '\r'));
+	if (*cur == '\r') {
+		++cur;
+		if (cur != end && *cur == '\n') {
+			++cur;
+		}
+	} else {
+		++cur;
+	}
 	++line;
 	col = 1;
 }
 
 void config_parser::rule_skip_ws() {
-	advance(std::string(cur, end).find_first_not_of(" \t"));
+	while (cur != end && (*cur == ' ' || *cur == '\t')) {
+		advance();
+    }
 }
 
-int config_parser::rule_varid(std::string &varp) {
+void config_parser::rule_varid(std::string &varp) {
 	std::string var;
 	size_t var_len = 0;
 
 	/* Determine variable name length */
-	while (is_varid(*(cur + var_len))) {
+	while (cur + var_len < end && is_varid(*(cur + var_len))) {
 		++var_len;
 	}
 
 	if (var_len == 0) {
 		syntax_error("empty variable name");
-		return -1;
 	}
 
 	varp.assign(cur, cur + var_len);
 
 	advance(var_len);
-
-	return 0;
 }
 
-int config_parser::rule_value(std::string &valp) {
+void config_parser::rule_value(std::string &valp) {
 	size_t val_len = 0;
 
 	/** Multi line value or single line value */
-	if (*cur == '<' && *(cur + 1) == '?') {
+	if (*cur == '<' && ((cur + 1) != end && *(cur + 1) == '?')) {
 		size_t tmp_line, tmp_col;
 
 		advance(2);
@@ -136,16 +142,23 @@ int config_parser::rule_value(std::string &valp) {
 
 		/** Determine length of multi line value */
 		for (;;) {
-			if (*(cur + val_len) == '\0') {
+			if (cur + val_len == end) {
 				line = tmp_line;
 				col = tmp_col;
 				syntax_error("unexpected end-of-file");
-				return -1;
 			}
 
 			/** Multi line value terminated by '?>' */
-			if (*(cur + val_len) == '?' && *(cur + val_len + 1) == '>') {
-				break;
+			if (*(cur + val_len) == '?') {
+				if (cur + val_len + 1 == end) {
+					line = tmp_line;
+					col = tmp_col;
+					syntax_error("unexpected end-of-file");
+                }
+				else if (*(cur + val_len + 1) == '>') {
+					break;
+				}
+                // else just regular ? in multi line value, continue searching for '?>'
 			}
 
 			if (*(cur + val_len) == '\n') {
@@ -166,16 +179,11 @@ int config_parser::rule_value(std::string &valp) {
 		rule_skip_ws();
 	} else {
 		/** Determine single line value length */
-		while (*(cur + val_len) != '\n'
-		       && *(cur + val_len) != '#'
-		       && (cur + val_len) != end) {
+		while ((cur + val_len) != end 
+				&& *(cur + val_len) != '\n'
+				&& *(cur + val_len) != '\r'
+				&& *(cur + val_len) != '#') {
 			++val_len;
-		}
-
-		if (cur + val_len == end) {
-			col += val_len;
-			syntax_error("unexpected end-of-file");
-			return -1;
 		}
 
 		valp.assign(cur, cur + val_len);
@@ -186,33 +194,27 @@ int config_parser::rule_value(std::string &valp) {
 		valp.erase(valp.find_last_not_of(" \n\r\t") + 1);
 
 	}
-
-	return 0;
 }
 
-int config_parser::rule_assign() {
-	int err;
-
+void config_parser::rule_assign() {
 	/** Obligatory variable name */
 	if (!is_varid(*cur)) {
-		syntax_error_expected("variable name");
-		return -1;
+     syntax_error_expected("variable name", *cur);
 	}
 
 	std::string var;
-	err = rule_varid(var);
-
-	if (err == -1) {
-		return -1;
-	}
+	rule_varid(var);
 
 	/** Optional white space */
 	rule_skip_ws();
 
+	if (cur == end) {
+		syntax_error("unexpected end-of-file");
+    }
+
 	/** Obligatory variable assignment character */
 	if (*cur != '=') {
-		syntax_error_expected("'='");
-		return -1;
+       syntax_error_expected("'='", *cur);
 	}
 
 	advance();
@@ -222,19 +224,14 @@ int config_parser::rule_assign() {
 
 	/* Obligatory value */
 	std::string val;
-	err = rule_value(val);
 
-	if (err == -1) {
-		return -1;
+    // Don't attempt to get the value if we are at the end of the file, but do allow an empty value even at the end of the file. 
+	// This allows for a file that ends with "key=" without a newline at the end.
+	if (cur != end) {
+		rule_value(val);
 	}
 
-	err = config_file::instance().insert(var, val);
-
-	if (err == -1) {
-		return -1;
-	}
-
-	return 0;
+	inserter_(var, val);
 }
 
 int config_parser::advance_to(const char c) {
@@ -250,52 +247,32 @@ void config_parser::advance(size_t dist) {
 	col += dist;
 }
 
-int config_parser::rule_comment() {
+void config_parser::skip_rest_of_line() {
+	while (cur != end && *cur != '\n' && *cur != '\r') {
+		advance();
+	}
+}
+
+void config_parser::rule_comment() {
 	/** Obligatory line comment initialiser character */
 	if (*cur != '#') {
-		syntax_error_expected("'#'");
-		return -1;
+       syntax_error_expected("'#'", *cur);
 	}
 
-	advance();
-
-	if (advance_to('\n') == -1 || cur == end) {
-		syntax_error("unexpected end-of-file");
-		return -1;
-	}
-
-	return 0;
+	skip_rest_of_line();
 }
 
 void config_parser::syntax_error(const std::string &str) {
-	/** Set prefix */
-	auto config = config_file::instance().file_name_str();
-	simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", config.c_str(),
-	                                   line, col);
-
-	/** Set message */
-	simplescim_error_string_set_message("%s", str.c_str());
+    throw config_parse_error(line, col, "syntax error: " + str);
 }
 
-void config_parser::syntax_error_expected(const std::string &str) {
-	/** Set prefix */
-	auto config = config_file::instance().file_name_str();
-	simplescim_error_string_set_prefix("%s:%lu:%lu:syntax error", config.c_str(),
-	                                   line, col);
-
-	/** Set message */
-	if (isprint(*cur)) {
-		simplescim_error_string_set_message(
-				"expected %s, found '%c'",
-				str.c_str(),
-				*cur
-		);
+void config_parser::syntax_error_expected(const std::string &str, char found) {
+	if (isprint(static_cast<unsigned char>(found))) {
+			auto msg = string_format("syntax error: expected %s, found '%c'", str.c_str(), found);
+        throw config_parse_error(line, col, msg);
 	} else {
-		simplescim_error_string_set_message(
-				"expected %s, found 0x%02X",
-				str.c_str(),
-				*cur
-		);
+     auto msg = string_format("syntax error: expected %s, found 0x%02X", str.c_str(), static_cast<unsigned char>(found));
+        throw config_parse_error(line, col, msg);
 	}
 }
 
