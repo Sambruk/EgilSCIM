@@ -81,7 +81,7 @@ void config_parser::parse() {
         }
 
 		/** Obligatory newline */
-		if (*cur != '\n') {
+		if (*cur != '\n' && *cur != '\r') {
            syntax_error_expected("end-of-line", *cur);
 		}
 
@@ -90,7 +90,15 @@ void config_parser::parse() {
 }
 
 void config_parser::next_line() {
-	++cur;
+    assert(cur != end && (*cur == '\n' || *cur == '\r'));
+	if (*cur == '\r') {
+		++cur;
+		if (cur != end && *cur == '\n') {
+			++cur;
+		}
+	} else {
+		++cur;
+	}
 	++line;
 	col = 1;
 }
@@ -172,6 +180,7 @@ void config_parser::rule_value(std::string &valp) {
 		/** Determine single line value length */
 		while ((cur + val_len) != end 
 				&& *(cur + val_len) != '\n'
+				&& *(cur + val_len) != '\r'
 				&& *(cur + val_len) != '#') {
 			++val_len;
 		}
@@ -237,8 +246,8 @@ void config_parser::advance(size_t dist) {
 	col += dist;
 }
 
-void config_parser::rule_skip_rest_of_line() {
-	while (cur != end && *cur != '\n') {
+void config_parser::skip_rest_of_line() {
+	while (cur != end && *cur != '\n' && *cur != '\r') {
 		advance();
 	}
 }
@@ -249,7 +258,7 @@ void config_parser::rule_comment() {
        syntax_error_expected("'#'", *cur);
 	}
 
-	rule_skip_rest_of_line();
+	skip_rest_of_line();
 }
 
 void config_parser::syntax_error(const std::string &str) {

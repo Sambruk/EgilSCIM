@@ -300,6 +300,32 @@ TEST_CASE("Config file parser: exception carries line and column of error") {
 }
 
 // ===========================================================================
+// Windows style line endings
+// ===========================================================================
+TEST_CASE("Config file parser: Windows style line endings are accepted") {
+    // Lines ending with "\r\n" are accepted and treated as a single newline
+    string input = "key=value\r\nanother=entry\r\n";
+    map<string, string> expected = {{"key", "value"}, {"another", "entry"}};
+    REQUIRE(parse(input) == expected);
+}
+
+TEST_CASE("Config file parser: Windows style line endings with multi-line value") {
+    // Multi-line values can contain "\r\n" line endings, which are preserved in the value
+    string input =
+        "key=<?\r\nline1\r\nline2\r\n?>\r\n";
+    REQUIRE(parse(input) == map<string, string>{{"key", "\r\nline1\r\nline2\r\n"}});
+}
+
+TEST_CASE("Config file parser: Windows style line endings after comments and blank lines") {
+    // Blank lines and comment lines can end with "\r\n" as well
+    string input =
+        "# comment\r\n"
+        "\r\n"
+        "key=value\r\n";
+    REQUIRE(parse(input) == map<string, string>{{"key", "value"}});
+}
+
+// ===========================================================================
 // Regression tests for specific problems
 // ===========================================================================
 TEST_CASE("Config file parser: trailing whitespace without newline at end of file") {

@@ -112,8 +112,12 @@ private:
 
 	int advance_to(char c);
 
-	void rule_skip_rest_of_line();
+	void skip_rest_of_line();
 
+	/**
+	* Advances 'cur' to the next line, handling both '\n' and '\r\n' line endings, and updates 'line' and 'col' accordingly.
+    * Assumes we're at a line ending when called. In other words cur should not be at the end of the file and *cur should be either '\n' or '\r'.
+	*/
 	void next_line();
 
 	/* <comment> ::= '#' [^\n]* */
