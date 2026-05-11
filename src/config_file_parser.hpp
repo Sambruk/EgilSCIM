@@ -68,10 +68,25 @@ public:
 
 	~config_parser() = default;
 
-	/**
-	 * <config> ::= ( <ws>* <assign>? <comment>? '\n' )*
-	 * Throws config_parse_error on failure.
-	 * */
+    /**
+     * Parses the input according to the grammar defined below. For each found assignment, 
+	 * calls the provided 'inserter' function with the variable name and value.
+	 * 
+     * ---------------------------------------------------------------------------
+	 * Grammar overview
+	 *
+	 *   <config>   ::= ( <ws>* <assign>? <comment>? <line-end> )*
+	 *                  ( <ws>* <assign>? <comment>? )?
+	 *   <line-end> ::= '\n' | '\r\n'
+	 *   <ws>       ::= ' ' | '\t'
+	 *   <varid>    ::= [-_a-zA-Z0-9]+
+	 *   <assign>   ::= <varid> <ws>* '=' <ws>* <value>
+	 *   <value>    ::= '<?' [^'?>']* '?>' <ws>*  -- multi-line form
+	 *                | [^'#' <line-end>]*        -- single-line form (trailing ws trimmed)
+	 *   <comment>  ::= '#' [^<line-end>]*
+	 * ---------------------------------------------------------------------------
+     * Throws config_parse_error on failure.
+     */
 	void parse();
 
 	void reset() {
