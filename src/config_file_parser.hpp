@@ -121,7 +121,7 @@ private:
 
 	void syntax_error(const std::string &str);
 
-	void syntax_error_expected(const std::string &str);
+	void syntax_error_expected(const std::string &str, char found);
 	
 	insert_fn inserter_;
 };

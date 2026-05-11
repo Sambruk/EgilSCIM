@@ -82,7 +82,7 @@ void config_parser::parse() {
 
 		/** Obligatory newline */
 		if (*cur != '\n') {
-			syntax_error_expected("end-of-line");
+           syntax_error_expected("end-of-line", *cur);
 		}
 
 		next_line();
@@ -189,7 +189,7 @@ void config_parser::rule_value(std::string &valp) {
 void config_parser::rule_assign() {
 	/** Obligatory variable name */
 	if (!is_varid(*cur)) {
-		syntax_error_expected("variable name");
+     syntax_error_expected("variable name", *cur);
 	}
 
 	std::string var;
@@ -204,7 +204,7 @@ void config_parser::rule_assign() {
 
 	/** Obligatory variable assignment character */
 	if (*cur != '=') {
-		syntax_error_expected("'='");
+       syntax_error_expected("'='", *cur);
 	}
 
 	advance();
@@ -246,7 +246,7 @@ void config_parser::rule_skip_rest_of_line() {
 void config_parser::rule_comment() {
 	/** Obligatory line comment initialiser character */
 	if (*cur != '#') {
-		syntax_error_expected("'#'");
+       syntax_error_expected("'#'", *cur);
 	}
 
 	rule_skip_rest_of_line();
@@ -256,12 +256,12 @@ void config_parser::syntax_error(const std::string &str) {
     throw config_parse_error(line, col, "syntax error: " + str);
 }
 
-void config_parser::syntax_error_expected(const std::string &str) {
-	if (isprint(static_cast<unsigned char>(*cur))) {
-        auto msg = string_format("syntax error: expected %s, found '%c'", str.c_str(), *cur);
+void config_parser::syntax_error_expected(const std::string &str, char found) {
+	if (isprint(static_cast<unsigned char>(found))) {
+			auto msg = string_format("syntax error: expected %s, found '%c'", str.c_str(), found);
         throw config_parse_error(line, col, msg);
 	} else {
-		auto msg = string_format("syntax error: expected %s, found 0x%02X", str.c_str(), static_cast<unsigned char>(*cur));
+     auto msg = string_format("syntax error: expected %s, found 0x%02X", str.c_str(), static_cast<unsigned char>(found));
         throw config_parse_error(line, col, msg);
 	}
 }
