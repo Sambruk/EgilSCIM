@@ -224,6 +224,19 @@ TEST_CASE("Config file parser: missing newline at end of file, after assignment,
     REQUIRE(parse(input) == expected);
 }
 
+TEST_CASE("Config file parser: missing newline at end of file, after blank line, is ok") {
+    string input = "key=value\n   ";   // last line has trailing whitespace but no newline before end of file
+    auto expected = std::map<std::string, std::string>{{"key", "value"}};
+    REQUIRE(parse(input) == expected);
+}
+
+TEST_CASE("Config file parser: missing newline at end of file, after multi-line value, is ok") {
+    string input =
+        "key=<?\nvalue\n?>";   // no trailing newline
+    auto expected = std::map<std::string, std::string>{{"key", "\nvalue\n"}};
+    REQUIRE(parse(input) == expected);
+}
+
 TEST_CASE("Config file parser: comment not terminated by end of file is ok") {
     // A comment doesn't need to be followed by '\n' before end-of-file
     string input = "# unterminated comment";
@@ -277,7 +290,7 @@ TEST_CASE("Config file parser: exception carries line and column of error") {
     // The config_parse_error exception reports where in the file the error occurred
     string input =
         "good=ok\n"
-        "bad";     // line 2, missing '=' and no newline
+        "bad";     // line 2, missing '='
     try {
         parse(input);
         FAIL("expected config_parse_error");
