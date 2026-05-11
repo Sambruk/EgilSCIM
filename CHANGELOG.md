@@ -1,5 +1,10 @@
 ## Releases
 
+## Unreleased
+#### Bugfixes
+  - Windows style line endings are now supported in the config file format (#249)
+  - Config files no longer need to end with a line ending (#91)
+
 ## v2.23 (2026-04-24)
 #### Features
   - External processes can now be used as a data source (#251)
