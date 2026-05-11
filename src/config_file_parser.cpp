@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <set>
 #include <vector>
+#include <cassert>
 #include "utility/utils.hpp"
 
 
