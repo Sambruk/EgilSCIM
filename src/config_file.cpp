@@ -52,7 +52,17 @@ int config_file::load_templates() {
 }
 
 int config_file::load_template(const std::string &ss12000type, const std::string &file) {
-    std::string content = read(std::filesystem::canonical(filename.parent_path() / file));
+    std::string content;
+    
+    try {
+        content = read(std::filesystem::canonical(filename.parent_path() / file));
+    } catch (const std::runtime_error& e) {
+        // Note: canonical() can throw if the file doesn't exist, but load_template() is
+        // expected to return -1. In the long run we should convert config_file to use
+        // exceptions more consistently.
+        std::cerr << "Failed to read " << ss12000type << "-scim-conf: " << e.what() << std::endl;
+        return -1;
+    }
 
     if (content.empty()) {
         std::cerr << ss12000type << "-scim-conf requested but the file is missing" << std::endl;
