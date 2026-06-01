@@ -24,12 +24,11 @@
 #include <iostream>
 #include <map>
 #include "utility/utils.hpp"
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental/filesystem>
+#include <filesystem>
 
 class config_file {
     // Absolute, canonical path to the config file
-    std::experimental::filesystem::path filename;
+    std::filesystem::path filename;
 
     std::map<std::string, std::string> variables{};
 
@@ -44,7 +43,7 @@ class config_file {
 
     config_file(const config_file &other) = default;
 
-    std::string read(const std::experimental::filesystem::path& path);
+    std::string read(const std::filesystem::path& path);
 
     int load_variables();
 

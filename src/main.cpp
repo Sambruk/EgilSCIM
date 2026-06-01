@@ -314,7 +314,12 @@ static int run_main(int argc, char *argv[]) {
         int err = 0;
         try {
             err = config.load(config_file);
-        } catch (std::string& msg) {
+        }
+        catch (const std::runtime_error& e) {
+            std::cerr << "Failed to load config file: " << e.what() << std::endl;
+            return EXIT_FAILURE;
+        }
+        catch (std::string& msg) {
             std::cerr << msg << std::endl;
             return EXIT_FAILURE;
         }

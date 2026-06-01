@@ -52,7 +52,17 @@ int config_file::load_templates() {
 }
 
 int config_file::load_template(const std::string &ss12000type, const std::string &file) {
-    std::string content = read(std::experimental::filesystem::canonical(file, filename.parent_path()));
+    std::string content;
+    
+    try {
+        content = read(std::filesystem::canonical(filename.parent_path() / file));
+    } catch (const std::runtime_error& e) {
+        // Note: canonical() can throw if the file doesn't exist, but load_template() is
+        // expected to return -1. In the long run we should convert config_file to use
+        // exceptions more consistently.
+        std::cerr << "Failed to read " << ss12000type << "-scim-conf: " << e.what() << std::endl;
+        return -1;
+    }
 
     if (content.empty()) {
         std::cerr << ss12000type << "-scim-conf requested but the file is missing" << std::endl;
@@ -150,7 +160,7 @@ int config_file::load_variables() {
 }
 
 int config_file::load(const std::string &file_name) {
-    filename = std::experimental::filesystem::canonical(file_name);
+    filename = std::filesystem::canonical(file_name);
     int err = load_variables();
 
     if (!err) {
@@ -163,7 +173,7 @@ int config_file::load(const std::string &file_name) {
     return err;
 }
 
-std::string config_file::read(const std::experimental::filesystem::path& f) {
+std::string config_file::read(const std::filesystem::path& f) {
     std::string content;
 
     std::ifstream file(f);
@@ -174,7 +184,8 @@ std::string config_file::read(const std::experimental::filesystem::path& f) {
         content = buffer.str();
         file.close();
     } else {
-        simplescim_error_string_set_errno("%s", filename.c_str());
+        const auto path_str = f.u8string();
+        simplescim_error_string_set_errno("%s", path_str.c_str());
         return "";
     }
     return content;
@@ -252,7 +263,7 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
 }
 
 std::string config_file::interpret_config_path(const std::string& path) const {
-    return std::experimental::filesystem::absolute(path, filename.parent_path()).u8string();
+    return std::filesystem::absolute(filename.parent_path() / path).u8string();
 }
 
 std::string config_file::get_path(const std::string& variable, bool silent) const {
@@ -315,36 +326,3 @@ int config_file::get_int(const std::string &attrib, int default_value) const {
         return default_value;
     }
 }
-
-//static size_t send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
-//    struct http_response *http_response;
-//
-//    http_response = static_cast<struct http_response *>(userdata);
-//    size_t len = size * nmemb;
-//
-//    for (size_t i = 0; i < len; ++i) {
-//        char c = ((char *) ptr)[i];
-//
-//        if (c == '\r') {
-//            continue;
-//        }
-//
-//        if (http_response->len + 1 == http_response->alloc) {
-//            char *tmp = static_cast<char *>(realloc(http_response->data, http_response->alloc * 2));
-//
-//            if (tmp == nullptr) {
-//                return i;
-//            }
-//
-//            http_response->data = tmp;
-//            http_response->alloc *= 2;
-//        }
-//
-//        http_response->data[http_response->len] = c;
-//        ++http_response->len;
-//    }
-//
-//    http_response->data[http_response->len] = '\0';
-//
-//    return len;
-//}
