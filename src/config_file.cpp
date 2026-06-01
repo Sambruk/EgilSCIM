@@ -52,7 +52,7 @@ int config_file::load_templates() {
 }
 
 int config_file::load_template(const std::string &ss12000type, const std::string &file) {
-    std::string content = read(std::experimental::filesystem::canonical(file, filename.parent_path()));
+    std::string content = read(std::filesystem::canonical(filename.parent_path() / file));
 
     if (content.empty()) {
         std::cerr << ss12000type << "-scim-conf requested but the file is missing" << std::endl;
@@ -150,7 +150,7 @@ int config_file::load_variables() {
 }
 
 int config_file::load(const std::string &file_name) {
-    filename = std::experimental::filesystem::canonical(file_name);
+    filename = std::filesystem::canonical(file_name);
     int err = load_variables();
 
     if (!err) {
@@ -163,7 +163,7 @@ int config_file::load(const std::string &file_name) {
     return err;
 }
 
-std::string config_file::read(const std::experimental::filesystem::path& f) {
+std::string config_file::read(const std::filesystem::path& f) {
     std::string content;
 
     std::ifstream file(f);
@@ -174,7 +174,8 @@ std::string config_file::read(const std::experimental::filesystem::path& f) {
         content = buffer.str();
         file.close();
     } else {
-        simplescim_error_string_set_errno("%s", filename.c_str());
+        const auto path_str = f.u8string();
+        simplescim_error_string_set_errno("%s", path_str.c_str());
         return "";
     }
     return content;
@@ -252,7 +253,7 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
 }
 
 std::string config_file::interpret_config_path(const std::string& path) const {
-    return std::experimental::filesystem::absolute(path, filename.parent_path()).u8string();
+    return std::filesystem::absolute(filename.parent_path() / path).u8string();
 }
 
 std::string config_file::get_path(const std::string& variable, bool silent) const {
