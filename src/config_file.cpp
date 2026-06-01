@@ -316,36 +316,3 @@ int config_file::get_int(const std::string &attrib, int default_value) const {
         return default_value;
     }
 }
-
-//static size_t send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
-//    struct http_response *http_response;
-//
-//    http_response = static_cast<struct http_response *>(userdata);
-//    size_t len = size * nmemb;
-//
-//    for (size_t i = 0; i < len; ++i) {
-//        char c = ((char *) ptr)[i];
-//
-//        if (c == '\r') {
-//            continue;
-//        }
-//
-//        if (http_response->len + 1 == http_response->alloc) {
-//            char *tmp = static_cast<char *>(realloc(http_response->data, http_response->alloc * 2));
-//
-//            if (tmp == nullptr) {
-//                return i;
-//            }
-//
-//            http_response->data = tmp;
-//            http_response->alloc *= 2;
-//        }
-//
-//        http_response->data[http_response->len] = c;
-//        ++http_response->len;
-//    }
-//
-//    http_response->data[http_response->len] = '\0';
-//
-//    return len;
-//}
