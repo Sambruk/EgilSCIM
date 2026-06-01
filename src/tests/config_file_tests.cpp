@@ -31,7 +31,7 @@ public:
 class temporary_directory {
 public:
     temporary_directory() {
-        const auto base = filesystem::absolute(filesystem::temp_directory_path());
+        const auto base = filesystem::canonical(filesystem::temp_directory_path());
         const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
 
         for (int i = 0; i < 100; ++i) {
