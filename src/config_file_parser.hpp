@@ -20,14 +20,30 @@
 #ifndef SIMPLESCIM_CONFIG_FILE_PARSER_H
 #define SIMPLESCIM_CONFIG_FILE_PARSER_H
 
+#include <stdexcept>
 #include <string>
+#include <functional>
 
 /**
- * Parses the configuration file with its contents in
- * 'input'.
- * On success, zero is returned. On error, -1 is returned
- * and simplescim_error_string is set to an appropriate
- * error message.
+ * Exception thrown by config_parser when a syntax error is encountered.
+ * Callers are responsible for prepending the filename to form the full
+ * error location string.
+ * line() and col() return the line and column of the error.
+ * what() returns the error message.
+ */
+class config_parse_error : public std::runtime_error {
+public:
+	explicit config_parse_error(size_t line, size_t col, const std::string &msg) : std::runtime_error(msg), line_(line), col_(col) {}
+    size_t line() const { return line_; }
+    size_t col() const { return col_; }
+private:
+	size_t line_;
+	size_t col_;
+};
+
+/**
+ * Parses the configuration file with its contents in 'input'.
+ * Throws config_parse_error on syntax errors.
  */
 class config_parser {
 	using iter = std::string::const_iterator;
@@ -36,16 +52,42 @@ class config_parser {
 	iter end;
 	size_t line;
 	size_t col;
+
 public:
-	explicit config_parser(iter first, iter last) : start(first), cur(first), end(last),
-	                                                line(0), col(0) {};
+	using insert_fn = std::function<void(const std::string&, const std::string&)>;
+
+	/**
+	 * Constructor for the config_parser.
+	 * @param first Iterator to the beginning of the input string.
+	 * @param last Iterator to the end of the input string.
+	 * @param inserter Function to insert parsed key-value pairs.
+	 */
+	explicit config_parser(iter first, iter last,
+							insert_fn inserter) : start(first), cur(first), end(last),
+	                                                line(0), col(0), inserter_(inserter) {};
 
 	~config_parser() = default;
 
-	/**
-	 * <config> ::= ( <ws>* <assign>? <comment>? '\n' )*
-	 * */
-	int parse();
+    /**
+     * Parses the input according to the grammar defined below. For each found assignment, 
+	 * calls the provided 'inserter' function with the variable name and value.
+	 * 
+     * ---------------------------------------------------------------------------
+	 * Grammar overview
+	 *
+	 *   <config>   ::= ( <ws>* <assign>? <comment>? <line-end> )*
+	 *                  ( <ws>* <assign>? <comment>? )?
+	 *   <line-end> ::= '\n' | '\r\n'
+	 *   <ws>       ::= ' ' | '\t'
+	 *   <varid>    ::= [-_a-zA-Z0-9]+
+	 *   <assign>   ::= <varid> <ws>* '=' <ws>* <value>
+	 *   <value>    ::= '<?' [^'?>']* '?>' <ws>*  -- multi-line form
+	 *                | [^'#' <line-end>]*        -- single-line form (trailing ws trimmed)
+	 *   <comment>  ::= '#' [^<line-end>]*
+	 * ---------------------------------------------------------------------------
+     * Throws config_parse_error on failure.
+     */
+	void parse();
 
 	void reset() {
 		cur = start;
@@ -68,32 +110,39 @@ private:
 	/**
 	 * <varid> ::= [-_a-zA-Z0-9]+
 	 */
-	int rule_varid(std::string &varp);
+	void rule_varid(std::string &varp);
 
 	/**
 	 * <value> ::= '<?' [^('?>')]* '?>' <ws>*
 	 *           | [^('#'|'\n')]*                    # remove trailing <ws>*
 	 */
-	int rule_value(std::string &valp);
+	void rule_value(std::string &valp);
 
 	/**
 	 * <assign> ::= <varid> <ws>* '=' <ws>* <value>
 	 * */
-	int rule_assign();
+	void rule_assign();
 
 	void advance(size_t dist = 1);
 
 	int advance_to(char c);
 
+	void skip_rest_of_line();
+
+	/**
+	* Advances 'cur' to the next line, handling both '\n' and '\r\n' line endings, and updates 'line' and 'col' accordingly.
+    * Assumes we're at a line ending when called. In other words cur should not be at the end of the file and *cur should be either '\n' or '\r'.
+	*/
 	void next_line();
 
 	/* <comment> ::= '#' [^\n]* */
-	int rule_comment();
+	void rule_comment();
 
 	void syntax_error(const std::string &str);
 
-	void syntax_error_expected(const std::string &str);
-
+	void syntax_error_expected(const std::string &str, char found);
+	
+	insert_fn inserter_;
 };
 
 #endif

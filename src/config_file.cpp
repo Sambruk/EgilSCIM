@@ -42,107 +42,129 @@ int config_file::load_templates() {
         if (type_end != std::string::npos) {
             std::string::const_iterator iter = std::begin(variable.first);
             std::string type = {iter, iter + type_end};
-            load_template(type, variable.second);
+            err = load_template(type, variable.second);
+            if (err) {
+                break;
+            }
         }
     }
     return err;
 }
 
 int config_file::load_template(const std::string &ss12000type, const std::string &file) {
-    int err = 0;
-    std::string content = read(std::experimental::filesystem::canonical(file, filename.parent_path()));
+    std::string content;
+    
+    try {
+        content = read(std::filesystem::canonical(filename.parent_path() / file));
+    } catch (const std::runtime_error& e) {
+        // Note: canonical() can throw if the file doesn't exist, but load_template() is
+        // expected to return -1. In the long run we should convert config_file to use
+        // exceptions more consistently.
+        std::cerr << "Failed to read " << ss12000type << "-scim-conf: " << e.what() << std::endl;
+        return -1;
+    }
 
     if (content.empty()) {
         std::cerr << ss12000type << "-scim-conf requested but the file is missing" << std::endl;
         return -1;
     }
-    config_parser parser(std::begin(content), std::end(content));
-    err = parser.parse();
-    if (!err) {
-        std::set<std::string> var_set;
-        auto json_template = get(ss12000type + "-scim-json-template", true);
-        if (!json_template.empty()) {
-            var_set = JSONTemplateParser::find_variables(json_template.begin(),
-                json_template.end());
-        }
-        
-        auto extra = get_vector(ss12000type + "-hidden-attributes", true);
-        if (!extra.empty())
-            var_set.insert(extra.begin(), extra.end());
+    config_parser parser(std::begin(content), std::end(content),
+                         [this](const std::string& k, const std::string& v) { return insert(k, v); });
+    try {
+        parser.parse();
+    }
+    catch (const config_parse_error& e) {
+        std::cerr << "Failed to parse " << ss12000type << "-scim-conf" << std::endl;
+        simplescim_error_string_set_prefix("%s:%zu:%zu", file.c_str(),
+                                               e.line(), e.col());
+        simplescim_error_string_set_message("%s", e.what());
+        return -1;
+    }
+    std::set<std::string> var_set;
+    auto json_template = get(ss12000type + "-scim-json-template", true);
+    if (!json_template.empty()) {
+        var_set = JSONTemplateParser::find_variables(json_template.begin(),
+            json_template.end());
+    }
 
-        relations_vector relations =
-            json_data_file::json_to_ldap_remote_relations(
-                get(ss12000type + "-remote-relations", true), ss12000type);
+    auto extra = get_vector(ss12000type + "-hidden-attributes", true);
+    if (!extra.empty()) {
+        var_set.insert(extra.begin(), extra.end());
+    }
 
-        for (auto& relation : relations) {
-            if (!relation.local_attribute.empty()) {
-                var_set.insert(relation.local_attribute);
-            }
-            if (!relation.remote_attribute.empty()) {
-                add_variable(relation.type + "-scim-variables", relation.remote_attribute);
-                add_variable("all-scim-variables", relation.remote_attribute);
-            }
+    relations_vector relations =
+        json_data_file::json_to_ldap_remote_relations(
+            get(ss12000type + "-remote-relations", true), ss12000type);
+
+    for (auto& relation : relations) {
+        if (!relation.local_attribute.empty()) {
+            var_set.insert(relation.local_attribute);
+        }
+        if (!relation.remote_attribute.empty()) {
+            add_variable(relation.type + "-scim-variables", relation.remote_attribute);
+            add_variable("all-scim-variables", relation.remote_attribute);
+        }
+    }
+
+    auto transformed_attributes = get_transformed_attributes(ss12000type);
+    for (auto attr : transformed_attributes) {
+        var_set.insert(attr);
+    }
+
+    std::string variables;
+    for (const auto& var : var_set) {
+        if (var.empty()) {
+            continue;
         }
 
-        auto transformed_attributes = get_transformed_attributes(ss12000type);
-        for (auto attr : transformed_attributes) {
-            var_set.insert(attr);   
+        auto typePos = var.find('.');
+        if (typePos != std::string::npos) {
+            std::string foreignKey(var.substr(typePos + 1));
+            std::string typeForKey(var.substr(0, typePos));
+            add_variable(typeForKey + "-scim-variables", foreignKey);
         }
-
-        std::string variables;
-        for (const auto &var : var_set) {
-            if (var.empty()) {
-                continue;
-            }
-            
-            auto typePos = var.find('.');
-            if (typePos != std::string::npos) {
-                std::string foreignKey(var.substr(typePos + 1));
-                std::string typeForKey(var.substr(0, typePos));
-                add_variable(typeForKey + "-scim-variables", foreignKey);
-            }
-            variables += var + ", ";
-        }
-        const std::string attribute = ss12000type + "-scim-variables";
-        if (!variables.empty()) {
-            variables.erase(variables.end() - 2, variables.end());
-            add_variable(attribute, variables);
-            add_variable("all-scim-variables", variables);
-        } else {
-            insert(attribute, "");
-        }
+        variables += var + ", ";
+    }
+    const std::string attribute = ss12000type + "-scim-variables";
+    if (!variables.empty()) {
+        variables.erase(variables.end() - 2, variables.end());
+        add_variable(attribute, variables);
+        add_variable("all-scim-variables", variables);
     }
     else {
-        std::cerr << "Failed to parse " << ss12000type << "-scim-conf" << std::endl;
-    }
-    return err;
-}
-
-int config_file::load_variables() {
-    int err;
-
-    std::string input;
-
-    input = read(filename);
-
-    /* Parse file contents. */
-    err = config_parser(std::begin(input), std::end(input)).parse();
-
-
-    if (err == -1) {
-        clear();
-        return -1;
+        insert(attribute, "");
     }
 
     return 0;
 }
 
+int config_file::load_variables() {
+    std::string input;
+
+    input = read(filename);
+
+    /* Parse file contents. */
+    try {
+        config_parser(std::begin(input), std::end(input),
+                      [this](const std::string& k, const std::string& v) { return insert(k, v); }).parse();
+    }
+    catch (const config_parse_error& e) {
+        std::cerr << "Failed to parse config file" << std::endl;
+        simplescim_error_string_set_prefix("%s:%zu:%zu", filename.u8string().c_str(),
+                                               e.line(), e.col());
+        simplescim_error_string_set_message("%s", e.what());
+        clear();
+        return -1;
+    }
+    return 0;
+}
+
 int config_file::load(const std::string &file_name) {
-    filename = std::experimental::filesystem::canonical(file_name);
+    filename = std::filesystem::canonical(file_name);
     int err = load_variables();
 
     if (!err) {
-        load_templates();
+        err = load_templates();
     }
 
     std::string val = get("scim-test-run", true);
@@ -151,7 +173,7 @@ int config_file::load(const std::string &file_name) {
     return err;
 }
 
-std::string config_file::read(const std::experimental::filesystem::path& f) {
+std::string config_file::read(const std::filesystem::path& f) {
     std::string content;
 
     std::ifstream file(f);
@@ -162,7 +184,8 @@ std::string config_file::read(const std::experimental::filesystem::path& f) {
         content = buffer.str();
         file.close();
     } else {
-        simplescim_error_string_set_errno("%s", filename.c_str());
+        const auto path_str = f.u8string();
+        simplescim_error_string_set_errno("%s", path_str.c_str());
         return "";
     }
     return content;
@@ -240,7 +263,7 @@ const std::string &config_file::get(const std::string &variable, bool silent) co
 }
 
 std::string config_file::interpret_config_path(const std::string& path) const {
-    return std::experimental::filesystem::absolute(path, filename.parent_path()).u8string();
+    return std::filesystem::absolute(filename.parent_path() / path).u8string();
 }
 
 std::string config_file::get_path(const std::string& variable, bool silent) const {
@@ -303,36 +326,3 @@ int config_file::get_int(const std::string &attrib, int default_value) const {
         return default_value;
     }
 }
-
-//static size_t send_write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
-//    struct http_response *http_response;
-//
-//    http_response = static_cast<struct http_response *>(userdata);
-//    size_t len = size * nmemb;
-//
-//    for (size_t i = 0; i < len; ++i) {
-//        char c = ((char *) ptr)[i];
-//
-//        if (c == '\r') {
-//            continue;
-//        }
-//
-//        if (http_response->len + 1 == http_response->alloc) {
-//            char *tmp = static_cast<char *>(realloc(http_response->data, http_response->alloc * 2));
-//
-//            if (tmp == nullptr) {
-//                return i;
-//            }
-//
-//            http_response->data = tmp;
-//            http_response->alloc *= 2;
-//        }
-//
-//        http_response->data[http_response->len] = c;
-//        ++http_response->len;
-//    }
-//
-//    http_response->data[http_response->len] = '\0';
-//
-//    return len;
-//}

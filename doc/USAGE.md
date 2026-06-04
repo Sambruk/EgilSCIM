@@ -1,16 +1,42 @@
 # Using EgilSCIM
 
-The intention is currently that for every remote service needing
-user management, a configuration file is constructed. The
-configuration file specifies how and where to fetch the user data
-using LDAP and how and where to send the data using SCIM, as well as
-how to relate the LDAP output to the SCIM requests.
+The EgilSCIM project's main piece of software is `EgilSCIMClient`
+(or `EgilSCIMClient.exe` on Windows). This is a command line tool
+which is responsible for reading user data from a data source 
+(e.g. LDAP or SQL) and sending that data to a service provider's
+SCIM server. In order to know how to read and interpret the data,
+and how and where to send it, `EgilSCIMClient` reads configuration
+from a set of files.
+
+The main entry point for the configuration is typically stored in a
+file named `master.conf`, and configuration specific to the various
+data types (Student, Teacher, StudentGroup etc.) is stored in 
+`.conf`-files named after each data type.
+
+A set of configuration files can be re-used for many service providers,
+but you may also want to have a separate configuration for a specific
+service provider. 
+
+To start the client you'd run something like:
+
+```
+EgilSCIMClient /etc/EgilSCIM/conf/master.conf
+```
+After the client has loaded the configuration it will read all data
+from the data source, compare the data we intend the service provider
+to have with the data we've already sent, and then send the differences
+(as SCIM operations, in other words creating, modifying and deleting
+objects in the SCIM server).
+
+The information about what data we've already sent is stored in a cache
+file (the path to the cache file can be configured in the configuration file,
+but if you want to be able to re-use your configuration for several service
+providers it's better to set it as a command line argument, since each
+destination should have its own cache file).
 
 ## Configuration file
 
-The formal grammar of an EgilSCIM configuration file can be found in
-the file `EgilSCIM/res/config-file-grammar`. A configuration file
-consists of a set of variable assignments. On each line, there can be
+A configuration file consists of a set of variable assignments. On each line, there can be
 an optional variable assignment followed by an optional comment. A
 variable assignment starts with a variable name followed by the `'='`
 sign and a value. A variable name can be one or more of `'-'`, `'_'`,
