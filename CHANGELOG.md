@@ -1,5 +1,9 @@
 ## Releases
 
+## Unreleased
+#### Misc
+  - On Linux, dynamic linking now used for OpenSSL, static linking for Boost (#261)
+
 ## v2.23 (2026-04-24)
 #### Features
   - External processes can now be used as a data source (#251)
