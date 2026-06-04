@@ -1,6 +1,9 @@
 ## Releases
 
 ## Unreleased
+#### Misc
+  - On Linux, dynamic linking now used for OpenSSL, static linking for Boost (#261)
+
 #### Bugfixes
   - Windows style line endings are now supported in the config file format (#249)
   - Config files no longer need to end with a line ending (#91)
