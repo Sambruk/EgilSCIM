@@ -1,6 +1,6 @@
 ## Releases
 
-## Unreleased
+## v2.24 (2026-10-12)
 #### Misc
   - On Linux, dynamic linking now used for OpenSSL, static linking for Boost (#261)
 
