@@ -66,6 +66,40 @@ jobs:
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
       run: ./tests
 
+    - name: Setup Python for SBOM generation
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.12'
+
+    - name: Install vcpkg-sbom
+      # vcpkg-sbom uses rich without declaring it as a dependency
+      run: pip install vcpkg-sbom==0.0.6 rich==15.0.0
+
+    - name: Generate SBOM
+      # The aggregated SBOM is created from the SPDX files vcpkg generates for
+      # each installed package, see .github/scripts/strip_spdx_files.py for why
+      # they need to be preprocessed.
+      shell: bash
+      env:
+        PYTHONUTF8: 1
+      run: |
+        triplet=$(sed -n 's/^VCPKG_TARGET_TRIPLET:[A-Z]*=//p' build/CMakeCache.txt | tr -d '\r')
+        installed_dir=$(sed -n 's/^VCPKG_INSTALLED_DIR:[A-Z]*=//p' build/CMakeCache.txt | tr -d '\r')
+        python .github/scripts/strip_spdx_files.py "$installed_dir/$triplet" "build/sbom-input/$triplet"
+
+        # vcpkg-sbom writes its output to the current directory, put it next to the binary
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          cd "build/${{ matrix.build_type }}"
+        else
+          cd build
+        fi
+        vcpkg-sbom "$GITHUB_WORKSPACE/build/sbom-input" \
+          --triplet "$triplet" \
+          --project EgilSCIMClient \
+          --namespace "${{ github.server_url }}/${{ github.repository }}/sbom/EgilSCIMClient-$RUNNER_OS-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}" \
+          --organization "Föreningen Sambruk" \
+          --email "info@sambruk.se"
+
     - name: Upload Windows artifacts
       if: matrix.os == 'windows-2022'
       uses: actions/upload-artifact@v4
@@ -78,4 +112,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: EgilSCIMClient-${{ matrix.os }}
-        path: build/EgilSCIMClient
+        path: |
+          build/EgilSCIMClient
+          build/EgilSCIMClient.spdx.json
